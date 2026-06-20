@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boardy.ai | Avalanche Escrow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0B0F19; color: white; font-family: 'Inter', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .ava-red { color: #E84142; }
+        .ava-bg { background-color: #E84142; }
+    </style>
+</head>
+<body class="flex items-center justify-center h-screen">
+    <div class="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl text-center">
+        <h2 class="text-2xl font-bold mb-2">Match Found! 🎉</h2>
+        <p class="text-gray-400 mb-6 text-sm">We've found a founder matching your exact criteria. To prevent spam and lock in the introduction, please stake your commitment.</p>
+        
+        <div class="bg-gray-800 rounded-lg p-4 mb-6 flex justify-between items-center border border-gray-700">
+            <span class="text-gray-300 font-semibold">Stake Amount</span>
+            <span class="text-xl font-bold">0.50 USDC</span>
+        </div>
+
+        <button id="payBtn" class="ava-bg hover:bg-red-600 transition-all w-full py-3 rounded-lg font-bold text-lg flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 4.2l7.5 15H4.5L12 6.2z"/></svg>
+            Pay with Core Wallet
+        </button>
+
+        <div id="status" class="hidden mt-4 text-green-400 font-medium animate-pulse">
+            Transaction Confirmed! ✅ Generating WhatsApp Group...
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('payBtn').addEventListener('click', () => {
+            const btn = document.getElementById('payBtn');
+            btn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Confirming on Chain...
+            `;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+            
+            // Simulate 2 second blockchain confirmation
+            setTimeout(() => {
+                btn.style.display = 'none';
+                document.getElementById('status').classList.remove('hidden');
+            }, 2500);
+        });
+    </script>
+</body>
+</html>

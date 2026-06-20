@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: boardy_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Jose254
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg_data_new:/var/lib/postgresql/data
+
+volumes:
+  pg_data_new:
