@@ -1,16 +1,31 @@
-# React + Vite
+# Boardy.ai - React Frontend ⚛️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The Boardy.ai frontend is a modern, single-page Web3 application built with React, Vite, and Tailwind CSS. It integrates Thirdweb for wallet authentication and Vapi.ai for real-time voice AI interviews.
 
-Currently, two official plugins are available:
+## ✨ Features
+- **Thirdweb Integration**: Seamless Web3 login.
+- **Vapi.ai Web SDK**: In-browser real-time voice streaming with the AI agent.
+- **Responsive UI**: Glassmorphism design system using Tailwind CSS.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Setup
+1. Create a `.env` file based on your keys:
+```env
+VITE_THIRDWEB_CLIENT_ID=your_client_id
+VITE_VAPI_PUBLIC_KEY=your_vapi_pk
+VITE_VAPI_ASSISTANT_ID=your_assistant_id
+VITE_API_URL=http://localhost:4000
+```
 
-## React Compiler
+2. Install dependencies:
+```bash
+npm install
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+3. Run the development server:
+```bash
+npm run dev
+```
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📂 Directory Structure
+- `/src/components/` - Main React components (`Dashboard`, `ProfileSetup`, `LandingPage`).
+- `/src/index.css` - Global Tailwind tokens and glassmorphism utilities.

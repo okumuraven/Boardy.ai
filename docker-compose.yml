@@ -1,17 +1,42 @@
+version: '3.8'
+
 services:
-  postgres:
-    image: ankane/pgvector:latest
-    container_name: boardy_db
-    restart: always
+  db:
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Jose254
-      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: boardy_dev
     ports:
       - "5432:5432"
     volumes:
+      - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - pg_data_new:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      network: host
+    network_mode: "host"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      network: host
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:4000
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
 
 volumes:
-  pg_data_new:
+  pgdata:
