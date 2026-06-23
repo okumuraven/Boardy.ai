@@ -16,9 +16,16 @@ export default function ProfileSetup({ onComplete }) {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/profiles`, {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:4000' 
+        : import.meta.env.VITE_API_URL;
+
+      const response = await fetch(`${apiUrl}/api/profiles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Tunnel-Skip-AntiPhishing-Page': 'true'
+        },
         body: JSON.stringify({
           wallet_address: activeAccount?.address,
           full_name: name,

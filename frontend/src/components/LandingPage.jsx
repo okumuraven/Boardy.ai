@@ -2,13 +2,13 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
   return (
     <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Navbar */}
-      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2rem 4rem' }}>
+      <nav className="nav-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div className="brand-logo">B</div>
           <span className="brand-text">Boardy.ai</span>
         </div>
         <div>
-          <button onClick={onJoinClick} className="btn-primary" style={{ padding: '0.75rem 2rem', marginTop: '0', borderRadius: '50px' }}>Enter App</button>
+          <button onClick={onJoinClick} className="btn-primary nav-btn">Enter App</button>
         </div>
       </nav>
 
@@ -19,26 +19,26 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
             The Verified Professional Synergy Protocol
           </div>
           
-          <h1 style={{ fontSize: '4.5rem', lineHeight: '1.1', marginBottom: '1.5rem', background: 'linear-gradient(135deg, #ffffff 0%, #a5a5b4 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.03em' }}>
+          <h1 className="hero-title">
             Don't just network.<br/> <span style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #ff5e78 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Synthesize.</span>
           </h1>
           
-          <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '3rem', maxWidth: '600px', margin: '0 auto 3rem auto' }}>
+          <p className="hero-subtitle">
             An exclusive, AI-orchestrated ecosystem. Talk to our voice agent, deposit your commitment stake on Avalanche, and let the protocol match you with the precise talent you need to scale.
           </p>
 
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button onClick={onJoinClick} className="btn-primary" style={{ marginTop: '0', width: 'auto', padding: '1.2rem 3rem', fontSize: '1.2rem', borderRadius: '50px' }}>
+          <div className="hero-buttons">
+            <button onClick={onJoinClick} className="btn-primary hero-btn-primary">
               Launch App
             </button>
-            <button onClick={onWhitepaperClick} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', padding: '1.2rem 3rem', borderRadius: '50px', fontSize: '1.2rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s' }} onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}>
+            <button onClick={onWhitepaperClick} className="hero-btn-secondary" onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}>
               Read Whitepaper
             </button>
           </div>
         </div>
 
         {/* Feature grid */}
-        <div className="animate-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2rem', marginTop: '6rem', maxWidth: '1000px', width: '100%', animationDelay: '0.2s', opacity: 0, animationFillMode: 'forwards' }}>
+        <div className="animate-in feature-grid" style={{ animationDelay: '0.2s', opacity: 0, animationFillMode: 'forwards' }}>
           {[
             { title: "Voice AI Ingestion", desc: "Speak naturally. Our Vapi integration extracts exactly what you are building and what you need." },
             { title: "Vector Matching", desc: "pgvector analyzes 1536-dimensional embeddings to guarantee hyper-accurate professional matches." },

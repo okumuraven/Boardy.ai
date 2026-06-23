@@ -49,7 +49,8 @@ defmodule Boardy.MixProject do
       {:jason, "~> 1.2"},
       {:cors_plug, "~> 3.0"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:pgvector, "~> 0.3.0"}
     ]
   end
 

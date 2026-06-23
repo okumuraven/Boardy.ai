@@ -26,7 +26,13 @@ VITE_VAPI_ASSISTANT_ID=your_vapi_assistant_id
 VITE_API_URL=http://localhost:4000
 ```
 
-### 2. Boot the Infrastructure
+### 2. Configure Vapi.ai Agent
+For the AI Oracle to successfully extract "Offers" and "Needs", you must configure your Vapi Assistant exactly like this:
+1. **System Prompt**: Copy the contents of `vapi_system_prompt.txt` into the Assistant's System Prompt box.
+2. **First Message**: Set the First Message to: *"Hey there, welcome to Boardy. Tell me a bit about what you're currently building?"*
+3. **Structured Data Extraction**: Go to the **Analysis** tab -> **Structured Data Extraction** and paste the JSON schema found in `vapi_schema.json`.
+
+### 3. Boot the Infrastructure
 Run the entire stack (Database, Elixir Backend, React Frontend) via Docker:
 ```bash
 docker compose up --build

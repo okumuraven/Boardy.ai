@@ -17,11 +17,25 @@ export default function App() {
   useEffect(() => {
     if (activeAccount?.address) {
       setIsLoading(true);
-      fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:4000'}/api/profiles/${activeAccount.address}`)
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? 'http://localhost:4000' 
+        : import.meta.env.VITE_API_URL;
+
+      fetch(`${apiUrl}/api/profiles/${activeAccount.address}`, {
+        headers: {
+          'X-Tunnel-Skip-AntiPhishing-Page': 'true'
+        }
+      })
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data && data.onboarding_completed) {
-            setProfile({ name: data.full_name, role: data.role, id: data.id });
+            setProfile({ 
+              name: data.full_name, 
+              role: data.role, 
+              id: data.id,
+              offer_text: data.offer_text,
+              need_text: data.need_text
+            });
           }
         })
         .catch(err => console.error(err))
@@ -55,7 +69,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-container" style={{ padding: (!activeAccount && !showLogin) ? '0' : '2rem' }}>
+    <div className={`app-container ${(!activeAccount && !showLogin) ? 'no-padding' : ''}`}>
       { (activeAccount || showLogin) && (
         <header className="brand-header">
           <div className="brand-logo">B</div>

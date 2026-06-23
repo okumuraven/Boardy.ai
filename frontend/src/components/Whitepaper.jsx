@@ -6,7 +6,7 @@ export default function Whitepaper({ onBack }) {
       </button>
 
       <div className="animate-in">
-        <h1 className="title" style={{ fontSize: '3.5rem', marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>Boardy.ai Lightpaper</h1>
+        <h1 className="title whitepaper-title" style={{ marginBottom: '0.5rem', letterSpacing: '-0.03em' }}>Boardy.ai Lightpaper</h1>
         <p style={{ fontSize: '1.1rem', color: 'var(--primary)', fontWeight: '600', marginBottom: '4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Version 1.0.0 - Protocol Specification</p>
 
         <section style={{ marginBottom: '4rem' }}>

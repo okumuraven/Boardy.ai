@@ -43,6 +43,10 @@ body {
   position: relative;
 }
 
+.no-padding {
+  padding: 0 !important;
+}
+
 /* Glass Card - The core component */
 .glass-card {
   background: var(--bg-card);
@@ -77,6 +81,10 @@ h1, h2, h3 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.75rem;
+}
+
+.whitepaper-title {
+  font-size: 3.5rem;
 }
 
 .subtitle {
@@ -219,3 +227,132 @@ select.input-field option {
 }
 
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Refactored Layout Classes */
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 4rem;
+  width: 100%;
+}
+
+.nav-btn {
+  padding: 0.75rem 2rem;
+  margin-top: 0;
+  border-radius: 50px;
+}
+
+.hero-title {
+  font-size: 4.5rem;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, #a5a5b4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.hero-btn-primary {
+  margin-top: 0;
+  width: auto;
+  padding: 1.2rem 3rem;
+  font-size: 1.2rem;
+  border-radius: 50px;
+}
+
+.hero-btn-secondary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 1.2rem 3rem;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 6rem;
+  max-width: 1000px;
+  width: 100%;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 1rem;
+  }
+  
+  .nav-bar {
+    padding: 1.5rem 1rem;
+  }
+  
+  .glass-card {
+    padding: 2.5rem 1.5rem;
+  }
+  
+  .brand-header {
+    position: relative;
+    top: 0;
+    left: 0;
+    margin-bottom: 2rem;
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+    padding: 0 1rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+    padding: 0 1rem;
+  }
+  
+  .hero-btn-primary, .hero-btn-secondary {
+    width: 100%;
+    padding: 1rem;
+  }
+  
+  .feature-grid {
+    grid-template-columns: 1fr;
+    margin-top: 3rem;
+    padding: 0 1rem;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  /* Make Thirdweb connect button full width if needed */
+  .tw-connect-wallet {
+    width: 100% !important;
+  }
+}

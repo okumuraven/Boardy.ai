@@ -5,12 +5,14 @@ import { inAppWallet } from "thirdweb/wallets";
 export default function Login({ onBack }) {
   return (
     <div style={{ position: 'relative' }}>
-      <button 
-        onClick={onBack}
-        style={{ position: 'absolute', top: '-3rem', left: '0', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-      >
-        ← Back to Home
-      </button>
+      <div style={{ marginBottom: '1.5rem', display: 'flex' }}>
+        <button 
+          onClick={onBack}
+          style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
+          ← Back to Home
+        </button>
+      </div>
 
       <div className="glass-card animate-in" style={{ textAlign: 'center' }}>
         <div style={{ marginBottom: '2.5rem' }}>

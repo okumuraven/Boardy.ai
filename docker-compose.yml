@@ -11,7 +11,6 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   backend:
     build:
@@ -31,8 +30,8 @@ services:
       network: host
     ports:
       - "5173:5173"
-    environment:
-      - VITE_API_URL=http://localhost:4000
+    env_file:
+      - ./frontend/.env
     volumes:
       - ./frontend:/app
     depends_on:
