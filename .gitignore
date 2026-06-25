@@ -1,0 +1,29 @@
+# Environment variables — never commit this
+.env
+
+# Hardhat
+cache/
+artifacts/
+typechain/
+typechain-types/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Coverage
+coverage/
+coverage.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Local persistence
+data/
