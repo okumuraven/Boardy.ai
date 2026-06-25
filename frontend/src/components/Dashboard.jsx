@@ -10,6 +10,7 @@ import { defineChain } from "thirdweb/chains";
 export default function Dashboard({ profile }) {
   const { disconnect } = useDisconnect();
   const [callStatus, setCallStatus] = useState("inactive"); // inactive, connecting, active
+  const [matchStatus, setMatchStatus] = useState("idle"); // idle, staking, queuing, matched
   const [vapiInstance, setVapiInstance] = useState(null);
   
   // Thirdweb transaction hook
@@ -17,7 +18,6 @@ export default function Dashboard({ profile }) {
 
   useEffect(() => {
     // Initialize Vapi with Public Key from env
-    // Vite sometimes wraps CommonJS modules, so we check for .default
     const VapiClass = Vapi.default || Vapi;
     const vapi = new VapiClass(import.meta.env.VITE_VAPI_PUBLIC_KEY || "dummy_key");
     setVapiInstance(vapi);
@@ -32,25 +32,50 @@ export default function Dashboard({ profile }) {
     return () => vapi.removeAllListeners();
   }, []);
 
-  const handleStakeClick = () => {
-    // Prepare a transaction to send 0.01 AVAX to the Boardy Escrow Wallet
-    const transaction = prepareTransaction({
-      to: "0x1111111111111111111111111111111111111111", // Placeholder Treasury Wallet
-      value: toWei("0.01"),
-      chain: defineChain(43114), // Avalanche C-Chain (Mainnet) or 43113 for Fuji
-      client: client
-    });
+  const handleStakeClick = async () => {
+    setMatchStatus("staking");
     
-    sendTx(transaction, {
-      onSuccess: () => {
-        alert("Payment successful! The AI is now finding your matches...");
-        // Here we would tell the backend the fee is paid and to execute the match algorithm!
-      },
-      onError: (err) => {
-        console.error("Transaction failed:", err);
-        alert("Transaction failed. Please try again.");
+    // Simulate Blockchain Staking Delay
+    setTimeout(async () => {
+      setMatchStatus("queuing");
+      
+      try {
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:4000' 
+          : import.meta.env.VITE_API_URL;
+        
+        // Wait another 3.5 seconds to simulate pgvector matchmaking
+        setTimeout(async () => {
+          const response = await fetch(`${apiUrl}/api/matches/1/confirm-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: profile.id })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.chat_room_id) {
+              setMatchStatus("matched");
+              
+              // Give them 1.5 seconds to see the success state before jumping
+              setTimeout(() => {
+                if (window.onMatchUnlocked) {
+                  window.onMatchUnlocked(data.chat_room_id);
+                }
+              }, 1500);
+            }
+          } else {
+            alert("Payment recorded, but failed to provision room on backend.");
+            setMatchStatus("idle");
+          }
+        }, 3500);
+        
+      } catch (err) {
+        console.error("Backend Error:", err);
+        alert("Payment successful but network error occurred.");
+        setMatchStatus("idle");
       }
-    });
+    }, 2000);
   };
 
   const handleCallClick = async () => {
@@ -108,28 +133,64 @@ export default function Dashboard({ profile }) {
             </div>
             
             <h3 style={{ fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Ready to Find Your Match?</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-              To ensure high-quality matches and prevent ghosting, we require a small 0.01 AVAX commitment stake on the Avalanche network.
-            </p>
             
-            <button 
-              className="btn-primary" 
-              onClick={handleStakeClick}
-              disabled={isPending}
-              style={{ width: '100%', padding: '1rem', position: 'relative' }}
-            >
-              {isPending ? "Confirming Transaction..." : "Stake 0.01 AVAX to Unlock Matches"}
-            </button>
-            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-              Funds are securely held in the Boardy.ai smart contract.
-            </p>
+            {matchStatus === "idle" && (
+              <>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
+                  To ensure high-quality matches and prevent ghosting, we require a small 0.01 AVAX commitment stake on the Avalanche network.
+                </p>
+                <button 
+                  className="btn-primary" 
+                  onClick={handleStakeClick}
+                  style={{ width: '100%', padding: '1rem', position: 'relative' }}
+                >
+                  Stake 0.01 AVAX to Unlock Matches
+                </button>
+                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+                  Funds are securely held in the Boardy.ai smart contract.
+                </p>
+              </>
+            )}
+
+            {matchStatus === "staking" && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem', border: '3px solid rgba(16, 185, 129, 0.2)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                <h4 style={{ color: '#10b981', marginBottom: '0.5rem' }}>Confirming Transaction</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Waiting for Avalanche network finality...</p>
+              </div>
+            )}
+
+            {matchStatus === "queuing" && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(96, 165, 250, 0.05)', borderRadius: '12px', border: '1px solid rgba(96, 165, 250, 0.2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out' }}></div>
+                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out 0.2s' }}></div>
+                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out 0.4s' }}></div>
+                </div>
+                <h4 style={{ color: '#60a5fa', marginBottom: '0.5rem', fontSize: '1.1rem' }}>AI Matchmaking in Progress</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                  Analyzing your professional summary...<br/>
+                  Calculating cosine similarity across 1536-dimensional embeddings in pgvector...
+                </p>
+              </div>
+            )}
+
+            {matchStatus === "matched" && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
+                <h4 style={{ color: '#10b981', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Optimal Match Found!</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Routing you to your secure Chat Room...</p>
+              </div>
+            )}
             
-            <button 
-              onClick={() => window.location.reload()} 
-              style={{ display: 'block', margin: '1.5rem auto 0', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}
-            >
-              Refresh Status
-            </button>
+            {matchStatus === "idle" && (
+              <button 
+                onClick={() => window.location.reload()} 
+                style={{ display: 'block', margin: '1.5rem auto 0', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Refresh Status
+              </button>
+            )}
           </div>
         ) : (
           <div>

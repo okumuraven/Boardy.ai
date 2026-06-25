@@ -5,6 +5,7 @@ import Whitepaper from './components/Whitepaper';
 import Login from './components/Login';
 import ProfileSetup from './components/ProfileSetup';
 import Dashboard from './components/Dashboard';
+import ChatRoomView from './components/ChatSystem';
 
 export default function App() {
   const activeAccount = useActiveAccount();
@@ -45,6 +46,17 @@ export default function App() {
     }
   }, [activeAccount]);
 
+  const [activeChatRoomId, setActiveChatRoomId] = useState(null);
+
+  useEffect(() => {
+    window.onMatchUnlocked = (roomId) => {
+      setActiveChatRoomId(roomId);
+    };
+    return () => {
+      delete window.onMatchUnlocked;
+    };
+  }, []);
+
   const renderScreen = () => {
     if (isLoading) {
       return (
@@ -63,6 +75,10 @@ export default function App() {
     
     if (activeAccount && !profile) {
       return <ProfileSetup onComplete={setProfile} />;
+    }
+
+    if (activeChatRoomId) {
+      return <ChatRoomView roomId={activeChatRoomId} profile={profile} onBack={() => setActiveChatRoomId(null)} />;
     }
 
     return <Dashboard profile={profile} />;

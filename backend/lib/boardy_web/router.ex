@@ -11,5 +11,6 @@ defmodule BoardyWeb.Router do
     get "/profiles/:id", ProfileController, :show
     post "/profiles", ProfileController, :create
     post "/vapi", VapiController, :webhook
+    post "/matches/:id/confirm-payment", MatchController, :confirm_payment
   end
 end

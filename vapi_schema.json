@@ -1,17 +1,1 @@
-{
-  "type": "object",
-  "properties": {
-    "professional_offer": {
-      "type": "string",
-      "description": "A highly professional, 2-sentence summary of what the user is building, their skills, and what value they can offer to a potential partner."
-    },
-    "professional_need": {
-      "type": "string",
-      "description": "A highly professional, 2-sentence summary of the exact skills, capital, or type of person the user is looking to be matched with."
-    }
-  },
-  "required": [
-    "professional_offer",
-    "professional_need"
-  ]
-}
+cl
