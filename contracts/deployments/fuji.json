@@ -1,0 +1,16 @@
+{
+  "network": "fuji",
+  "chainId": 43113,
+  "deployedAt": "2026-06-26T06:33:59.418Z",
+  "deployer": "0x238A0E863Aa6e495921b9c7777a4047CB8A913c1",
+  "contracts": {
+    "BoardyMatchStaking": {
+      "address": "0xA9d63536cd7e9B12F501BDb2F51C0822afbe0215",
+      "stakeAmountWei": "10000000000000000",
+      "stakeAmountAvax": "0.01"
+    },
+    "BoardyMilestoneEscrow": {
+      "address": "0xc6d301478BfcCC5a1252862fC73B54397A0D2F13"
+    }
+  }
+}
