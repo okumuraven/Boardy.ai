@@ -48,13 +48,14 @@ defmodule Boardy.AI do
       url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
       
       prompt = """
-      You are an expert B2B matchmaker. Read the conversation below and extract the user's Offer and Need.
-      1. "offer": What is the user's core skill, product, or value proposition? (1-2 sentences)
-      2. "need": What is the user's biggest bottleneck or requirement? (1-2 sentences)
+      You are an expert B2B matchmaker and executive summary writer. Read the conversation below and extract the user's Offer and Need.
+      1. "offer": What is the user's core skill, product, or value proposition? (1-2 sentences). Make it sound incredibly strong, professional, and confident. Use high-impact action verbs.
+      2. "need": What is the user's biggest bottleneck or requirement? (1-2 sentences). Frame this professionally as a strategic requirement or investment opportunity.
       
       Rules:
       - Return ONLY a valid JSON object with keys "offer" and "need".
-      - DO NOT quote the raw conversation. Synthesize it professionally.
+      - DO NOT quote the raw conversation. Synthesize it into a highly polished, professional executive summary.
+      - Ensure the tone is persuasive, strong, and business-focused.
       - If the conversation is cut off or missing details, make your best professional inference or write "Not explicitly stated".
       
       Conversation Transcript:

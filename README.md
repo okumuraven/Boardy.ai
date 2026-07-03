@@ -7,6 +7,7 @@ Instead of filling out endless forms, users connect their wallet, press a button
 - **Frontend**: React + Vite + Tailwind CSS + Thirdweb (Wallet Auth) + Vapi Web SDK (Voice Agent)
 - **Backend**: Elixir + Phoenix (REST API & Webhooks)
 - **Database**: PostgreSQL with `pgvector` for Cosine Similarity Matching
+- **Smart Contracts**: Avalanche Fuji Testnet (Bilateral Staking & Escrow) - see [contracts.md](contracts.md)
 - **Infrastructure**: Fully Dockerized (Monorepo)
 
 ## 🛠️ Prerequisites

@@ -61,8 +61,8 @@ Wire these into `frontend/.env`:
 
 ```env
 VITE_CHAIN_ID=43113
-VITE_MATCH_STAKING_ADDRESS=0x...
-VITE_MILESTONE_ESCROW_ADDRESS=0x...
+VITE_MATCH_STAKING_ADDRESS=0x3e5E4D5FA56fa78F9665Bc36b8D08964Dc790eFA
+VITE_MILESTONE_ESCROW_ADDRESS=0xb26Ef6c2fC70D831924622fa783b1cc800eb3F64
 ```
 
 Use Thirdweb `defineChain(43113)` and call `stake(matchId)` on `BoardyMatchStaking` with `{ value: parseEther("0.01") }`.

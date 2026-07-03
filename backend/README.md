@@ -23,8 +23,10 @@ mix ecto.setup
 mix phx.server
 ```
 
-## 📡 API Endpoints
+## 📡 API Endpoints & Webhooks
 - `GET /api/profiles/:wallet_address` - Fetches a user profile.
 - `POST /api/profiles` - Creates or updates a user profile.
+- `POST /api/vapi_webhook` - Receives Vapi analysis, computes vector similarities, and determines the best match.
 
-*(Note: AI Webhook endpoint coming soon to receive Vapi analysis).*
+## 🔗 Smart Contract Integration
+The backend serves as the authoritative matchmaker for the `BoardyMatchStaking` contract. Once a high-synergy match is found via `pgvector`, the backend calculates a deterministic `matchId` and sends a transaction to the smart contract on Avalanche Fuji, enabling both parties to securely stake their commitment.
