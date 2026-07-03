@@ -9,6 +9,9 @@ defmodule BoardyWeb.VapiController do
       "end-of-call-report" ->
         handle_end_of_call(message)
         json(conn, %{status: "received"})
+      "assistant-request" ->
+        # Vapi expects an empty object or assistant overrides if a Server URL is configured
+        json(conn, %{})
       _ ->
         # Other webhooks (e.g., tool calls, call-start), just ack them.
         json(conn, %{status: "ignored"})
