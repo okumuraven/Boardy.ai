@@ -34,13 +34,16 @@ export default function ProfileSetup({ onComplete }) {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to save profile on backend.");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Failed to save profile on backend.");
+      }
       const data = await response.json();
       onComplete({ name, phoneNumber, role, id: data.id });
       
     } catch (error) {
       console.error(error);
-      alert("Error saving profile to the backend.");
+      alert(error.message || "Error saving profile to the backend.");
     } finally {
       setIsSubmitting(false);
     }

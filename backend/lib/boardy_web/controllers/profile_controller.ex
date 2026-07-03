@@ -63,6 +63,12 @@ defmodule BoardyWeb.ProfileController do
           role: user.role,
           onboarding_completed: user.onboarding_completed
         })
+      {:error, %Ecto.Changeset{} = changeset} ->
+        # Extract the first error message to send to the frontend
+        error_msg = Enum.reduce(changeset.errors, "Validation failed", fn {field, {msg, _}}, _acc -> 
+          "#{field} #{msg}"
+        end)
+        conn |> put_status(400) |> json(%{error: error_msg})
       {:error, reason} ->
         IO.inspect(reason, label: "DB_ERROR")
         conn |> put_status(500) |> json(%{error: "Database error", details: inspect(reason)})
