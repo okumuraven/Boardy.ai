@@ -11,6 +11,9 @@ config :boardy,
   ecto_repos: [Boardy.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :boardy, Boardy.Repo,
+  types: Boardy.PostgresTypes
+
 # Configure the endpoint
 config :boardy, BoardyWeb.Endpoint,
   url: [host: "localhost"],
