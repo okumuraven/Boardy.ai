@@ -50,7 +50,8 @@ defmodule Boardy.MixProject do
       {:cors_plug, "~> 3.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:pgvector, "~> 0.3.0"}
+      {:pgvector, "~> 0.3.0"},
+      {:req, "~> 0.4.0"}
     ]
   end
 

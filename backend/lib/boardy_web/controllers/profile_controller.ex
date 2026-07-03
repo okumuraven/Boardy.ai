@@ -68,4 +68,66 @@ defmodule BoardyWeb.ProfileController do
         conn |> put_status(500) |> json(%{error: "Database error", details: inspect(reason)})
     end
   end
+
+  # Local dev bypass to simulate Vapi Webhook + OpenAI Embeddings
+  def sync_mock(conn, %{"id" => user_id}) do
+    profile = Boardy.Repo.get_by(Profile, user_id: user_id)
+    
+    if profile do
+      # Generate a mock 1536-dimensional vector for pgvector
+      mock_vector = Pgvector.new(for _ <- 1..1536, do: :rand.uniform() |> Float.round(4))
+      
+      changeset = Profile.changeset(profile, %{
+        offer_text: "AI: I am an expert Web3 and React developer looking for a fast-paced team.",
+        need_text: "Need: Looking for a blockchain startup with a solid product roadmap.",
+        offer_vector: mock_vector,
+        need_vector: mock_vector
+      })
+      
+      Boardy.Repo.update!(changeset)
+      json(conn, %{success: true})
+    else
+      conn |> put_status(404) |> json(%{error: "Profile not found"})
+    end
+  end
+
+  # Real data pipeline bypassing Vapi webhooks
+  def sync_real_transcript(conn, %{"id" => user_id, "transcript" => transcript}) do
+    profile = Boardy.Repo.get_by(Profile, user_id: user_id)
+    
+    if profile do
+      # Extract intelligent summary via Gemini Flash
+      {offer, need} = case Boardy.AI.extract_summary(transcript) do
+        {:ok, o, n} -> {o, n}
+        _ -> {"Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "..."}
+      end
+
+      # 1. Save the raw transcript AND the extracted summaries
+      changeset = Profile.changeset(profile, %{
+        raw_transcript: transcript,
+        offer_text: offer,
+        need_text: need
+      })
+      updated_profile = Boardy.Repo.update!(changeset)
+      
+      # 2. Use Gemini to generate REAL pgvector embeddings from the REAL transcript
+      Task.start(fn ->
+        case Boardy.AI.generate_embedding(transcript) do
+          {:ok, vector} ->
+            vector_changeset = Profile.changeset(updated_profile, %{
+              offer_vector: vector,
+              need_vector: vector
+            })
+            Boardy.Repo.update!(vector_changeset)
+            IO.puts("Successfully generated REAL Gemini vector for user #{user_id}")
+          _ ->
+            IO.puts("Failed to generate Gemini vector")
+        end
+      end)
+      
+      json(conn, %{success: true})
+    else
+      conn |> put_status(404) |> json(%{error: "Profile not found"})
+    end
+  end
 end

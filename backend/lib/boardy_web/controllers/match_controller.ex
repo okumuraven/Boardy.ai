@@ -22,4 +22,23 @@ defmodule BoardyWeb.MatchController do
         |> json(%{error: "Failed to unlock match"})
     end
   end
+
+  def stake(conn, %{"user_id" => user_id}) do
+    case Matchmaking.process_stake!(user_id) do
+      {:matched, chat_room} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          status: "matched",
+          chat_room_id: chat_room.id
+        })
+        
+      {:queued} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          status: "queued"
+        })
+    end
+  end
 end

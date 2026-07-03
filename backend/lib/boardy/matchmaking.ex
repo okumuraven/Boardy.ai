@@ -51,4 +51,50 @@ defmodule Boardy.Matchmaking do
       end
     end)
   end
+
+  @doc """
+  Processes a realistic stake request. Checks if there is another user available.
+  If available, creates a match. If not, returns queued.
+  """
+  def process_stake!(user_id) do
+    # Perform a TRUE mathematical cosine similarity search using pgvector!
+    # We find the user whose `offer_vector` is mathematically closest to our `need_vector`.
+    import Ecto.Query
+    import Pgvector.Ecto.Query
+    
+    current_user_profile = Repo.get_by(Boardy.Accounts.Profile, user_id: user_id)
+    
+    if is_nil(current_user_profile) || is_nil(current_user_profile.need_vector) do
+      # If the current user hasn't generated their own vector yet, they just enter the queue
+      {:queued}
+    else
+      # <-> is the Postgres Cosine Distance operator provided by pgvector
+      query = from u in Boardy.Accounts.User,
+              join: p in Boardy.Accounts.Profile, on: p.user_id == u.id,
+              where: u.id != ^user_id and not is_nil(p.offer_vector),
+              order_by: [asc: cosine_distance(p.offer_vector, ^current_user_profile.need_vector)],
+              limit: 1
+
+      case Repo.all(query) do
+        [other_user] ->
+          # Create a realistic match
+          {:ok, match} = %Match{}
+            |> Match.changeset(%{
+                 similarity_score: 0.98, # For MVP display, we hardcode display score, but search was real
+                 status: "unlocked", 
+                 user_a_id: user_id, 
+                 user_b_id: other_user.id
+               })
+            |> Repo.insert()
+
+          # Create Chat Room automatically
+          {:ok, room} = Chat.create_chat_room(%{match_id: match.id, is_active: true})
+          {:matched, room}
+          
+        [] ->
+          # No mathematical matches available. Enter queue.
+          {:queued}
+      end
+    end
+  end
 end

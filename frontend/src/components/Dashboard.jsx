@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useDisconnect } from "thirdweb/react";
+import { useDisconnect, useActiveWallet } from "thirdweb/react";
 import { client } from "../client";
 import Vapi from "@vapi-ai/web";
 
@@ -8,6 +8,7 @@ import { useSendTransaction } from "thirdweb/react";
 import { defineChain } from "thirdweb/chains";
 
 export default function Dashboard({ profile }) {
+  const wallet = useActiveWallet();
   const { disconnect } = useDisconnect();
   const [callStatus, setCallStatus] = useState("inactive"); // inactive, connecting, active
   const [matchStatus, setMatchStatus] = useState("idle"); // idle, staking, queuing, matched
@@ -16,14 +17,44 @@ export default function Dashboard({ profile }) {
   // Thirdweb transaction hook
   const { mutate: sendTx, isPending } = useSendTransaction();
 
+  const [transcript, setTranscript] = useState("");
+
   useEffect(() => {
     // Initialize Vapi with Public Key from env
+    // Vite wraps CommonJS modules, so we must check for .default
     const VapiClass = Vapi.default || Vapi;
     const vapi = new VapiClass(import.meta.env.VITE_VAPI_PUBLIC_KEY || "dummy_key");
     setVapiInstance(vapi);
 
-    vapi.on("call-start", () => setCallStatus("active"));
-    vapi.on("call-end", () => setCallStatus("inactive"));
+    vapi.on("call-start", () => {
+      setCallStatus("active");
+      setTranscript(""); // Reset transcript on new call
+    });
+    
+    vapi.on("message", (msg) => {
+      if (msg.type === "conversation-update" && msg.conversation) {
+        const fullTranscript = msg.conversation
+          .filter(c => c.role !== 'system')
+          .map(c => `${c.role === 'user' ? 'User' : 'AI'}: ${c.text || c.content || ""}`)
+          .join("\n");
+        setTranscript(fullTranscript);
+      }
+    });
+
+    vapi.on("call-end", async () => {
+      setCallStatus("inactive");
+      // Forcefully sync the REAL transcript to the backend when the call ends
+      // This bypasses the need for the user to configure Vapi Webhooks/DevTunnels!
+      try {
+        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : import.meta.env.VITE_API_URL;
+        // We will push this state after a small delay to ensure React state updated
+        setTimeout(async () => {
+          // Send a custom event to trigger the sync below
+          window.dispatchEvent(new CustomEvent('sync_real_transcript'));
+        }, 2000);
+      } catch (e) { console.error(e); }
+    });
+
     vapi.on("error", (e) => {
       console.error(e);
       setCallStatus("inactive");
@@ -31,6 +62,26 @@ export default function Dashboard({ profile }) {
 
     return () => vapi.removeAllListeners();
   }, []);
+
+  // Effect to listen for our custom sync event and use the latest transcript state
+  useEffect(() => {
+    const handleSync = async () => {
+      if (!transcript || transcript.length < 10) return; // Skip if empty
+      try {
+        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : import.meta.env.VITE_API_URL;
+        await fetch(`${apiUrl}/api/profiles/${profile.id}/sync_real_transcript`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: transcript })
+        });
+        window.location.reload();
+      } catch (e) {
+        console.error("Sync error:", e);
+      }
+    };
+    window.addEventListener('sync_real_transcript', handleSync);
+    return () => window.removeEventListener('sync_real_transcript', handleSync);
+  }, [transcript, profile.id]);
 
   const handleStakeClick = async () => {
     setMatchStatus("staking");
@@ -44,9 +95,9 @@ export default function Dashboard({ profile }) {
           ? 'http://localhost:4000' 
           : import.meta.env.VITE_API_URL;
         
-        // Wait another 3.5 seconds to simulate pgvector matchmaking
+        // Wait 3.5 seconds to simulate pgvector matchmaking
         setTimeout(async () => {
-          const response = await fetch(`${apiUrl}/api/matches/1/confirm-payment`, {
+          const response = await fetch(`${apiUrl}/api/matchmaking/stake`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: profile.id })
@@ -54,18 +105,19 @@ export default function Dashboard({ profile }) {
           
           if (response.ok) {
             const data = await response.json();
-            if (data.success && data.chat_room_id) {
+            if (data.status === "matched" && data.chat_room_id) {
               setMatchStatus("matched");
               
-              // Give them 1.5 seconds to see the success state before jumping
               setTimeout(() => {
                 if (window.onMatchUnlocked) {
                   window.onMatchUnlocked(data.chat_room_id);
                 }
               }, 1500);
+            } else if (data.status === "queued") {
+              setMatchStatus("in_queue");
             }
           } else {
-            alert("Payment recorded, but failed to provision room on backend.");
+            alert("Failed to process stake on backend.");
             setMatchStatus("idle");
           }
         }, 3500);
@@ -93,11 +145,12 @@ export default function Dashboard({ profile }) {
         }
         await vapiInstance?.start(assistantId, {
           variableValues: {
-            wallet_address: profile.id // The user's internal database ID or wallet
+            wallet_address: String(profile.id) // The user's internal database ID or wallet MUST be string
           }
         });
       } catch (err) {
         console.error("Vapi Error:", err);
+        alert(`Failed to connect to AI Voice: ${err.message || 'Check microphone permissions or Vapi API limits.'}`);
         setCallStatus("inactive");
       }
     }
@@ -175,6 +228,19 @@ export default function Dashboard({ profile }) {
               </div>
             )}
 
+            {matchStatus === "in_queue" && (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
+                <h4 style={{ color: '#f59e0b', marginBottom: '0.5rem', fontSize: '1.1rem' }}>You are in the Matchmaking Queue</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
+                  Your stake has been confirmed! However, there are no other compatible professionals currently available.
+                </p>
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', marginTop: '1rem' }}>
+                  The system will continuously scan the network. You will be notified instantly when a high-quality match is found.
+                </p>
+              </div>
+            )}
+
             {matchStatus === "matched" && (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
                 <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
@@ -190,6 +256,32 @@ export default function Dashboard({ profile }) {
               >
                 Refresh Status
               </button>
+            )}
+
+            {/* Redo Interview Feature */}
+            {matchStatus !== "staking" && matchStatus !== "queuing" && matchStatus !== "matched" && (
+              <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
+                  Want to improve your matching odds?
+                </p>
+                <button 
+                  onClick={handleCallClick}
+                  disabled={callStatus === "connecting"}
+                  className="btn-primary" 
+                  style={{ 
+                    width: '100%',
+                    padding: '0.75rem',
+                    background: callStatus === "active" ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'rgba(255,255,255,0.05)', 
+                    color: callStatus === "active" ? 'white' : 'var(--text-main)',
+                    boxShadow: callStatus === "active" ? '0 4px 15px rgba(239, 68, 68, 0.2)' : 'none',
+                    border: '1px dashed rgba(255,255,255,0.2)'
+                  }}
+                >
+                  {callStatus === "inactive" && <><span style={{ fontSize: '1.1rem' }}>🎙️</span> Redo AI Voice Interview</>}
+                  {callStatus === "connecting" && "Connecting to AI..."}
+                  {callStatus === "active" && "⏹️ End AI Voice Interview"}
+                </button>
+              </div>
             )}
           </div>
         ) : (
@@ -214,12 +306,9 @@ export default function Dashboard({ profile }) {
             </button>
             
             {callStatus === "inactive" && (
-              <button 
-                onClick={() => window.location.reload()} 
-                style={{ display: 'block', margin: '1rem auto 0', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                Refresh Data (If you just finished a call)
-              </button>
+              <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
+                Note: Ensure your backend is running with GEMINI_API_KEY exported to test real vectors.
+              </p>
             )}
           </div>
         )}
@@ -227,7 +316,9 @@ export default function Dashboard({ profile }) {
 
       <div style={{ textAlign: 'center' }}>
         <button 
-          onClick={() => disconnect(client)}
+          onClick={() => {
+            if (wallet) disconnect(wallet);
+          }}
           style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', transition: 'color 0.2s' }}
           onMouseOver={(e) => e.target.style.color = 'var(--primary)'}
           onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}

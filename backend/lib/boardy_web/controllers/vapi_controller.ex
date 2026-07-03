@@ -39,16 +39,32 @@ defmodule BoardyWeb.VapiController do
         nil -> 
           IO.puts("Profile not found for user ID: #{user_id}")
         profile ->
-          # Update the profile with the extracted data
+          # 1. Update the profile with the extracted text data first
           changeset = Profile.changeset(profile, %{
             raw_transcript: transcript,
             offer_text: offer || transcript, # fallback to transcript if Vapi didn't extract
             need_text: need || "Needs data extraction"
           })
-          Repo.update!(changeset)
+          updated_profile = Repo.update!(changeset)
           
-          # NOTE: Here we would trigger the OpenAI embeddings generation in the background!
-          IO.puts("Successfully saved Vapi interview for user #{user_id}")
+          # 2. Call OpenAI to generate real pgvector embeddings asynchronously
+          Task.start(fn ->
+            text_to_embed = "Offer: #{updated_profile.offer_text} Need: #{updated_profile.need_text}"
+            
+            case Boardy.AI.generate_embedding(text_to_embed) do
+              {:ok, vector} ->
+                # Save the vector to the database
+                vector_changeset = Profile.changeset(updated_profile, %{
+                  offer_vector: vector,
+                  need_vector: vector
+                })
+                Repo.update!(vector_changeset)
+                IO.puts("Successfully generated and saved OpenAI pgvector for user #{user_id}")
+                
+              {:error, _reason} ->
+                IO.puts("Failed to generate vector for user #{user_id}")
+            end
+          end)
       end
     end
   end
