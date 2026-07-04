@@ -4,12 +4,12 @@
   "deployedAt": "2026-07-03T18:24:09.415Z",
   "deployer": "0x9d52Ad13d70C8404a1a2439961eC9e8495245A13",
   "contracts": {
-    "BoardyMatchStaking": {
+    "VokaziMatchStaking": {
       "address": "0x3e5E4D5FA56fa78F9665Bc36b8D08964Dc790eFA",
       "stakeAmountWei": "10000000000000000",
       "stakeAmountAvax": "0.01"
     },
-    "BoardyMilestoneEscrow": {
+    "VokaziMilestoneEscrow": {
       "address": "0xb26Ef6c2fC70D831924622fa783b1cc800eb3F64"
     }
   }

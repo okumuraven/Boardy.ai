@@ -200,7 +200,7 @@ export default function Dashboard({ profile }) {
                   Stake 0.01 AVAX to Unlock Matches
                 </button>
                 <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-                  Funds are securely held in the Boardy.ai smart contract.
+                  Funds are securely held in the Vokazi.ai smart contract.
                 </p>
               </>
             )}
@@ -288,7 +288,7 @@ export default function Dashboard({ profile }) {
           <div>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Your Next Step</h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-              Boardy.ai uses a voice-first approach to understand what you're building and what you need. Our AI agent will call you to collect this data and match you with the perfect counterpart.
+              Vokazi.ai uses a voice-first approach to understand what you're building and what you need. Our AI agent will call you to collect this data and match you with the perfect counterpart.
             </p>
             
             <button 

@@ -1,4 +1,4 @@
-# /home/joseraven01/PROJECTS/Boardy.ai/frontend/Dockerfile
+# /home/joseraven01/PROJECTS/Vokazi.ai/frontend/Dockerfile
 FROM node:20-alpine
 
 WORKDIR /app

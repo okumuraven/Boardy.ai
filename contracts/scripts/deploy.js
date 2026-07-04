@@ -9,18 +9,18 @@ async function main() {
   const [deployer] = await hre.ethers.getSigners();
   const network = await hre.ethers.provider.getNetwork();
 
-  console.log("Deploying Boardy contracts");
+  console.log("Deploying Vokazi contracts");
   console.log("  Network:", hre.network.name, `(chainId ${network.chainId})`);
   console.log("  Deployer:", deployer.address);
 
   const balance = await hre.ethers.provider.getBalance(deployer.address);
   console.log("  Balance:", hre.ethers.formatEther(balance), "AVAX");
 
-  const MatchStaking = await hre.ethers.getContractFactory("BoardyMatchStaking");
+  const MatchStaking = await hre.ethers.getContractFactory("VokaziMatchStaking");
   const matchStaking = await MatchStaking.deploy(STAKE_AMOUNT);
   await matchStaking.waitForDeployment();
 
-  const MilestoneEscrow = await hre.ethers.getContractFactory("BoardyMilestoneEscrow");
+  const MilestoneEscrow = await hre.ethers.getContractFactory("VokaziMilestoneEscrow");
   const milestoneEscrow = await MilestoneEscrow.deploy();
   await milestoneEscrow.waitForDeployment();
 
@@ -28,8 +28,8 @@ async function main() {
   const milestoneEscrowAddress = await milestoneEscrow.getAddress();
 
   console.log("\nDeployed:");
-  console.log("  BoardyMatchStaking:", matchStakingAddress);
-  console.log("  BoardyMilestoneEscrow:", milestoneEscrowAddress);
+  console.log("  VokaziMatchStaking:", matchStakingAddress);
+  console.log("  VokaziMilestoneEscrow:", milestoneEscrowAddress);
   console.log("  Stake amount:", hre.ethers.formatEther(STAKE_AMOUNT), "AVAX");
 
   const deployment = {
@@ -38,12 +38,12 @@ async function main() {
     deployedAt: new Date().toISOString(),
     deployer: deployer.address,
     contracts: {
-      BoardyMatchStaking: {
+      VokaziMatchStaking: {
         address: matchStakingAddress,
         stakeAmountWei: STAKE_AMOUNT.toString(),
         stakeAmountAvax: "0.01",
       },
-      BoardyMilestoneEscrow: {
+      VokaziMilestoneEscrow: {
         address: milestoneEscrowAddress,
       },
     },

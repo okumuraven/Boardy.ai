@@ -1,8 +1,8 @@
 {
-  "name": "@boardy/contracts",
+  "name": "@vokazi/contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "Boardy.ai smart contracts for Avalanche Fuji testnet",
+  "description": "Vokazi.ai smart contracts for Avalanche Fuji testnet",
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",

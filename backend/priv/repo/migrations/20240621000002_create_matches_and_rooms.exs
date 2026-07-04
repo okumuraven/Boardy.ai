@@ -1,4 +1,4 @@
-defmodule Boardy.Repo.Migrations.CreateMatchesAndRooms do
+defmodule Vokazi.Repo.Migrations.CreateMatchesAndRooms do
   use Ecto.Migration
 
   def change do

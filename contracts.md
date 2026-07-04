@@ -1,17 +1,17 @@
-# Boardy.ai Smart Contracts Documentation
+# Vokazi.ai Smart Contracts Documentation
 
-This document serves as a comprehensive guide for collaborators to understand the smart contracts that power the Boardy.ai Web3 ecosystem.
+This document serves as a comprehensive guide for collaborators to understand the smart contracts that power the Vokazi.ai Web3 ecosystem.
 
 ## Overview
-Boardy.ai uses smart contracts to guarantee commitment and facilitate secure escrow between matched users (e.g., developers and founders). The contracts are currently deployed on the **Avalanche Fuji Testnet** (Chain ID: `43113`).
+Vokazi.ai uses smart contracts to guarantee commitment and facilitate secure escrow between matched users (e.g., developers and founders). The contracts are currently deployed on the **Avalanche Fuji Testnet** (Chain ID: `43113`).
 
 ### Deployed Contracts
-- **BoardyMatchStaking**: `0x3e5E4D5FA56fa78F9665Bc36b8D08964Dc790eFA`
-- **BoardyMilestoneEscrow**: `0xb26Ef6c2fC70D831924622fa783b1cc800eb3F64`
+- **VokaziMatchStaking**: `0x3e5E4D5FA56fa78F9665Bc36b8D08964Dc790eFA`
+- **VokaziMilestoneEscrow**: `0xb26Ef6c2fC70D831924622fa783b1cc800eb3F64`
 
 ---
 
-## 1. BoardyMatchStaking
+## 1. VokaziMatchStaking
 This contract handles bilateral commitment staking. When the AI matches two users, both must stake a small amount (0.01 AVAX) to unlock the introduction.
 
 ### The Flow
@@ -23,7 +23,7 @@ This contract handles bilateral commitment staking. When the AI matches two user
 
 ---
 
-## 2. BoardyMilestoneEscrow
+## 2. VokaziMilestoneEscrow
 This contract is used for handling the actual deliverables between the matched users (for instance, a founder paying a developer).
 
 ### The Flow
@@ -51,4 +51,4 @@ VITE_MILESTONE_ESCROW_ADDRESS=0xb26Ef6c2fC70D831924622fa783b1cc800eb3F64
 Use `ethers.js` or `thirdweb` to interact with the contracts, calling the `stake` function with `parseEther("0.01")` when a match is presented.
 
 ### Backend
-The Elixir backend must hold the private key of the deployer wallet (or an authorized admin wallet). When `pgvector` finds a match, the backend calculates a deterministic `matchId` and sends a transaction to `createMatch(matchId, userA, userB)` on the `BoardyMatchStaking` contract.
+The Elixir backend must hold the private key of the deployer wallet (or an authorized admin wallet). When `pgvector` finds a match, the backend calculates a deterministic `matchId` and sends a transaction to `createMatch(matchId, userA, userB)` on the `VokaziMatchStaking` contract.

@@ -5,7 +5,7 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
       <nav className="nav-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <div className="brand-logo">B</div>
-          <span className="brand-text">Boardy.ai</span>
+          <span className="brand-text">Vokazi.ai</span>
         </div>
         <div>
           <button onClick={onJoinClick} className="btn-primary nav-btn">Enter App</button>

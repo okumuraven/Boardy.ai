@@ -5,17 +5,17 @@ import Config
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :boardy, Boardy.Repo,
+config :vokazi, Vokazi.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "boardy_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "vokazi_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: System.schedulers_online() * 2
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
-config :boardy, BoardyWeb.Endpoint,
+config :vokazi, VokaziWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "Hi7dDmg6LY2w64vsHROetvJsN+ehFxum7iZ+GFsbyGLeFh8q1EDqxQrZVZwSdxwv",
   server: false

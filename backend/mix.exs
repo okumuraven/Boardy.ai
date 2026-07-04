@@ -1,9 +1,9 @@
-defmodule Boardy.MixProject do
+defmodule Vokazi.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :boardy,
+      app: :vokazi,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -19,7 +19,7 @@ defmodule Boardy.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Boardy.Application, []},
+      mod: {Vokazi.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

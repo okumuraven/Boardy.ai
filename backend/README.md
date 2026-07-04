@@ -1,6 +1,6 @@
-# Boardy.ai - Elixir Phoenix Backend 💧
+# Vokazi.ai - Elixir Phoenix Backend 💧
 
-The Boardy.ai backend is a highly concurrent REST API built with Elixir and the Phoenix Framework. It handles user profiles, Vapi.ai webhook processing, and vector similarity matching using `pgvector`.
+The Vokazi.ai backend is a highly concurrent REST API built with Elixir and the Phoenix Framework. It handles user profiles, Vapi.ai webhook processing, and vector similarity matching using `pgvector`.
 
 ## 🏗️ Architecture
 - **Elixir 1.15 / Erlang OTP**
@@ -29,4 +29,4 @@ mix phx.server
 - `POST /api/vapi_webhook` - Receives Vapi analysis, computes vector similarities, and determines the best match.
 
 ## 🔗 Smart Contract Integration
-The backend serves as the authoritative matchmaker for the `BoardyMatchStaking` contract. Once a high-synergy match is found via `pgvector`, the backend calculates a deterministic `matchId` and sends a transaction to the smart contract on Avalanche Fuji, enabling both parties to securely stake their commitment.
+The backend serves as the authoritative matchmaker for the `VokaziMatchStaking` contract. Once a high-synergy match is found via `pgvector`, the backend calculates a deterministic `matchId` and sends a transaction to the smart contract on Avalanche Fuji, enabling both parties to securely stake their commitment.

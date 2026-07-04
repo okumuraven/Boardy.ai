@@ -1,15 +1,15 @@
 import Config
 
 # Configure your database
-config :boardy, Boardy.Repo,
+config :vokazi, Vokazi.Repo,
   username: "postgres",
   password: "password",
   hostname: "127.0.0.1",
-  database: "boardy_dev",
+  database: "vokazi_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10,
-  types: Boardy.PostgresTypes
+  types: Vokazi.PostgresTypes
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -17,7 +17,7 @@ config :boardy, Boardy.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
-config :boardy, BoardyWeb.Endpoint,
+config :vokazi, VokaziWeb.Endpoint,
   # Bind to 0.0.0.0 to expose the server to the docker host machine.
   # This makes make the service accessible from any network interface.
   # Change to `ip: {127, 0, 0, 1}` to allow access only from the server machine.
@@ -52,7 +52,7 @@ config :boardy, BoardyWeb.Endpoint,
 # different ports.
 
 # Enable dev routes for dashboard and mailbox
-config :boardy, dev_routes: true
+config :vokazi, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"

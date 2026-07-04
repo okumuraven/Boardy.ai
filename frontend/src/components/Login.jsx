@@ -19,7 +19,7 @@ export default function Login({ onBack }) {
           <div style={{ width: '72px', height: '72px', background: 'linear-gradient(135deg, var(--primary), #ff5e78)', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem', boxShadow: '0 8px 30px var(--primary-glow)' }}>
             <span style={{ fontSize: '2.5rem', color: 'white', fontWeight: 'bold' }}>B</span>
           </div>
-          <h1 className="title">Boardy.ai</h1>
+          <h1 className="title">Vokazi.ai</h1>
           <p className="subtitle">Connect your wallet or use social login to enter the Verified Professional Synergy Protocol.</p>
         </div>
 
@@ -32,7 +32,7 @@ export default function Login({ onBack }) {
               }),
             ]}
             theme="dark"
-            connectModal={{ size: "wide", title: "Join Boardy.ai" }}
+            connectModal={{ size: "wide", title: "Join Vokazi.ai" }}
           />
         </div>
       </div>

@@ -7,22 +7,22 @@
 # General application configuration
 import Config
 
-config :boardy,
-  ecto_repos: [Boardy.Repo],
+config :vokazi,
+  ecto_repos: [Vokazi.Repo],
   generators: [timestamp_type: :utc_datetime]
 
-config :boardy, Boardy.Repo,
-  types: Boardy.PostgresTypes
+config :vokazi, Vokazi.Repo,
+  types: Vokazi.PostgresTypes
 
 # Configure the endpoint
-config :boardy, BoardyWeb.Endpoint,
+config :vokazi, VokaziWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [json: BoardyWeb.ErrorJSON],
+    formats: [json: VokaziWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Boardy.PubSub,
+  pubsub_server: Vokazi.PubSub,
   live_view: [signing_salt: "mJs3eHMQ"]
 
 # Configure Elixir's Logger

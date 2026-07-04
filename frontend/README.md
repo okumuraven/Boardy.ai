@@ -1,6 +1,6 @@
-# Boardy.ai - React Frontend ⚛️
+# Vokazi.ai - React Frontend ⚛️
 
-The Boardy.ai frontend is a modern, single-page Web3 application built with React, Vite, and Tailwind CSS. It integrates Thirdweb for wallet authentication and Vapi.ai for real-time voice AI interviews.
+The Vokazi.ai frontend is a modern, single-page Web3 application built with React, Vite, and Tailwind CSS. It integrates Thirdweb for wallet authentication and Vapi.ai for real-time voice AI interviews.
 
 ## ✨ Features
 - **Thirdweb Integration**: Seamless Web3 login.

@@ -89,7 +89,7 @@ export default function App() {
       { (activeAccount || showLogin) && (
         <header className="brand-header">
           <div className="brand-logo">B</div>
-          <span className="brand-text">Boardy.ai</span>
+          <span className="brand-text">Vokazi.ai</span>
         </header>
       )}
 

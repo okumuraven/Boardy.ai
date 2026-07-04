@@ -1,4 +1,4 @@
-defmodule Boardy.Repo.Migrations.CreateUsersAndProfiles do
+defmodule Vokazi.Repo.Migrations.CreateUsersAndProfiles do
   use Ecto.Migration
 
   def up do

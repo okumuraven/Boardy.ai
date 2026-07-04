@@ -1,7 +1,7 @@
-# Boardy.ai System Architecture
+# Vokazi.ai System Architecture
 
 ## Overview
-Boardy.ai is an NLP-driven conversational matching engine designed for the Kuzana ecosystem in the Silicon Savannah. It connects entrepreneurs based on their specific business bottlenecks ("Needs") and resources ("Offers"). To ensure high-quality interactions and filter out bad actors, it employs a Web3 staking mechanism on the Avalanche C-Chain.
+Vokazi.ai is an NLP-driven conversational matching engine designed for the Kuzana ecosystem in the Silicon Savannah. It connects entrepreneurs based on their specific business bottlenecks ("Needs") and resources ("Offers"). To ensure high-quality interactions and filter out bad actors, it employs a Web3 staking mechanism on the Avalanche C-Chain.
 
 This document outlines the technical architecture of the MVP.
 
@@ -54,7 +54,7 @@ graph TD
 ### E. Web3 Payment / Staking Layer (Avalanche)
 - **Network:** Avalanche Fuji Testnet (Production: C-Chain Mainnet).
 - **Tooling:** Thirdweb SDK.
-- **Mechanism:** To unlock a high-confidence match, the user must stake 0.50 USDC. This micro-fee acts as a sybil-resistance mechanism and filters out uncommitted participants, raising the overall quality of the Boardy.ai network.
+- **Mechanism:** To unlock a high-confidence match, the user must stake 0.50 USDC. This micro-fee acts as a sybil-resistance mechanism and filters out uncommitted participants, raising the overall quality of the Vokazi.ai network.
 
 ## 3. The 4-Phase Execution Pipeline
 
