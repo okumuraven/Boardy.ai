@@ -1,13 +1,16 @@
 # Vokazi.ai 🎙️ 🤝
 
-Vokazi.ai is an elite, voice-first Web3 professional matchmaking platform. 
-Instead of filling out endless forms, users connect their wallet, press a button, and have a natural conversation with an AI agent (powered by Vapi.ai). The AI extracts what the user is building (their "Offer") and what they need (their "Need"), generates 1536-dimensional embeddings, and uses `pgvector` on an Elixir/Phoenix backend to instantly find their perfect co-founder, investor, or developer match.
+Vokazi is the Web3 evolution of professional matchmaking, built specifically for the Silicon Savannah. 
+
+Instead of traditional forms or cold emails, Vokazi uses a **conversational onboarding flow** combined with a **Web3 Trust-Gate**. Users drop their phone number, authenticate via Google (which secretly provisions an Avalanche C-Chain wallet via Thirdweb), and complete a live voice interview with our AI agent (powered by Vapi). 
+
+The AI extracts their "Needs" and "Offers", generates 1536-dimensional embeddings, and uses `pgvector` to find perfect matches. To unlock introductions and automatically schedule a meeting, both parties must stake a micro-commitment (USDC) on Avalanche, completely eliminating ghosting and spam.
 
 ## 🚀 Architecture
-- **Frontend**: React + Vite + Tailwind CSS + Thirdweb (Wallet Auth) + Vapi Web SDK (Voice Agent)
+- **Frontend**: React + Vite + Tailwind CSS + Thirdweb (In-App Wallets via Google OAuth) + Vapi Web SDK
 - **Backend**: Elixir + Phoenix (REST API & Webhooks)
 - **Database**: PostgreSQL with `pgvector` for Cosine Similarity Matching
-- **Smart Contracts**: Avalanche Fuji Testnet (Bilateral Staking & Escrow) - see [contracts.md](contracts.md)
+- **Smart Contracts**: Avalanche Fuji Testnet (Bilateral Staking & Escrow)
 - **Infrastructure**: Fully Dockerized (Monorepo)
 
 ## 🛠️ Prerequisites
@@ -28,10 +31,10 @@ VITE_API_URL=http://localhost:4000
 ```
 
 ### 2. Configure Vapi.ai Agent
-For the AI Oracle to successfully extract "Offers" and "Needs", you must configure your Vapi Assistant exactly like this:
+For the AI Oracle to successfully extract "Offers" and "Needs", configure your Vapi Assistant:
 1. **System Prompt**: Copy the contents of `vapi_system_prompt.txt` into the Assistant's System Prompt box.
-2. **First Message**: Set the First Message to: *"Hey there, welcome to Vokazi. Tell me a bit about what you're currently building?"*
-3. **Structured Data Extraction**: Go to the **Analysis** tab -> **Structured Data Extraction** and paste the JSON schema found in `vapi_schema.json`.
+2. **First Message**: Set to: *"Hey there, welcome to Vokazi. Tell me a bit about what you're currently building?"*
+3. **Structured Data**: Go to the **Analysis** tab -> **Structured Data Extraction** and paste the JSON schema found in `vapi_schema.json`.
 
 ### 3. Boot the Infrastructure
 Run the entire stack (Database, Elixir Backend, React Frontend) via Docker:
@@ -39,17 +42,17 @@ Run the entire stack (Database, Elixir Backend, React Frontend) via Docker:
 docker compose up --build
 ```
 
-### 3. Access the DApp
+### 4. Access the DApp
 Open your browser and navigate to: `http://localhost:5173`
 
 - **Database**: Runs on `localhost:5432`
 - **Backend API**: Runs on `localhost:4000`
 
 ## 🧠 How it Works
-1. **Connect**: User authenticates seamlessly via Thirdweb wallet.
-2. **Profile**: User sets their Name, Phone, and Role.
-3. **Interview**: User clicks the Microphone and talks to "Vokazi" (the Vapi AI Agent).
-4. **Match**: The backend computes cosine similarity on the vector embeddings and pairs the user with their highest-synergy counterpart.
+1. **Conversational Onboarding**: User inputs phone number in a chat UI.
+2. **Invisible Wallet**: User signs in with Google, automatically provisioning a Thirdweb Avalanche wallet.
+3. **Voice Interview**: User talks to the Vapi AI Agent in the browser to log their Needs/Offers.
+4. **AI Match & Staking**: The backend finds a high-confidence vector match. Both users must stake USDC on Avalanche to unlock the chat and calendar invite.
 
 ## 🤝 Contributing
-Clone the repo, set up your `.env`, and ensure Docker is running. The Elixir backend uses `network_mode: "host"` to bypass Docker DNS issues and features blazing-fast hot-reloading.
+Clone the repo, set up your `.env`, and ensure Docker is running. The Elixir backend uses `network_mode: "host"` to bypass Docker DNS issues and features blazing-fast hot-reloading. See `ROADMAP.md` for our 3-month scaling plan.

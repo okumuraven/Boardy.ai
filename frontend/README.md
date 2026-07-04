@@ -1,11 +1,13 @@
 # Vokazi.ai - React Frontend ⚛️
 
-The Vokazi.ai frontend is a modern, single-page Web3 application built with React, Vite, and Tailwind CSS. It integrates Thirdweb for wallet authentication and Vapi.ai for real-time voice AI interviews.
+The Vokazi frontend is a modern, single-page Web3 application built with React, Vite, and Tailwind CSS. It is the core interface for our "Trust-Gate" matchmaking platform.
 
 ## ✨ Features
-- **Thirdweb Integration**: Seamless Web3 login.
-- **Vapi.ai Web SDK**: In-browser real-time voice streaming with the AI agent.
-- **Responsive UI**: Glassmorphism design system using Tailwind CSS.
+- **Conversational Onboarding UI**: A frictionless, chat-like interface for collecting initial user intent.
+- **Thirdweb Invisible Wallets**: Users sign in seamlessly with Google, and an Avalanche C-Chain wallet is provisioned in the background automatically. Zero crypto jargon.
+- **Vapi.ai Web SDK**: In-browser real-time voice streaming with the AI agent to extract business needs and offers instantly.
+- **Avalanche Staking**: Integration to stake USDC micro-commitments to unlock matches.
+- **Responsive UI**: Glassmorphism design system utilizing tailored Tailwind CSS tokens.
 
 ## 🛠️ Setup
 1. Create a `.env` file based on your keys:
