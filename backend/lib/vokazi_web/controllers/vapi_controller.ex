@@ -4,71 +4,84 @@ defmodule VokaziWeb.VapiController do
   alias Vokazi.Repo
 
   def webhook(conn, %{"message" => message}) do
-    # Vapi sends different types of messages. We only care about the end-of-call report.
     case message["type"] do
       "end-of-call-report" ->
-        handle_end_of_call(message)
+        # ⚡ Pillar 4: Asynchronous Processing
+        Task.start(fn -> 
+          try do
+            handle_end_of_call(message) 
+          rescue
+            e -> IO.puts("CRITICAL TASK ERROR: #{inspect(e)}")
+          end
+        end)
         json(conn, %{status: "received"})
+
       "assistant-request" ->
-        # Vapi expects an empty object or assistant overrides if a Server URL is configured
+        # Handshake for custom assistants
         json(conn, %{})
+
       _ ->
-        # Other webhooks (e.g., tool calls, call-start), just ack them.
         json(conn, %{status: "ignored"})
     end
   end
   
-  # Handle the case where no message key is provided (some ping payloads)
   def webhook(conn, _params) do
     json(conn, %{status: "ok"})
   end
 
   defp handle_end_of_call(message) do
-    # Vapi passes back our variableValues if we sent them.
-    # We injected wallet_address (which maps to the DB ID in our frontend snippet)
-    user_id = get_in(message, ["call", "assistantOverrides", "variableValues", "wallet_address"]) ||
-              get_in(message, ["call", "customer", "number"]) # fallback
-              
-    transcript = message["transcript"]
+    transcript = message["transcript"] || ""
+
+    # 🔗 Pillar 2: Identity Resolution (Transcript Extraction)
+    # We parse the secret system message we injected via React!
+    user_id = case Regex.run(~r/\[VOKAZI_SYSTEM_IDENTITY:\s*user_id=(\d+)\]/, transcript) do
+      [_, id] -> String.to_integer(id)
+      _ -> get_in(message, ["call", "customer", "number"]) # Fallback
+    end
     
-    # If the user added the structured output in Vapi dashboard:
+    # 🛡️ Pillar 3: Graceful AI Fallbacks
     analysis = message["analysis"] || %{}
     structured_data = analysis["structuredData"] || %{}
-    offer = structured_data["professional_offer"]
-    need = structured_data["professional_need"]
+    
+    # Defensive fallback to raw transcript if AI fails to extract
+    offer = structured_data["professional_offer"] || transcript
+    need = structured_data["professional_need"] || "Requires manual parsing. Raw transcript saved."
 
     if user_id do
       case Repo.get_by(Profile, user_id: user_id) do
         nil -> 
           IO.puts("Profile not found for user ID: #{user_id}")
         profile ->
-          # 1. Update the profile with the extracted text data first
           changeset = Profile.changeset(profile, %{
             raw_transcript: transcript,
-            offer_text: offer || transcript, # fallback to transcript if Vapi didn't extract
-            need_text: need || "Needs data extraction"
+            offer_text: offer,
+            need_text: need
           })
-          updated_profile = Repo.update!(changeset)
           
-          # 2. Call OpenAI to generate real pgvector embeddings asynchronously
-          Task.start(fn ->
-            text_to_embed = "Offer: #{updated_profile.offer_text} Need: #{updated_profile.need_text}"
-            
-            case Vokazi.AI.generate_embedding(text_to_embed) do
-              {:ok, vector} ->
-                # Save the vector to the database
-                vector_changeset = Profile.changeset(updated_profile, %{
-                  offer_vector: vector,
-                  need_vector: vector
-                })
-                Repo.update!(vector_changeset)
-                IO.puts("Successfully generated and saved OpenAI pgvector for user #{user_id}")
-                
-              {:error, _reason} ->
-                IO.puts("Failed to generate vector for user #{user_id}")
-            end
-          end)
+          updated_profile = Repo.update!(changeset)
+          IO.puts("Successfully saved transcript and structured data for user #{user_id}")
+          
+          # Trigger OpenAI Vector Math asynchronously
+          generate_vectors(updated_profile)
       end
+    else
+      IO.puts("Webhook Warning: No user_id found in metadata. Cannot save profile data.")
+    end
+  end
+
+  defp generate_vectors(profile) do
+    text_to_embed = "Offer: #{profile.offer_text} Need: #{profile.need_text}"
+    case Vokazi.AI.generate_embedding(text_to_embed) do
+      {:ok, vector} ->
+        vector_changeset = Profile.changeset(profile, %{
+          offer_vector: vector,
+          need_vector: vector
+        })
+        Repo.update!(vector_changeset)
+        IO.puts("Successfully generated and saved pgvector embeddings for user #{profile.user_id}")
+        
+      {:error, _reason} ->
+        IO.puts("Failed to generate vector for user #{profile.user_id}")
     end
   end
 end

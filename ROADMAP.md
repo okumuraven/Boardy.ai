@@ -60,6 +60,17 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 
 ---
 
+## 🏢 Phase 4: Vokazi Enterprise (The Talent Marketplace)
+*Objective: Launch our B2B monetization engine. Solve enterprise recruiting inefficiencies using AI & Escrow.*
+
+### The Enterprise Workflow
+- [ ] **Talent Bounties:** Enable large companies to post job openings and stake a recruitment bounty (e.g., $500 USDC) plus a "Candidate Time-Incentive" (e.g., $10 USDC).
+- [ ] **Structured AI Technical Screens:** Vapi AI calls matched developers in our database to conduct a graded technical interview based on the company's specific rubric.
+- [ ] **The "Anti-Ghosting" Final Interview:** If the developer accepts the human interview, they are guaranteed the $10 USDC time-incentive. If they ghost, they lose platform credibility.
+- [ ] **Smart Contract Revenue:** Upon successful hire, the Avalanche contract automatically routes the $500 USDC bounty into the Vokazi Treasury.
+
+---
+
 ## 📈 Growth Strategy (How We Hit 1,000)
 Vokazi inherently possesses a viral "Double Opt-In" loop. 
 If User A stakes their 0.50 USDC, they are financially incentivized to text User B and say, *"I just put down money on Vokazi to meet you—go accept the match!"* 

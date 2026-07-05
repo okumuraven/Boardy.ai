@@ -10,10 +10,10 @@ defmodule Vokazi.AI do
       IO.puts("WARNING: GEMINI_API_KEY is not set. Cannot generate real vectors.")
       {:error, :missing_api_key}
     else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=#{api_key}"
+      url = "https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=#{api_key}"
       
       body = %{
-        model: "models/text-embedding-004",
+        model: "models/embedding-001",
         content: %{
           parts: [%{text: text}]
         }

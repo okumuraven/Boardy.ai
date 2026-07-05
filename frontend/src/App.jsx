@@ -13,14 +13,13 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showWhitepaper, setShowWhitepaper] = useState(false);
+  const [collectedPhone, setCollectedPhone] = useState('');
 
   // Auto-fetch profile to prevent the "refresh resets account" bug
   useEffect(() => {
     if (activeAccount?.address) {
       setIsLoading(true);
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? 'http://localhost:4000' 
-        : import.meta.env.VITE_API_URL;
+      const apiUrl = import.meta.env.VITE_API_URL;
 
       fetch(`${apiUrl}/api/profiles/${activeAccount.address}`, {
         headers: {
@@ -69,12 +68,15 @@ export default function App() {
 
     if (!activeAccount) {
       if (showWhitepaper) return <Whitepaper onBack={() => setShowWhitepaper(false)} />;
-      if (showLogin) return <Login onBack={() => setShowLogin(false)} />;
-      return <LandingPage onJoinClick={() => setShowLogin(true)} onWhitepaperClick={() => setShowWhitepaper(true)} />;
+      if (showLogin) return <Login onBack={() => setShowLogin(false)} collectedPhone={collectedPhone} />;
+      return <LandingPage 
+                onJoinClick={(phone) => { setCollectedPhone(phone); setShowLogin(true); }} 
+                onWhitepaperClick={() => setShowWhitepaper(true)} 
+             />;
     }
     
     if (activeAccount && !profile) {
-      return <ProfileSetup onComplete={setProfile} />;
+      return <ProfileSetup onComplete={setProfile} phone={collectedPhone} />;
     }
 
     if (activeChatRoomId) {
@@ -86,13 +88,6 @@ export default function App() {
 
   return (
     <div className={`app-container ${(!activeAccount && !showLogin) ? 'no-padding' : ''}`}>
-      { (activeAccount || showLogin) && (
-        <header className="brand-header">
-          <div className="brand-logo">B</div>
-          <span className="brand-text">Vokazi.ai</span>
-        </header>
-      )}
-
       {renderScreen()}
     </div>
   );

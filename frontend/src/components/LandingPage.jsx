@@ -1,58 +1,92 @@
+import { useState, useEffect, useRef } from 'react';
+
 export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
+  const [phone, setPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (phone.length < 9) return;
+    setIsSubmitting(true);
+    
+    setTimeout(() => {
+      onJoinClick(phone);
+    }, 600);
+  };
+
   return (
-    <div style={{ width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Navbar */}
+    <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
+      
+      {/* Premium Navbar */}
       <nav className="nav-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="brand-logo">B</div>
-          <span className="brand-text">Vokazi.ai</span>
+        <div className="brand-logo-container">
+          <div className="vokazi-icon">V</div>
+          <span className="brand-text">Vokazi</span>
         </div>
         <div>
-          <button onClick={onJoinClick} className="btn-primary nav-btn">Enter App</button>
+          <button 
+            onClick={onWhitepaperClick} 
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              color: 'var(--text-muted)', 
+              cursor: 'pointer', 
+              fontSize: '0.95rem', 
+              fontWeight: 500,
+              transition: 'color 0.2s'
+            }} 
+            onMouseOver={(e) => e.target.style.color = '#fff'} 
+            onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+          >
+            Read Whitepaper
+          </button>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 2rem' }}>
-        <div className="animate-in" style={{ maxWidth: '800px' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(232, 65, 66, 0.1)', border: '1px solid rgba(232, 65, 66, 0.3)', color: 'var(--primary)', padding: '0.5rem 1.2rem', borderRadius: '30px', fontWeight: '600', marginBottom: '2rem', letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.85rem' }}>
-            The Verified Professional Synergy Protocol
+      {/* Dynamic Immersive Onboarding */}
+      <main className="onboarding-container">
+        
+        <h1 className="ai-greeting">
+          I find you the right people. <br />
+          <span className="gradient-text">You build the future.</span>
+        </h1>
+        
+        <p className="ai-subtext">
+          Drop your WhatsApp number below to register. We'll instantly start a secure, in-browser voice interview to understand your goals and orchestrate the perfect introduction.
+        </p>
+
+        <form onSubmit={handleSubmit} className="command-center">
+          <div className="country-pill">
+            <span>🇰🇪</span>
+            <span>+254</span>
           </div>
           
-          <h1 className="hero-title">
-            Don't just network.<br/> <span style={{ background: 'linear-gradient(135deg, var(--primary) 0%, #ff5e78 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Synthesize.</span>
-          </h1>
+          <input 
+            type="tel" 
+            placeholder="7XX XXX XXX" 
+            className="premium-input"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))}
+            autoFocus
+            disabled={isSubmitting}
+          />
           
-          <p className="hero-subtitle">
-            An exclusive, AI-orchestrated ecosystem. Talk to our voice agent, deposit your commitment stake on Avalanche, and let the protocol match you with the precise talent you need to scale.
-          </p>
+          <button 
+            type="submit" 
+            className={`action-btn ${phone.length >= 9 ? 'ready' : ''}`}
+            disabled={phone.length < 9 || isSubmitting}
+          >
+            {isSubmitting ? (
+              <div style={{ width: '20px', height: '20px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            )}
+          </button>
+        </form>
 
-          <div className="hero-buttons">
-            <button onClick={onJoinClick} className="btn-primary hero-btn-primary">
-              Launch App
-            </button>
-            <button onClick={onWhitepaperClick} className="hero-btn-secondary" onMouseOver={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'} onMouseOut={(e) => e.target.style.background = 'rgba(255,255,255,0.05)'}>
-              Read Whitepaper
-            </button>
-          </div>
-        </div>
-
-        {/* Feature grid */}
-        <div className="animate-in feature-grid" style={{ animationDelay: '0.2s', opacity: 0, animationFillMode: 'forwards' }}>
-          {[
-            { title: "Voice AI Ingestion", desc: "Speak naturally. Our Vapi integration extracts exactly what you are building and what you need." },
-            { title: "Vector Matching", desc: "pgvector analyzes 1536-dimensional embeddings to guarantee hyper-accurate professional matches." },
-            { title: "Web3 Escrow", desc: "Filter out the noise. Avalanche smart contracts hold commitment stakes to ensure serious intent." }
-          ].map((feat, i) => (
-            <div key={i} style={{ background: 'rgba(20, 20, 30, 0.4)', padding: '2rem', borderRadius: '20px', border: '1px solid var(--border)', textAlign: 'left', transition: 'transform 0.3s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
-              <div style={{ width: '40px', height: '40px', background: 'rgba(232, 65, 66, 0.1)', color: 'var(--primary)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginBottom: '1rem' }}>
-                ✦
-              </div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--text-main)' }}>{feat.title}</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5' }}>{feat.desc}</p>
-            </div>
-          ))}
-        </div>
       </main>
     </div>
   );

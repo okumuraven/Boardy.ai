@@ -1,58 +1,39 @@
 import { useState, useEffect } from "react";
 import { useDisconnect, useActiveWallet } from "thirdweb/react";
-import { client } from "../client";
+import { client, activeChain } from "../config/thirdweb";
 import Vapi from "@vapi-ai/web";
-
-import { prepareTransaction, toWei } from "thirdweb";
-import { useSendTransaction } from "thirdweb/react";
-import { defineChain } from "thirdweb/chains";
 
 export default function Dashboard({ profile }) {
   const wallet = useActiveWallet();
   const { disconnect } = useDisconnect();
   const [callStatus, setCallStatus] = useState("inactive"); // inactive, connecting, active
-  const [matchStatus, setMatchStatus] = useState("idle"); // idle, staking, queuing, matched
   const [vapiInstance, setVapiInstance] = useState(null);
-  
-  // Thirdweb transaction hook
-  const { mutate: sendTx, isPending } = useSendTransaction();
-
   const [transcript, setTranscript] = useState("");
 
   useEffect(() => {
     // Initialize Vapi with Public Key from env
-    // Vite wraps CommonJS modules, so we must check for .default
     const VapiClass = Vapi.default || Vapi;
     const vapi = new VapiClass(import.meta.env.VITE_VAPI_PUBLIC_KEY || "dummy_key");
     setVapiInstance(vapi);
 
     vapi.on("call-start", () => {
       setCallStatus("active");
-      setTranscript(""); // Reset transcript on new call
+      setTranscript("");
     });
     
     vapi.on("message", (msg) => {
       if (msg.type === "conversation-update" && msg.conversation) {
         const fullTranscript = msg.conversation
           .filter(c => c.role !== 'system')
-          .map(c => `${c.role === 'user' ? 'User' : 'AI'}: ${c.text || c.content || ""}`)
+          .map(c => `${c.role === 'user' ? 'You' : 'Vokazi'}: ${c.text || c.content || ""}`)
           .join("\n");
         setTranscript(fullTranscript);
       }
     });
 
-    vapi.on("call-end", async () => {
+    vapi.on("call-end", () => {
       setCallStatus("inactive");
-      // Forcefully sync the REAL transcript to the backend when the call ends
-      // This bypasses the need for the user to configure Vapi Webhooks/DevTunnels!
-      try {
-        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : import.meta.env.VITE_API_URL;
-        // We will push this state after a small delay to ensure React state updated
-        setTimeout(async () => {
-          // Send a custom event to trigger the sync below
-          window.dispatchEvent(new CustomEvent('sync_real_transcript'));
-        }, 2000);
-      } catch (e) { console.error(e); }
+      console.log("Call ended. Transcript ready for pgvector extraction.");
     });
 
     vapi.on("error", (e) => {
@@ -62,73 +43,6 @@ export default function Dashboard({ profile }) {
 
     return () => vapi.removeAllListeners();
   }, []);
-
-  // Effect to listen for our custom sync event and use the latest transcript state
-  useEffect(() => {
-    const handleSync = async () => {
-      if (!transcript || transcript.length < 10) return; // Skip if empty
-      try {
-        const apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : import.meta.env.VITE_API_URL;
-        await fetch(`${apiUrl}/api/profiles/${profile.id}/sync_real_transcript`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: transcript })
-        });
-        window.location.reload();
-      } catch (e) {
-        console.error("Sync error:", e);
-      }
-    };
-    window.addEventListener('sync_real_transcript', handleSync);
-    return () => window.removeEventListener('sync_real_transcript', handleSync);
-  }, [transcript, profile.id]);
-
-  const handleStakeClick = async () => {
-    setMatchStatus("staking");
-    
-    // Simulate Blockchain Staking Delay
-    setTimeout(async () => {
-      setMatchStatus("queuing");
-      
-      try {
-        const apiUrl = window.location.hostname === 'localhost' 
-          ? 'http://localhost:4000' 
-          : import.meta.env.VITE_API_URL;
-        
-        // Wait 3.5 seconds to simulate pgvector matchmaking
-        setTimeout(async () => {
-          const response = await fetch(`${apiUrl}/api/matchmaking/stake`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: profile.id })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.status === "matched" && data.chat_room_id) {
-              setMatchStatus("matched");
-              
-              setTimeout(() => {
-                if (window.onMatchUnlocked) {
-                  window.onMatchUnlocked(data.chat_room_id);
-                }
-              }, 1500);
-            } else if (data.status === "queued") {
-              setMatchStatus("in_queue");
-            }
-          } else {
-            alert("Failed to process stake on backend.");
-            setMatchStatus("idle");
-          }
-        }, 3500);
-        
-      } catch (err) {
-        console.error("Backend Error:", err);
-        alert("Payment successful but network error occurred.");
-        setMatchStatus("idle");
-      }
-    }, 2000);
-  };
 
   const handleCallClick = async () => {
     if (callStatus === "active" || callStatus === "connecting") {
@@ -143,189 +57,137 @@ export default function Dashboard({ profile }) {
           setCallStatus("inactive");
           return;
         }
-        await vapiInstance?.start(assistantId, {
-          variableValues: {
-            wallet_address: String(profile.id) // The user's internal database ID or wallet MUST be string
+
+        // Start the call with ZERO overrides to completely avoid 400 Bad Requests
+        await vapiInstance?.start(assistantId);
+
+        // Pillar 2: Send Identity via Transcript Injection
+        // Silently push the user_id into the AI's context window. 
+        // Vapi will include this string in the final webhook transcript!
+        vapiInstance?.send({
+          type: "add-message",
+          message: {
+            role: "system",
+            content: `[VOKAZI_SYSTEM_IDENTITY: user_id=${profile.id}]`
           }
         });
       } catch (err) {
-        console.error("Vapi Error:", err);
-        alert(`Failed to connect to AI Voice: ${err.message || 'Check microphone permissions or Vapi API limits.'}`);
+        console.error("Vapi Error Full:", err);
+        // Vapi nests its errors deeply. We need to extract the exact reason.
+        const errorReason = err?.error?.message || err?.message || JSON.stringify(err);
+        alert(`Vapi Server Rejected the Call. Reason: ${errorReason}`);
         setCallStatus("inactive");
       }
     }
   };
 
   return (
-    <div className="glass-card animate-in" style={{ maxWidth: '600px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem' }}>
-        <div>
-          <h2 className="title" style={{ fontSize: '1.8rem', marginBottom: '0.25rem' }}>Welcome, {profile?.name?.split(' ')[0] || 'Professional'}</h2>
-          <span style={{ color: 'var(--primary)', fontWeight: '600', fontSize: '0.9rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            {profile?.role || 'Verified User'}
-          </span>
+    <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      
+      {/* Background Orbs */}
+      <div className="bg-orb orb-1"></div>
+      <div className="bg-orb orb-2"></div>
+
+      {/* Header */}
+      <nav className="nav-bar" style={{ padding: '2rem 3rem' }}>
+        <div className="brand-logo-container">
+          <div className="vokazi-icon">V</div>
+          <span className="brand-text">Vokazi Intelligence</span>
         </div>
-        <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
-          <span style={{ fontSize: '1.5rem' }}>👋</span>
-        </div>
-      </div>
-
-      <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: '16px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.03)' }}>
-        {profile?.offer_text ? (
-          <div>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Your Professional Summary</h3>
-            <div className="custom-scrollbar" style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '10px', marginBottom: '1rem', maxHeight: '150px', overflowY: 'auto', fontSize: '0.9rem', lineHeight: '1.6' }}>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '0.25rem' }}>Your Offer:</strong> 
-                {profile.offer_text}
-              </p>
-              <p style={{ color: 'var(--text-muted)' }}>
-                <strong style={{ color: 'var(--text-main)', display: 'block', marginBottom: '0.25rem' }}>Your Need:</strong> 
-                {profile.need_text}
-              </p>
-            </div>
-            
-            <h3 style={{ fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Ready to Find Your Match?</h3>
-            
-            {matchStatus === "idle" && (
-              <>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-                  To ensure high-quality matches and prevent ghosting, we require a small 0.01 AVAX commitment stake on the Avalanche network.
-                </p>
-                <button 
-                  className="btn-primary" 
-                  onClick={handleStakeClick}
-                  style={{ width: '100%', padding: '1rem', position: 'relative' }}
-                >
-                  Stake 0.01 AVAX to Unlock Matches
-                </button>
-                <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
-                  Funds are securely held in the Vokazi.ai smart contract.
-                </p>
-              </>
-            )}
-
-            {matchStatus === "staking" && (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-                <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem', border: '3px solid rgba(16, 185, 129, 0.2)', borderTopColor: '#10b981', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                <h4 style={{ color: '#10b981', marginBottom: '0.5rem' }}>Confirming Transaction</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Waiting for Avalanche network finality...</p>
-              </div>
-            )}
-
-            {matchStatus === "queuing" && (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(96, 165, 250, 0.05)', borderRadius: '12px', border: '1px solid rgba(96, 165, 250, 0.2)' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out' }}></div>
-                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out 0.2s' }}></div>
-                  <div style={{ width: '12px', height: '12px', background: '#60a5fa', borderRadius: '50%', animation: 'pulse 1.5s infinite ease-in-out 0.4s' }}></div>
-                </div>
-                <h4 style={{ color: '#60a5fa', marginBottom: '0.5rem', fontSize: '1.1rem' }}>AI Matchmaking in Progress</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                  Analyzing your professional summary...<br/>
-                  Calculating cosine similarity across 1536-dimensional embeddings in pgvector...
-                </p>
-              </div>
-            )}
-
-            {matchStatus === "in_queue" && (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(245, 158, 11, 0.05)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
-                <h4 style={{ color: '#f59e0b', marginBottom: '0.5rem', fontSize: '1.1rem' }}>You are in the Matchmaking Queue</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                  Your stake has been confirmed! However, there are no other compatible professionals currently available.
-                </p>
-                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.4)', marginTop: '1rem' }}>
-                  The system will continuously scan the network. You will be notified instantly when a high-quality match is found.
-                </p>
-              </div>
-            )}
-
-            {matchStatus === "matched" && (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                <h4 style={{ color: '#10b981', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Optimal Match Found!</h4>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Routing you to your secure Chat Room...</p>
-              </div>
-            )}
-            
-            {matchStatus === "idle" && (
-              <button 
-                onClick={() => window.location.reload()} 
-                style={{ display: 'block', margin: '1.5rem auto 0', background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                Refresh Status
-              </button>
-            )}
-
-            {/* Redo Interview Feature */}
-            {matchStatus !== "staking" && matchStatus !== "queuing" && matchStatus !== "matched" && (
-              <div style={{ marginTop: '2rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
-                  Want to improve your matching odds?
-                </p>
-                <button 
-                  onClick={handleCallClick}
-                  disabled={callStatus === "connecting"}
-                  className="btn-primary" 
-                  style={{ 
-                    width: '100%',
-                    padding: '0.75rem',
-                    background: callStatus === "active" ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'rgba(255,255,255,0.05)', 
-                    color: callStatus === "active" ? 'white' : 'var(--text-main)',
-                    boxShadow: callStatus === "active" ? '0 4px 15px rgba(239, 68, 68, 0.2)' : 'none',
-                    border: '1px dashed rgba(255,255,255,0.2)'
-                  }}
-                >
-                  {callStatus === "inactive" && <><span style={{ fontSize: '1.1rem' }}>🎙️</span> Redo AI Voice Interview</>}
-                  {callStatus === "connecting" && "Connecting to AI..."}
-                  {callStatus === "active" && "⏹️ End AI Voice Interview"}
-                </button>
-              </div>
-            )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 500, background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '100px' }}>
+            {profile?.name || 'Verified Identity'}
           </div>
-        ) : (
-          <div>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--text-main)' }}>Your Next Step</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.5', marginBottom: '1.5rem' }}>
-              Vokazi.ai uses a voice-first approach to understand what you're building and what you need. Our AI agent will call you to collect this data and match you with the perfect counterpart.
-            </p>
-            
-            <button 
-              onClick={handleCallClick}
-              disabled={callStatus === "connecting"}
-              className="btn-primary" 
-              style={{ 
-                background: callStatus === "active" ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' : 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-                boxShadow: callStatus === "active" ? '0 4px 15px rgba(239, 68, 68, 0.2)' : '0 4px 15px rgba(16, 185, 129, 0.2)' 
-              }}
-            >
-              {callStatus === "inactive" && <><span style={{ fontSize: '1.2rem' }}>🎙️</span> Start AI Voice Interview</>}
-              {callStatus === "connecting" && "Connecting to AI..."}
-              {callStatus === "active" && "⏹️ End AI Voice Interview"}
-            </button>
-            
+          <button 
+            onClick={() => { if (wallet) disconnect(wallet); }}
+            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '100px', color: 'var(--text-muted)', padding: '0.5rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}
+          >
+            Disconnect
+          </button>
+        </div>
+      </nav>
+
+      {/* Voice UI Center */}
+      <main className="onboarding-container" style={{ justifyContent: 'center', animation: 'fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
+        
+        <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto 3rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          
+          {/* Pulsing Rings when Active */}
+          {callStatus === "active" && (
+            <>
+              <div style={{ position: 'absolute', inset: -20, border: '2px solid var(--primary)', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+              <div style={{ position: 'absolute', inset: -40, border: '1px solid var(--secondary)', borderRadius: '50%', opacity: 0.3, animation: 'pulse 1.5s infinite 0.3s' }}></div>
+              <div style={{ position: 'absolute', inset: -60, border: '1px solid var(--primary)', borderRadius: '50%', opacity: 0.1, animation: 'pulse 1.5s infinite 0.6s' }}></div>
+            </>
+          )}
+
+          {/* Main Button */}
+          <button 
+            onClick={handleCallClick}
+            className={`action-btn ${callStatus === "inactive" ? 'ready' : ''}`}
+            style={{ 
+              width: '120px', 
+              height: '120px', 
+              borderRadius: '50%', 
+              position: 'relative', 
+              zIndex: 10,
+              background: callStatus === "active" ? 'rgba(232, 65, 66, 0.1)' : undefined,
+              border: callStatus === "active" ? '2px solid #e84142' : 'none',
+              boxShadow: callStatus === "active" ? '0 0 40px rgba(232, 65, 66, 0.4)' : undefined
+            }}
+          >
             {callStatus === "inactive" && (
-              <p style={{ marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-                Note: Ensure your backend is running with GEMINI_API_KEY exported to test real vectors.
-              </p>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+              </svg>
             )}
+            {callStatus === "connecting" && (
+               <div style={{ width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            )}
+            {callStatus === "active" && (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e84142" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
+              </svg>
+            )}
+          </button>
+        </div>
+
+        <h1 className="ai-greeting" style={{ fontSize: '3rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
+          {callStatus === "inactive" ? "Vokazi is ready to listen." : ""}
+          {callStatus === "connecting" ? "Establishing Neural Link..." : ""}
+          {callStatus === "active" ? <span className="gradient-text">Listening...</span> : ""}
+        </h1>
+        
+        <p className="ai-subtext" style={{ maxWidth: '600px', animationDelay: '0.2s', marginBottom: '2rem' }}>
+          {callStatus === "inactive" 
+            ? "Tap the microphone. Explain exactly what your startup is building, what technical challenges you face, and what resources you are offering to the ecosystem." 
+            : "Speak naturally. Our AI is extracting your technical requirements and preparing them for vectorization."}
+        </p>
+
+        {/* Live Transcript Box */}
+        {callStatus === "active" && transcript && (
+          <div style={{ 
+            width: '100%', 
+            maxWidth: '600px', 
+            background: 'rgba(0,0,0,0.4)', 
+            border: '1px solid rgba(0, 240, 255, 0.2)', 
+            borderRadius: '24px', 
+            padding: '1.5rem', 
+            textAlign: 'left',
+            animation: 'fadeUpIn 0.4s ease forwards',
+            maxHeight: '200px',
+            overflowY: 'auto'
+          }}>
+            <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Live Transcript</p>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+              {transcript}
+            </div>
           </div>
         )}
-      </div>
 
-      <div style={{ textAlign: 'center' }}>
-        <button 
-          onClick={() => {
-            if (wallet) disconnect(wallet);
-          }}
-          style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '0.9rem', cursor: 'pointer', textDecoration: 'underline', transition: 'color 0.2s' }}
-          onMouseOver={(e) => e.target.style.color = 'var(--primary)'}
-          onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
-        >
-          Disconnect Wallet
-        </button>
-      </div>
+      </main>
     </div>
   );
 }
