@@ -64,7 +64,27 @@ CRITICAL RULES:
 ## 3. Structured Data Extraction (Analysis Tab)
 *To make sure your Elixir backend (`pgvector`) actually works, you must tell Vapi to extract the transcript into a JSON format.*
 
-**Go to the "Analysis" Tab in Vapi, enable "Structured Data Extraction", and use this JSON Schema:**
+**Option 1: Manual UI Setup (If creating a new account)**
+If the JSON schema box isn't working or you are on a new account, manually add the fields:
+
+1. Click **Add Field**.
+2. Name it: `offer_text`
+3. Description: `A deeply detailed summary of the user's skills, traction, investment thesis, or technical abilities.`
+4. Type: **String**
+5. Hit **Save**.
+
+Next, create the second field:
+
+1. Click **Add Field**
+2. Name it: `need_text`
+3. Description: `A deeply detailed summary of exactly who or what the user is looking to find, hire, or receive funding from.`
+4. Type: **String**
+5. Hit **Save**.
+
+*(Note: If you have a broken `professional_offer` field stuck as a Boolean, simply ignore it. The backend will only look for `offer_text` and `need_text`.)*
+
+**Option 2: JSON Schema Method**
+Alternatively, go to the "Analysis" Tab in Vapi, enable "Structured Data Extraction", and paste this JSON Schema:
 
 ```json
 {

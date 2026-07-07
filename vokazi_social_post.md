@@ -2,23 +2,16 @@
 
 Here are a few options for your social media posts depending on which platform you are posting to. 
 
-## Option 1: Twitter/X (Punchy & Hype-focused)
+## Option 1: Twitter/X (Short & Punchy)
 
-**Thread 1:**
-We started building "Boardy.ai" as a generic networking tool. Today, we are officially rebranding to **Vokazi**. 
+We started building "Boardy.ai" as a generic tool. Today, we are officially rebranding to **Vokazi**—an elite, AI-driven Talent Intelligence Agent. 🎙️⚡️
 
-Why? Because what we are building is no longer just a tool. It's an elite, AI-driven Talent Intelligence Agent designed for executive matchmaking. We needed a name with gravitas. 🧵👇
+Phase 1 is officially live:
+✅ Real-time Voice AI WebRTC 
+✅ Custom Elixir/Phoenix backend Webhooks
+✅ Auto-generating 1536-dimensional `pgvector` embeddings of your exact skills using Google Gemini.
 
-**Thread 2:**
-Here is what we just shipped in Phase 1 of Vokazi:
-✅ Integrated a real-time Voice AI Assistant (Sub-500ms latency)
-✅ Built a custom Elixir/Phoenix backend for extreme concurrency
-✅ Engineered a stealth "Webhook Identity Resolution" system to link voice calls to database profiles perfectly.
-
-**Thread 3:**
-But the coolest part? As soon as you finish speaking to the Vokazi AI, our Elixir backend intercepts the transcript, calls Google Gemini, and instantly generates a 1536-dimensional `pgvector` embedding of your exact skills and needs. 
-
-The mathematical matchmaking engine is officially alive. ⚡️
+The mathematical matchmaking engine is alive. 🚀
 
 ## Option 2: LinkedIn (Professional & Technical)
 

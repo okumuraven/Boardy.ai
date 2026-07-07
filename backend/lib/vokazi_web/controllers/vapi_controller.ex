@@ -34,7 +34,7 @@ defmodule VokaziWeb.VapiController do
 
     # 🔗 Pillar 2: Identity Resolution (Transcript Extraction)
     # We parse the secret system message we injected via React!
-    user_id = case Regex.run(~r/\[VOKAZI_SYSTEM_IDENTITY:\s*user_id=(\d+)\]/, transcript) do
+    user_id = case Regex.run(~r/\[VOKAZI_SYSTEM_IDENTITY:\s*user_id=(\d+)\]/i, transcript) do
       [_, id] -> String.to_integer(id)
       _ -> get_in(message, ["call", "customer", "number"]) # Fallback
     end
@@ -44,8 +44,8 @@ defmodule VokaziWeb.VapiController do
     structured_data = analysis["structuredData"] || %{}
     
     # Defensive fallback to raw transcript if AI fails to extract
-    offer = structured_data["professional_offer"] || transcript
-    need = structured_data["professional_need"] || "Requires manual parsing. Raw transcript saved."
+    offer = structured_data["offer_text"] || transcript
+    need = structured_data["need_text"] || "Requires manual parsing. Raw transcript saved."
 
     if user_id do
       case Repo.get_by(Profile, user_id: user_id) do

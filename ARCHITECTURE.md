@@ -31,7 +31,9 @@ graph TD
 ### B. Backend API (Elixir + Phoenix)
 - **Framework:** Elixir and the Phoenix Framework running on Bandit.
 - **Vapi Webhook:** An HTTP POST endpoint (`/api/vapi`) that catches the End-of-Call report from the Voice AI.
-- **AI Processing:** Uses the OpenAI API to translate raw unstructured transcripts into structured JSON (Needs/Offers) and generates 1536-dimensional vectors using `text-embedding-3-small`.
+- **AI Processing (The Gemini Engine):** The system completely relies on the Google Gemini API for its intelligence via `Vokazi.AI`:
+  - **The Mathematical Brain:** Uses Gemini's `embedding-001` model to translate the extracted `offer_text` and `need_text` into 768-dimensional mathematical vectors. The Elixir backend smartly pads this array to exactly 1536 dimensions so it perfectly aligns with the standard `pgvector` database schema without requiring migrations.
+  - **The Backup Summarizer:** Uses `gemini-1.5-flash` as a failsafe. If the Vapi Voice AI fails to extract structured JSON data, Elixir feeds the raw transcript into Flash to forcefully synthesize a highly polished, executive summary of the user's Offer and Need.
 - **Google Calendar API:** Handles the automatic scheduling of meetings once the Web3 criteria are met.
 
 ### C. Database Layer (PostgreSQL + pgvector)
