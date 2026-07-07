@@ -10,22 +10,22 @@ defmodule Vokazi.AI do
       IO.puts("WARNING: GEMINI_API_KEY is not set. Cannot generate real vectors.")
       {:error, :missing_api_key}
     else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=#{api_key}"
+      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=#{api_key}"
       
       body = %{
-        model: "models/embedding-001",
+        model: "models/gemini-embedding-2",
         content: %{
           parts: [%{text: text}]
         }
       }
       
-      case Req.post(url, json: body) do
+      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
         {:ok, %Req.Response{status: 200, body: data}} ->
           embedding = data["embedding"]["values"]
           
-          # Gemini returns 768 dimensions. Our DB is strictly 1536 dimensions.
-          # We pad it with exactly 768 zeros. Cosine similarity math still works perfectly.
-          padded_embedding = embedding ++ List.duplicate(0.0, 768)
+          # Gemini 2 returns a massive 3072 dimensions. Our DB is strictly 1536 dimensions.
+          # We slice the first 1536 elements to perfectly align with the schema.
+          padded_embedding = Enum.take(embedding, 1536)
           
           {:ok, Pgvector.new(padded_embedding)}
           
@@ -69,7 +69,7 @@ defmodule Vokazi.AI do
         }
       }
       
-      case Req.post(url, json: body) do
+      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
         {:ok, %Req.Response{status: 200, body: data}} ->
           try do
             text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")

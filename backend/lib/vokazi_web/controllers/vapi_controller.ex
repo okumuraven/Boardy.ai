@@ -77,8 +77,11 @@ defmodule VokaziWeb.VapiController do
           offer_vector: vector,
           need_vector: vector
         })
-        Repo.update!(vector_changeset)
+        updated_profile = Repo.update!(vector_changeset)
         IO.puts("Successfully generated and saved pgvector embeddings for user #{profile.user_id}")
+        
+        # 🔥 Phase 2: Instant Asynchronous Matchmaking
+        Vokazi.Matchmaking.find_pending_match(updated_profile)
         
       {:error, _reason} ->
         IO.puts("Failed to generate vector for user #{profile.user_id}")

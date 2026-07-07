@@ -11,6 +11,52 @@ defmodule Vokazi.Matchmaking do
   def get_match!(id), do: Repo.get!(Match, id)
 
   @doc """
+  Instantly queries the database for matches with >= 0.85 similarity (<= 0.15 distance).
+  Creates a pending match if one is found, triggering the Avalanche Trust-Gate.
+  """
+  def find_pending_match(current_user_profile) do
+    import Ecto.Query
+    import Pgvector.Ecto.Query
+    
+    if is_nil(current_user_profile.need_vector) do
+      {:error, :no_vector}
+    else
+      query = from p in Vokazi.Accounts.Profile,
+              where: p.user_id != ^current_user_profile.user_id and not is_nil(p.offer_vector),
+              where: cosine_distance(p.offer_vector, ^current_user_profile.need_vector) <= 0.15,
+              order_by: [asc: cosine_distance(p.offer_vector, ^current_user_profile.need_vector)],
+              select: {p, cosine_distance(p.offer_vector, ^current_user_profile.need_vector)},
+              limit: 1
+
+      case Repo.all(query) do
+        [{best_match_profile, distance}] ->
+          similarity = 1.0 - distance
+          
+          changeset = %Match{}
+            |> Match.changeset(%{
+                 similarity_score: similarity,
+                 status: "pending", 
+                 user_a_id: current_user_profile.user_id, 
+                 user_b_id: best_match_profile.user_id
+               })
+               
+          case Repo.insert(changeset) do
+             {:ok, match} ->
+                IO.puts("🔥 PERFECT MATCH FOUND! Similarity: #{Float.round(similarity * 100, 2)}%. Triggering Trust-Gate for users #{match.user_a_id} and #{match.user_b_id}")
+                {:ok, match}
+             {:error, changeset} ->
+                IO.puts("Failed to create match: #{inspect(changeset.errors)}")
+                {:error, changeset}
+          end
+          
+        [] ->
+          IO.puts("No matches found >= 0.85 similarity yet. User added to matchmaking queue.")
+          {:queued}
+      end
+    end
+  end
+
+  @doc """
   Mocks the payment validation. When a payment is successful,
   this updates the match status and provisions a chat room.
   """

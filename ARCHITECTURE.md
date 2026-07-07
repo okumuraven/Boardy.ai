@@ -12,7 +12,7 @@ graph TD
     A[React Conversational UI] -->|1. Enter Phone Number| B[Thirdweb Google Auth]
     B -->|2. Invisible Wallet Provisioned| C[Vapi.ai Web SDK]
     C -->|3. Live Voice Interview| D[Phoenix Webhook Endpoint]
-    D -->|4. OpenAI Embeddings| E[(PostgreSQL + pgvector)]
+    D -->|4. Gemini Embeddings| E[(PostgreSQL + pgvector)]
     E -->|5. Match Found >= 0.85| F[React Dashboard Alert]
     F -->|6. Stake USDC via Thirdweb| G[Avalanche Fuji Testnet]
     G -->|7. Tx Confirmed| H[AvaCloud Webhook]
@@ -32,14 +32,23 @@ graph TD
 - **Framework:** Elixir and the Phoenix Framework running on Bandit.
 - **Vapi Webhook:** An HTTP POST endpoint (`/api/vapi`) that catches the End-of-Call report from the Voice AI.
 - **AI Processing (The Gemini Engine):** The system completely relies on the Google Gemini API for its intelligence via `Vokazi.AI`:
-  - **The Mathematical Brain:** Uses Gemini's `embedding-001` model to translate the extracted `offer_text` and `need_text` into 768-dimensional mathematical vectors. The Elixir backend smartly pads this array to exactly 1536 dimensions so it perfectly aligns with the standard `pgvector` database schema without requiring migrations.
-  - **The Backup Summarizer:** Uses `gemini-1.5-flash` as a failsafe. If the Vapi Voice AI fails to extract structured JSON data, Elixir feeds the raw transcript into Flash to forcefully synthesize a highly polished, executive summary of the user's Offer and Need.
+  - **The Mathematical Brain:** Uses Gemini's `gemini-embedding-2` model to translate the extracted `offer_text` and `need_text` into 768-dimensional mathematical vectors. The Elixir backend smartly pads this array to exactly 1536 dimensions so it perfectly aligns with the standard `pgvector` database schema without requiring migrations.
+  - **The Backup Summarizer:** Uses `gemini-3.5-flash` as a failsafe. If the Vapi Voice AI fails to extract structured JSON data, Elixir feeds the raw transcript into Flash to forcefully synthesize a highly polished, executive summary of the user's Offer and Need.
 - **Google Calendar API:** Handles the automatic scheduling of meetings once the Web3 criteria are met.
 
 ### C. Database Layer (PostgreSQL + pgvector)
 - **Infrastructure:** Dockerized PostgreSQL 15 instance.
 - **Extension:** `pgvector` enables high-dimensional vector similarity search.
-- **Match Logic:** Runs Cosine Similarity (`<=>`) to match the `need_vector` of User A against the `offer_vector` of User B. If the similarity score is `>= 0.85`, the "Trust-Gate" is triggered.
+- **Asynchronous Match Algorithm:** When `vapi_controller.ex` successfully saves a new vector, it instantly triggers a background task (`Vokazi.Matchmaking.find_pending_match`).
+- **Cosine Distance Math:** The system uses `Pgvector.Ecto.Query.cosine_distance` to execute a strict mathematical scan. To find a similarity score of $\ge 0.85$, the Ecto query enforces a distance of $\le 0.15$.
+  ```elixir
+  query = from p in Profile,
+    where: p.user_id != ^current_user_id,
+    where: cosine_distance(p.offer_vector, ^user_need_vector) <= 0.15,
+    order_by: [asc: cosine_distance(p.offer_vector, ^user_need_vector)],
+    limit: 1
+  ```
+- **The Trust-Gate Trigger:** If the database yields a match, the backend instantly creates a `Match` record with `status: "pending"`. The React frontend detects this state and locks the user's UI, displaying the Avalanche Staking prompt to financially commit to the introduction.
 
 ### D. Web3 Trust-Gate (Avalanche)
 - **Network:** Avalanche Fuji Testnet (Production: C-Chain Mainnet).

@@ -39,7 +39,7 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 *Objective: Automate AI matching and introduce the Avalanche financial commitment. Target: 400 Users.*
 
 ### Backend & AI Team
-- [ ] **OpenAI Embeddings:** Connect the Phoenix backend to OpenAI to convert `need_text` and `offer_text` into 1536-dimensional vectors.
+- [ ] **Gemini Embeddings:** Connect the Phoenix backend to the Google Gemini API (`embedding-001`) to convert `need_text` and `offer_text` into padded 1536-dimensional vectors (leveraging Gemini's free tier during the building stage).
 - [ ] **pgvector Matching:** Activate `cosine distance` calculations in the database. When a new vector is saved, instantly query the database for matches with $\ge 0.85$ similarity.
 - [ ] **AvaCloud Webhooks:** Set up real-time on-chain listening. When AvaCloud detects that both users have staked USDC, push a payload to Phoenix to officially "unlock" the match.
 
