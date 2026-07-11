@@ -15,31 +15,41 @@ export default function App() {
   const [showWhitepaper, setShowWhitepaper] = useState(false);
   const [collectedPhone, setCollectedPhone] = useState('');
 
+  // Fetches the profile tied to the connected wallet. Reused both on wallet
+  // connect (to restore a returning user without re-asking their details)
+  // and after a "Redo Interview" call ends (to pull the freshly-updated
+  // offer/need text once the webhook has finished processing it).
+  const fetchProfile = (showSpinner = true) => {
+    if (!activeAccount?.address) return Promise.resolve(null);
+    if (showSpinner) setIsLoading(true);
+    const apiUrl = import.meta.env.VITE_API_URL;
+
+    return fetch(`${apiUrl}/api/profiles/${activeAccount.address}`, {
+      headers: {
+        'X-Tunnel-Skip-AntiPhishing-Page': 'true'
+      }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.onboarding_completed) {
+          setProfile({
+            name: data.full_name,
+            role: data.role,
+            id: data.id,
+            offer_text: data.offer_text,
+            need_text: data.need_text
+          });
+        }
+        return data;
+      })
+      .catch(err => { console.error(err); return null; })
+      .finally(() => { if (showSpinner) setIsLoading(false); });
+  };
+
   // Auto-fetch profile to prevent the "refresh resets account" bug
   useEffect(() => {
     if (activeAccount?.address) {
-      setIsLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      fetch(`${apiUrl}/api/profiles/${activeAccount.address}`, {
-        headers: {
-          'X-Tunnel-Skip-AntiPhishing-Page': 'true'
-        }
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && data.onboarding_completed) {
-            setProfile({ 
-              name: data.full_name, 
-              role: data.role, 
-              id: data.id,
-              offer_text: data.offer_text,
-              need_text: data.need_text
-            });
-          }
-        })
-        .catch(err => console.error(err))
-        .finally(() => setIsLoading(false));
+      fetchProfile();
     } else {
       setProfile(null);
     }
@@ -83,7 +93,7 @@ export default function App() {
       return <ChatRoomView roomId={activeChatRoomId} profile={profile} onBack={() => setActiveChatRoomId(null)} />;
     }
 
-    return <Dashboard profile={profile} />;
+    return <Dashboard profile={profile} onInterviewComplete={() => fetchProfile(false)} />;
   };
 
   return (
