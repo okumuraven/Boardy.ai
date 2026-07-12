@@ -15,7 +15,7 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 **Vokazi's Unique Edge:** We are the **Web3 evolution** of professional matchmaking. 
 1. **The Frictionless Start:** Users sign in with Google. Behind the scenes, Thirdweb instantly provisions an Avalanche C-Chain wallet. Zero crypto friction.
 2. **The Voice AI (Vapi):** Users do a live voice interview directly in the browser to extract their business Needs and Offers.
-3. **The Trust-Gate (Avalanche Staking):** When our Elixir backend finds a $\ge 0.85$ match via `pgvector`, both users must stake 0.50 USDC on Avalanche to unlock the introduction. If they ghost, they lose their stake. This forces financial accountability.
+3. **The Trust-Gate (Avalanche Staking):** When our Elixir backend's `pgvector` + Gemini AI pipeline finds a genuinely complementary match and both users mutually accept the detailed score breakdown, they must each stake 0.01 native AVAX on Avalanche Fuji to unlock the introduction. If they ghost, they lose their stake. This forces financial accountability.
 4. **Escrow-Gated Meetings:** We automatically schedule a Google Meet *only* after both parties have confirmed their Web3 stake.
 
 ---
@@ -39,13 +39,15 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 *Objective: Automate AI matching and introduce the Avalanche financial commitment. Target: 400 Users.*
 
 ### Backend & AI Team
-- [ ] **Gemini Embeddings:** Connect the Phoenix backend to the Google Gemini API (`embedding-001`) to convert `need_text` and `offer_text` into padded 1536-dimensional vectors (leveraging Gemini's free tier during the building stage).
-- [ ] **pgvector Matching:** Activate `cosine distance` calculations in the database. When a new vector is saved, instantly query the database for matches with $\ge 0.85$ similarity.
-- [ ] **AvaCloud Webhooks:** Set up real-time on-chain listening. When AvaCloud detects that both users have staked USDC, push a payload to Phoenix to officially "unlock" the match.
+- [x] **Gemini Embeddings:** Connect the Phoenix backend to the Google Gemini API (`gemini-embedding-2`) to convert `need_text` and `offer_text` into 1536-dimensional vectors directly via `outputDimensionality` (leveraging Gemini's free tier during the building stage).
+- [x] **pgvector Matching:** Activate bidirectional `cosine distance` calculations in the database (my need vs. their offer, and their need vs. my offer — the weaker direction sets the score). When a new vector is saved, shortlist candidates clearing a `0.75` similarity floor.
+- [x] **AI Validation & Detailed Match Score:** Gemini judges each shortlisted candidate for a *genuinely* complementary fit (not just lexical similarity), producing a 0-100 confidence score, a reasoning summary, transparent "what lines up" / "what's uncertain" breakdowns (`ai_strengths` / `ai_gaps`), and a ready-to-send introduction message. Only candidates clearing both the pgvector floor and a `70`+ AI score become a match.
+- [x] **Mutual Consent Screen:** Both users see the full score breakdown (`MatchReview.jsx`) and independently accept or decline before anything unlocks — neither side is ever auto-matched into a conversation.
+- [x] **On-chain Stake Verification (in place of AvaCloud Webhooks):** Rather than subscribing to AvaCloud's real-time event product (a separate third-party account we haven't set up), the Phoenix backend (`Vokazi.Avalanche`) directly re-reads `getMatch` off the deployed contract via a signed JSON-RPC call whenever a user reports a stake, and only unlocks once the contract itself confirms both sides staked. Functionally equivalent zero-trust verification; revisit if a literal AvaCloud subscription is wanted later.
 
 ### Web3 & Frontend Team
-- [ ] **Smart Contract Deployment:** Write and deploy the "Commitment Stake" Solidity contract to the Avalanche Fuji Testnet.
-- [ ] **Staking UI:** Update the React dashboard. When a match is pending, display: *"Perfect Match Found. Stake 0.50 USDC on Avalanche to unlock your intro."* Enable the user to sign this transaction via their Thirdweb wallet.
+- [x] **Smart Contract Deployment:** `VokaziMatchStaking.sol` deployed to the Avalanche Fuji Testnet at `0x3e5E4D5FA56fa78F9665Bc36b8D08964Dc790eFA`. Stake amount is **0.01 native AVAX** (not USDC).
+- [x] **Staking UI:** `StakingGate.jsx` shows once both sides mutually accept: *"Match Accepted — stake 0.01 AVAX to unlock chat."* Uses Thirdweb's `useSendTransaction`/`prepareContractCall` to sign the real `stake()` transaction from the user's own wallet.
 
 ---
 

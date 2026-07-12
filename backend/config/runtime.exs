@@ -23,6 +23,14 @@ end
 config :vokazi, VokaziWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Avalanche Fuji JSON-RPC endpoint used by Vokazi.Avalanche to submit the
+# owner-only `createMatch` tx and to independently verify stakes via
+# `getMatch` - never trust the frontend's claim that a stake succeeded.
+config :ethereumex,
+  url: System.get_env("FUJI_RPC_URL") || "https://api.avax-test.network/ext/bc/C/rpc"
+
+config :ethers, secp256k1_module: ExSecp256k1
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

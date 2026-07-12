@@ -3,7 +3,7 @@ import { useDisconnect, useActiveWallet } from "thirdweb/react";
 import { client, activeChain } from "../config/thirdweb";
 import Vapi from "@vapi-ai/web";
 
-export default function Dashboard({ profile, onInterviewComplete }) {
+export default function Dashboard({ profile, onInterviewComplete, onFindMatch }) {
   const wallet = useActiveWallet();
   const { disconnect } = useDisconnect();
   const [callStatus, setCallStatus] = useState("inactive"); // inactive, connecting, active
@@ -13,6 +13,24 @@ export default function Dashboard({ profile, onInterviewComplete }) {
   // "interview": show the mic UI (first-time users land here directly).
   const [view, setView] = useState(profile?.offer_text ? "summary" : "interview");
   const [processingRedo, setProcessingRedo] = useState(false);
+  const [findingMatch, setFindingMatch] = useState(false);
+  const [findMatchMessage, setFindMatchMessage] = useState("");
+
+  const handleFindMatch = async () => {
+    setFindingMatch(true);
+    setFindMatchMessage("");
+    try {
+      const data = await onFindMatch?.();
+      if (data?.status === "queued") {
+        setFindMatchMessage("No match found yet — check back soon as more people join.");
+      } else if (data?.status === "error") {
+        setFindMatchMessage("Couldn't reach the server. Please try again.");
+      }
+      // data?.status === "matched" swaps App.jsx into the MatchReview screen automatically.
+    } finally {
+      setFindingMatch(false);
+    }
+  };
   const onInterviewCompleteRef = useRef(onInterviewComplete);
   useEffect(() => {
     onInterviewCompleteRef.current = onInterviewComplete;
@@ -146,13 +164,25 @@ export default function Dashboard({ profile, onInterviewComplete }) {
                 <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: '1.6' }}>{profile?.need_text}</div>
               </div>
 
-              <button
-                onClick={() => setView("interview")}
-                className="action-btn ready"
-                style={{ marginTop: '0.5rem', padding: '0.9rem 1.5rem', borderRadius: '100px', alignSelf: 'center' }}
-              >
-                Redo Interview
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.5rem' }}>
+                <button
+                  onClick={() => setView("interview")}
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '100px', color: 'var(--text-muted)', padding: '0.9rem 1.5rem', fontSize: '0.95rem', cursor: 'pointer' }}
+                >
+                  Redo Interview
+                </button>
+                <button
+                  onClick={handleFindMatch}
+                  disabled={findingMatch}
+                  className="action-btn ready"
+                  style={{ padding: '0.9rem 1.75rem', borderRadius: '100px' }}
+                >
+                  {findingMatch ? "Searching..." : "Find a Match"}
+                </button>
+              </div>
+              {findMatchMessage && (
+                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{findMatchMessage}</p>
+              )}
             </div>
           )}
         </main>

@@ -113,20 +113,26 @@ defmodule VokaziWeb.VapiController do
     end
   end
 
+  # Offer and Need are embedded *separately* so offer_vector and need_vector
+  # actually represent different things. Embedding one combined string for
+  # both (the old behavior) meant every profile's two vectors were
+  # identical, which silently turned "does their offer meet my need"
+  # matching into "does their whole profile read like mine" matching.
   defp generate_vectors(profile) do
-    text_to_embed = "Offer: #{profile.offer_text} Need: #{profile.need_text}"
-    case Vokazi.AI.generate_embedding(text_to_embed) do
-      {:ok, vector} ->
-        vector_changeset = Profile.changeset(profile, %{
-          offer_vector: vector,
-          need_vector: vector
+    with {:ok, offer_vector} <- Vokazi.AI.generate_embedding(profile.offer_text),
+         {:ok, need_vector} <- Vokazi.AI.generate_embedding(profile.need_text) do
+      vector_changeset =
+        Profile.changeset(profile, %{
+          offer_vector: offer_vector,
+          need_vector: need_vector
         })
-        updated_profile = Repo.update!(vector_changeset)
-        Logger.info("Vapi webhook: saved pgvector embeddings for user_id=#{profile.user_id}")
 
-        # 🔥 Phase 2: Instant Asynchronous Matchmaking
-        Vokazi.Matchmaking.find_pending_match(updated_profile)
+      updated_profile = Repo.update!(vector_changeset)
+      Logger.info("Vapi webhook: saved pgvector embeddings for user_id=#{profile.user_id}")
 
+      # 🔥 Phase 2: Instant Asynchronous Matchmaking
+      Vokazi.Matchmaking.find_pending_match(updated_profile)
+    else
       {:error, reason} ->
         Logger.error("Vapi webhook: failed to generate vector for user_id=#{profile.user_id}: #{inspect(reason)}")
     end

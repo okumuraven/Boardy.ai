@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useActiveAccount } from "thirdweb/react";
 import LandingPage from './components/LandingPage';
 import Whitepaper from './components/Whitepaper';
@@ -6,6 +6,8 @@ import Login from './components/Login';
 import ProfileSetup from './components/ProfileSetup';
 import Dashboard from './components/Dashboard';
 import ChatRoomView from './components/ChatSystem';
+import MatchReview from './components/MatchReview';
+import StakingGate from './components/StakingGate';
 
 export default function App() {
   const activeAccount = useActiveAccount();
@@ -56,6 +58,69 @@ export default function App() {
   }, [activeAccount]);
 
   const [activeChatRoomId, setActiveChatRoomId] = useState(null);
+  const [pendingMatch, setPendingMatch] = useState(null);
+
+  // Checks whether this user already has an active match - awaiting
+  // mutual consent, awaiting an on-chain stake, or already unlocked (so
+  // a returning user lands back in the right screen instead of an empty
+  // "no match" state). Reused on profile load and after every step of
+  // the consent/staking flow, since each step needs the next screen's
+  // fresh data rather than guessing it locally.
+  const fetchPendingMatch = useCallback(() => {
+    if (!profile?.id) {
+      setPendingMatch(null);
+      return;
+    }
+    const apiUrl = import.meta.env.VITE_API_URL;
+    fetch(`${apiUrl}/api/matches/pending?user_id=${profile.id}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        const match = data?.match || null;
+        if (match?.status === "unlocked" && match.chat_room_id) {
+          setActiveChatRoomId(match.chat_room_id);
+          setPendingMatch(null);
+        } else {
+          setPendingMatch(match);
+        }
+      })
+      .catch(err => console.error(err));
+  }, [profile?.id]);
+
+  useEffect(() => {
+    fetchPendingMatch();
+  }, [fetchPendingMatch]);
+
+  // Passed down to Dashboard's "Find a Match" action - triggers the
+  // matching pipeline on demand and shows the review screen immediately
+  // if a candidate clears validation.
+  const findMatch = () => {
+    if (!profile?.id) return Promise.resolve({ status: "queued" });
+    const apiUrl = import.meta.env.VITE_API_URL;
+    return fetch(`${apiUrl}/api/matchmaking/find_match`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: profile.id }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "matched") setPendingMatch(data);
+        return data;
+      })
+      .catch(err => { console.error(err); return { status: "error" }; });
+  };
+
+  const handleMatchResolved = ({ unlocked, declined, awaitingStake, chatRoomId }) => {
+    if (unlocked && chatRoomId) {
+      setPendingMatch(null);
+      setActiveChatRoomId(chatRoomId);
+    } else if (declined) {
+      setPendingMatch(null);
+    } else if (awaitingStake) {
+      // Mutual consent just completed - refetch to pick up the "pending"
+      // status (and onchain_match_id) so renderScreen swaps to StakingGate.
+      fetchPendingMatch();
+    }
+  };
 
   useEffect(() => {
     window.onMatchUnlocked = (roomId) => {
@@ -93,7 +158,15 @@ export default function App() {
       return <ChatRoomView roomId={activeChatRoomId} profile={profile} onBack={() => setActiveChatRoomId(null)} />;
     }
 
-    return <Dashboard profile={profile} onInterviewComplete={() => fetchProfile(false)} />;
+    if (pendingMatch?.status === "pending") {
+      return <StakingGate profile={profile} match={pendingMatch} onResolved={handleMatchResolved} />;
+    }
+
+    if (pendingMatch) {
+      return <MatchReview profile={profile} initialMatch={pendingMatch} onResolved={handleMatchResolved} />;
+    }
+
+    return <Dashboard profile={profile} onInterviewComplete={() => fetchProfile(false)} onFindMatch={findMatch} />;
   };
 
   return (

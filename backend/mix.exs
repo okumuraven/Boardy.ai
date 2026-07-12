@@ -51,7 +51,10 @@ defmodule Vokazi.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:pgvector, "~> 0.3.0"},
-      {:req, "~> 0.4.0"}
+      {:req, "~> 0.5"},
+      {:ethers, "~> 0.6"},
+      {:ex_keccak, "~> 0.7"},
+      {:ex_secp256k1, "~> 0.7.6"}
     ]
   end
 

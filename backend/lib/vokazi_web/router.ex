@@ -13,7 +13,10 @@ defmodule VokaziWeb.Router do
     post "/profiles/:id/sync_real_transcript", ProfileController, :sync_real_transcript
     post "/profiles", ProfileController, :create
     post "/vapi", VapiController, :webhook
-    post "/matches/:id/confirm-payment", MatchController, :confirm_payment
-    post "/matchmaking/stake", MatchController, :stake
+    post "/matches/:id/respond", MatchController, :respond
+    post "/matches/:id/confirm-stake", MatchController, :confirm_stake
+    get "/matches/pending", MatchController, :pending_for_user
+    get "/matches/:id/status", MatchController, :status
+    post "/matchmaking/find_match", MatchController, :find_match
   end
 end
