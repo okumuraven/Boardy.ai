@@ -1,218 +1,181 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Socket, Presence } from "phoenix";
 
-export default function ChatRoomView({ roomId, profile, onBack }) {
+const HISTORY_PAGE_SIZE = 50;
+
+export default function ChatRoomView({ roomId, profile, partnerName, onBack }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [connectionState, setConnectionState] = useState("connecting"); // connecting | joined | error
+  const [joinError, setJoinError] = useState("");
+  const [otherOnline, setOtherOnline] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const socketRef = useRef(null);
+  const channelRef = useRef(null);
+  const presenceStateRef = useRef({});
   const messagesEndRef = useRef(null);
+  const shouldScrollRef = useRef(true);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (shouldScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    shouldScrollRef.current = true;
   }, [messages]);
 
+  const updatePresence = useCallback(() => {
+    const online = Presence.list(presenceStateRef.current).some((p) => p.id !== String(profile.id));
+    setOtherOnline(online);
+  }, [profile.id]);
+
   useEffect(() => {
-    console.log(`Connected to room ${roomId}`);
-    
-    // Simulate an initial history load with a business context
-    setTimeout(() => {
-      setMessages([
-        { 
-          id: 1, 
-          type: "system",
-          content: "Identity Verified via Avalanche Civic Pass. Both parties have staked 0.01 AVAX.", 
-          inserted_at: new Date().toISOString() 
-        },
-        { 
-          id: 2, 
-          type: "text",
-          content: "Hello! I saw your project needs a Web3 developer. I'm ready to collaborate.", 
-          sender_id: "mock_other_user", 
-          inserted_at: new Date().toISOString() 
-        }
-      ]);
-    }, 1000);
-    
-    return () => console.log("Left room");
-  }, [roomId]);
+    const apiUrl = import.meta.env.VITE_API_URL;
+    const socketUrl = `${apiUrl.replace(/^http/, "ws")}/socket`;
+    const socket = new Socket(socketUrl, { params: { user_id: profile.id } });
+    socket.connect();
+    socketRef.current = socket;
+
+    const channel = socket.channel(`chat_room:${roomId}`, {});
+    channelRef.current = channel;
+
+    channel.on("history", ({ messages: history }) => {
+      setMessages(history);
+      setHasMoreHistory(history.length >= HISTORY_PAGE_SIZE);
+    });
+
+    channel.on("new_msg", (message) => {
+      shouldScrollRef.current = true;
+      setMessages((prev) => [...prev, message]);
+    });
+
+    channel.on("presence_state", (state) => {
+      presenceStateRef.current = Presence.syncState(presenceStateRef.current, state);
+      updatePresence();
+    });
+
+    channel.on("presence_diff", (diff) => {
+      presenceStateRef.current = Presence.syncDiff(presenceStateRef.current, diff);
+      updatePresence();
+    });
+
+    channel
+      .join()
+      .receive("ok", () => setConnectionState("joined"))
+      .receive("error", ({ reason }) => {
+        setConnectionState("error");
+        setJoinError(
+          reason === "unauthorized"
+            ? "You're not a participant in this chat."
+            : "This chat room couldn't be found."
+        );
+      });
+
+    return () => {
+      channel.leave();
+      socket.disconnect();
+    };
+  }, [roomId, profile.id, updatePresence]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    const content = newMessage.trim();
+    if (!content || connectionState !== "joined") return;
 
-    const msg = {
-      id: Date.now(),
-      type: "text",
-      content: newMessage,
-      sender_id: profile?.id || 1,
-      inserted_at: new Date().toISOString()
-    };
-    
-    setMessages(prev => [...prev, msg]);
+    channelRef.current
+      ?.push("new_msg", { content })
+      .receive("error", ({ reason }) => alert(reason || "Message failed to send."));
+
     setNewMessage("");
-
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        type: "text",
-        content: "That sounds great. Let's set up an Escrow Milestone for the first deliverable.",
-        sender_id: "mock_other_user",
-        inserted_at: new Date().toISOString()
-      }]);
-    }, 2000);
   };
 
-  const handleCreateMilestone = () => {
-    const msg = {
-      id: Date.now(),
-      type: "escrow_proposal",
-      content: "Proposed Escrow: 50 AVAX for MVP Delivery",
-      sender_id: profile?.id || 1,
-      inserted_at: new Date().toISOString(),
-      amount: "50 AVAX"
-    };
-    setMessages(prev => [...prev, msg]);
-  };
+  const handleLoadMore = () => {
+    const earliest = messages[0];
+    if (!earliest || loadingMore) return;
 
-  const handleVerifyIdentity = () => {
-    const msg = {
-      id: Date.now(),
-      type: "identity_verification",
-      content: "Identity Document Shared securely.",
-      sender_id: profile?.id || 1,
-      inserted_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, msg]);
-  };
-
-  const handleCall = (type) => {
-    alert(`Initiating secure end-to-end encrypted ${type} call...`);
+    setLoadingMore(true);
+    shouldScrollRef.current = false;
+    channelRef.current
+      ?.push("load_more", { before_id: earliest.id })
+      .receive("ok", ({ messages: older }) => {
+        setMessages((prev) => [...older, ...prev]);
+        setHasMoreHistory(older.length >= HISTORY_PAGE_SIZE);
+        setLoadingMore(false);
+      })
+      .receive("error", () => {
+        setHasMoreHistory(false);
+        setLoadingMore(false);
+      })
+      .receive("timeout", () => setLoadingMore(false));
   };
 
   return (
-    <div className="glass-card animate-in" style={{ maxWidth: '900px', width: '100%', height: '85vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      
+    <div className="chat-panel animate-in">
+
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+      <div className="chat-header">
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button 
-            onClick={onBack}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '1.2rem', cursor: 'pointer', marginRight: '1rem' }}
-          >
+          <button onClick={onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
             ←
           </button>
           <div>
-            <h2 style={{ fontSize: '1.3rem', margin: 0, color: 'var(--text-main)' }}>Professional Match #{roomId}</h2>
-            <span style={{ fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
-              Escrow Secured on Avalanche
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
+            <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span className={`dot ${otherOnline ? 'online' : ''}`}></span>
+              {connectionState === "joined" ? (otherOnline ? "Online now" : "Offline") : connectionState === "error" ? "Connection failed" : "Connecting..."}
             </span>
           </div>
-        </div>
-
-        {/* Action Buttons (Call / Video) */}
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button onClick={() => handleCall('Voice')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📞 Voice Call
-          </button>
-          <button onClick={() => handleCall('Video')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            📹 Video Call
-          </button>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '1rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto' }}>
-            <p style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>👋 Professional Synergy Established</p>
+      <div className="chat-messages custom-scrollbar">
+        {connectionState === "error" ? (
+          <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
+        ) : messages.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto' }}>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--paper)' }}>You're connected</p>
             <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
-              You are now securely connected. Use the tools below to share identity, discuss terms, and create smart-contract milestones.
+              Say hello to {partnerName || "your match"} - this is a real, private conversation between the two of you.
             </p>
           </div>
         ) : (
-          messages.map((msg, i) => {
-            if (msg.type === "system") {
+          <>
+            {hasMoreHistory && (
+              <button onClick={handleLoadMore} disabled={loadingMore} className="btn-ghost" style={{ alignSelf: 'center', padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                {loadingMore ? "Loading..." : "Load earlier messages"}
+              </button>
+            )}
+            {messages.map((msg) => {
+              const isMe = msg.sender_id === profile.id;
               return (
-                <div key={msg.id || i} style={{ textAlign: 'center', margin: '1rem 0' }}>
-                  <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                    🛡️ {msg.content}
-                  </span>
+                <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                  <div className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
+                    {msg.content}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem', textAlign: isMe ? 'right' : 'left' }}>
+                    {new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
                 </div>
               );
-            }
-
-            const isMe = msg.sender_id === (profile?.id || 1);
-            
-            return (
-              <div key={msg.id || i} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                <div style={{ 
-                  background: isMe ? 'var(--primary)' : 'rgba(255,255,255,0.1)', 
-                  color: 'white',
-                  padding: '1rem', 
-                  borderRadius: '16px',
-                  borderBottomRightRadius: isMe ? '4px' : '16px',
-                  borderBottomLeftRadius: isMe ? '16px' : '4px',
-                  fontSize: '0.95rem',
-                  lineHeight: '1.5',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-                }}>
-                  {msg.type === "escrow_proposal" && (
-                    <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      💼 Escrow Milestone Created
-                    </div>
-                  )}
-                  {msg.type === "identity_verification" && (
-                    <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#60a5fa' }}>
-                      🆔 Identity Reveal
-                    </div>
-                  )}
-                  
-                  {msg.content}
-                  
-                  {msg.type === "escrow_proposal" && !isMe && (
-                    <button style={{ marginTop: '1rem', width: '100%', padding: '0.5rem', background: 'white', color: 'black', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-                      Fund {msg.amount} into Smart Contract
-                    </button>
-                  )}
-                </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.25rem', textAlign: isMe ? 'right' : 'left' }}>
-                  {new Date(msg.inserted_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </div>
-              </div>
-            );
-          })
+            })}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Business Tool Bar */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-        <button onClick={handleVerifyIdentity} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#60a5fa', padding: '0.5rem 1rem', borderRadius: '20px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          📷 Reveal Identity
-        </button>
-        <button onClick={handleCreateMilestone} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#f59e0b', padding: '0.5rem 1rem', borderRadius: '20px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          💰 Create Escrow Milestone
-        </button>
-      </div>
-
       {/* Input Area */}
       <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-        <input 
-          type="text" 
+        <input
+          type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Discuss project terms, deliverables..."
-          style={{ 
-            flex: 1, 
-            background: 'rgba(255,255,255,0.05)', 
-            border: '1px solid rgba(255,255,255,0.1)', 
-            borderRadius: '12px',
-            padding: '1rem',
-            color: 'white',
-            outline: 'none',
-            fontSize: '0.95rem'
-          }}
+          placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
+          disabled={connectionState !== "joined"}
+          className="chat-input"
         />
-        <button type="submit" className="btn-primary" style={{ padding: '0 1.5rem', height: '100%', borderRadius: '12px' }} disabled={!newMessage.trim()}>
+        <button type="submit" className="btn-primary" style={{ padding: '0 1.5rem', height: '100%' }} disabled={!newMessage.trim() || connectionState !== "joined"}>
           Send
         </button>
       </form>

@@ -116,24 +116,20 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
 
   return (
     <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      
-      {/* Background Orbs */}
-      <div className="bg-orb orb-1"></div>
-      <div className="bg-orb orb-2"></div>
 
       {/* Header */}
-      <nav className="nav-bar" style={{ padding: '2rem 3rem' }}>
+      <nav className="nav-bar">
         <div className="brand-logo-container">
           <div className="vokazi-icon">V</div>
           <span className="brand-text">Vokazi Intelligence</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ color: 'var(--text-main)', fontSize: '0.95rem', fontWeight: 500, background: 'rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '100px' }}>
+        <div className="nav-actions">
+          <div className="user-pill">
             {profile?.name || 'Verified Identity'}
           </div>
-          <button 
+          <button
             onClick={() => { if (wallet) disconnect(wallet); }}
-            style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '100px', color: 'var(--text-muted)', padding: '0.5rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}
+            className="btn-ghost btn-sm"
           >
             Disconnect
           </button>
@@ -152,36 +148,28 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
           </p>
 
           {processingRedo ? (
-            <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto' }}></div>
           ) : (
             <div style={{ width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '24px', padding: '1.5rem', textAlign: 'left' }}>
-                <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Your Offer</p>
-                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: '1.6' }}>{profile?.offer_text}</div>
+              <div className="panel">
+                <p className="panel-label">Your Offer</p>
+                <div style={{ color: 'rgba(237,232,221,0.85)', fontSize: '0.95rem', lineHeight: '1.6' }}>{profile?.offer_text}</div>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0, 240, 255, 0.2)', borderRadius: '24px', padding: '1.5rem', textAlign: 'left' }}>
-                <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Your Need</p>
-                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: '1.6' }}>{profile?.need_text}</div>
+              <div className="panel">
+                <p className="panel-label">Your Need</p>
+                <div style={{ color: 'rgba(237,232,221,0.85)', fontSize: '0.95rem', lineHeight: '1.6' }}>{profile?.need_text}</div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.5rem' }}>
-                <button
-                  onClick={() => setView("interview")}
-                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '100px', color: 'var(--text-muted)', padding: '0.9rem 1.5rem', fontSize: '0.95rem', cursor: 'pointer' }}
-                >
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                <button onClick={() => setView("interview")} className="btn-ghost">
                   Redo Interview
                 </button>
-                <button
-                  onClick={handleFindMatch}
-                  disabled={findingMatch}
-                  className="action-btn ready"
-                  style={{ padding: '0.9rem 1.75rem', borderRadius: '100px' }}
-                >
+                <button onClick={handleFindMatch} disabled={findingMatch} className="btn-primary">
                   {findingMatch ? "Searching..." : "Find a Match"}
                 </button>
               </div>
               {findMatchMessage && (
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{findMatchMessage}</p>
+                <p style={{ textAlign: 'center', color: 'var(--muted)', fontSize: '0.9rem' }}>{findMatchMessage}</p>
               )}
             </div>
           )}
@@ -191,35 +179,35 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
         {profile?.offer_text && (
           <button
             onClick={() => setView("summary")}
-            style={{ position: 'absolute', top: '6rem', right: '3rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '100px', color: 'var(--text-muted)', padding: '0.5rem 1rem', fontSize: '0.85rem', cursor: 'pointer' }}
+            className="btn-ghost back-to-profile"
+            style={{ position: 'absolute', top: '6rem', right: '3rem', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
           >
             ← Back to profile
           </button>
         )}
         <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto 3rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          
+
           {/* Pulsing Rings when Active */}
           {callStatus === "active" && (
             <>
-              <div style={{ position: 'absolute', inset: -20, border: '2px solid var(--primary)', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
-              <div style={{ position: 'absolute', inset: -40, border: '1px solid var(--secondary)', borderRadius: '50%', opacity: 0.3, animation: 'pulse 1.5s infinite 0.3s' }}></div>
-              <div style={{ position: 'absolute', inset: -60, border: '1px solid var(--primary)', borderRadius: '50%', opacity: 0.1, animation: 'pulse 1.5s infinite 0.6s' }}></div>
+              <div style={{ position: 'absolute', inset: -20, border: '2px solid #e84142', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+              <div style={{ position: 'absolute', inset: -40, border: '1px solid #e84142', borderRadius: '50%', opacity: 0.3, animation: 'pulse 1.5s infinite 0.3s' }}></div>
+              <div style={{ position: 'absolute', inset: -60, border: '1px solid #e84142', borderRadius: '50%', opacity: 0.1, animation: 'pulse 1.5s infinite 0.6s' }}></div>
             </>
           )}
 
           {/* Main Button */}
-          <button 
+          <button
             onClick={handleCallClick}
             className={`action-btn ${callStatus === "inactive" ? 'ready' : ''}`}
-            style={{ 
-              width: '120px', 
-              height: '120px', 
-              borderRadius: '50%', 
-              position: 'relative', 
+            style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              position: 'relative',
               zIndex: 10,
               background: callStatus === "active" ? 'rgba(232, 65, 66, 0.1)' : undefined,
-              border: callStatus === "active" ? '2px solid #e84142' : 'none',
-              boxShadow: callStatus === "active" ? '0 0 40px rgba(232, 65, 66, 0.4)' : undefined
+              border: callStatus === "active" ? '2px solid #e84142' : 'none'
             }}
           >
             {callStatus === "inactive" && (
@@ -229,9 +217,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
                 <line x1="12" y1="19" x2="12" y2="22"></line>
               </svg>
             )}
-            {callStatus === "connecting" && (
-               <div style={{ width: '30px', height: '30px', border: '3px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-            )}
+            {callStatus === "connecting" && <div className="spinner" style={{ width: '30px', height: '30px' }}></div>}
             {callStatus === "active" && (
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e84142" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
@@ -240,34 +226,23 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
           </button>
         </div>
 
-        <h1 className="ai-greeting" style={{ fontSize: '3rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
+        <h1 className="ai-greeting" style={{ fontSize: '2.8rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
           {callStatus === "inactive" ? "Vokazi is ready to listen." : ""}
-          {callStatus === "connecting" ? "Establishing Neural Link..." : ""}
-          {callStatus === "active" ? <span className="gradient-text">Listening...</span> : ""}
+          {callStatus === "connecting" ? "Establishing connection..." : ""}
+          {callStatus === "active" ? <span className="accent-text">Listening...</span> : ""}
         </h1>
-        
+
         <p className="ai-subtext" style={{ maxWidth: '600px', animationDelay: '0.2s', marginBottom: '2rem' }}>
-          {callStatus === "inactive" 
-            ? "Tap the microphone. Explain exactly what your startup is building, what technical challenges you face, and what resources you are offering to the ecosystem." 
+          {callStatus === "inactive"
+            ? "Tap the microphone. Explain exactly what your startup is building, what technical challenges you face, and what resources you are offering to the ecosystem."
             : "Speak naturally. Our AI is extracting your technical requirements and preparing them for vectorization."}
         </p>
 
         {/* Live Transcript Box */}
         {callStatus === "active" && transcript && (
-          <div style={{ 
-            width: '100%', 
-            maxWidth: '600px', 
-            background: 'rgba(0,0,0,0.4)', 
-            border: '1px solid rgba(0, 240, 255, 0.2)', 
-            borderRadius: '24px', 
-            padding: '1.5rem', 
-            textAlign: 'left',
-            animation: 'fadeUpIn 0.4s ease forwards',
-            maxHeight: '200px',
-            overflowY: 'auto'
-          }}>
-            <p style={{ color: 'var(--primary)', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Live Transcript</p>
-            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+          <div className="panel animate-in" style={{ width: '100%', maxWidth: '600px', maxHeight: '200px', overflowY: 'auto' }}>
+            <p className="panel-label">Live Transcript</p>
+            <div style={{ color: 'rgba(237,232,221,0.8)', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
               {transcript}
             </div>
           </div>

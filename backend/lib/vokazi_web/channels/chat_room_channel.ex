@@ -2,34 +2,36 @@ defmodule VokaziWeb.ChatRoomChannel do
   use VokaziWeb, :channel
 
   alias Vokazi.Chat
+  alias VokaziWeb.Presence
 
   @impl true
-  def join("chat_room:" <> room_id, payload, socket) do
-    # Here we could check if the user is authorized to join the match room
-    # For MVP, we allow them in
-    send(self(), :after_join)
-    {:ok, assign(socket, :room_id, room_id)}
+  def join("chat_room:" <> room_id_str, _payload, socket) do
+    user_id = socket.assigns.user_id
+    room_id = String.to_integer(room_id_str)
+    room = Chat.get_chat_room!(room_id)
+
+    with true <- room.is_active,
+         true <- Chat.participant?(room_id, user_id) do
+      send(self(), :after_join)
+      {:ok, assign(socket, :room_id, room_id)}
+    else
+      false -> {:error, %{reason: "unauthorized"}}
+    end
+  rescue
+    Ecto.NoResultsError -> {:error, %{reason: "not_found"}}
+    ArgumentError -> {:error, %{reason: "not_found"}}
   end
 
   @impl true
   def handle_info(:after_join, socket) do
     room_id = socket.assigns.room_id
-    messages = Chat.list_messages_for_room(room_id)
-    
-    # Broadcast existing messages to the joining user
-    push(socket, "presence_state", %{}) # if we wanted presence
-    
-    # Send historical messages to the newly joined client
-    push(socket, "history", %{
-      messages: Enum.map(messages, fn m -> 
-        %{
-          id: m.id,
-          content: m.content,
-          sender_id: m.sender_id,
-          inserted_at: m.inserted_at
-        }
-      end)
-    })
+    user_id = socket.assigns.user_id
+
+    messages = Chat.list_recent_messages(room_id)
+    push(socket, "history", %{messages: Enum.map(messages, &serialize_message/1)})
+
+    {:ok, _ref} = Presence.track(socket, to_string(user_id), %{online_at: System.system_time(:second)})
+    push(socket, "presence_state", Presence.list(socket))
 
     {:noreply, socket}
   end
@@ -41,16 +43,37 @@ defmodule VokaziWeb.ChatRoomChannel do
 
     case Chat.create_message(%{content: content, sender_id: user_id, chat_room_id: room_id}) do
       {:ok, message} ->
-        broadcast!(socket, "new_msg", %{
-          id: message.id,
-          content: message.content,
-          sender_id: message.sender_id,
-          inserted_at: message.inserted_at
-        })
+        broadcast!(socket, "new_msg", serialize_message(message))
         {:reply, :ok, socket}
 
-      {:error, _changeset} ->
-        {:reply, {:error, %{reason: "Could not save message"}}, socket}
+      {:error, changeset} ->
+        {:reply, {:error, %{reason: changeset_error_message(changeset)}}, socket}
     end
+  end
+
+  def handle_in("new_msg", _payload, socket) do
+    {:reply, {:error, %{reason: "invalid_payload"}}, socket}
+  end
+
+  @impl true
+  def handle_in("load_more", %{"before_id" => before_id}, socket) do
+    messages = Chat.list_messages_before(socket.assigns.room_id, before_id)
+    {:reply, {:ok, %{messages: Enum.map(messages, &serialize_message/1)}}, socket}
+  end
+
+  defp serialize_message(message) do
+    %{
+      id: message.id,
+      content: message.content,
+      sender_id: message.sender_id,
+      sender_name: message.sender && message.sender.full_name,
+      inserted_at: message.inserted_at
+    }
+  end
+
+  defp changeset_error_message(changeset) do
+    changeset.errors
+    |> Enum.map(fn {field, {msg, _}} -> "#{field} #{msg}" end)
+    |> Enum.join(", ")
   end
 end

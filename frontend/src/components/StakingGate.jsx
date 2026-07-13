@@ -29,7 +29,7 @@ export default function StakingGate({ profile, match, onResolved }) {
         const data = await res.json();
         if (data.status === "unlocked") {
           clearInterval(pollRef.current);
-          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id });
+          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
         } else {
           setCurrent(data);
         }
@@ -52,7 +52,7 @@ export default function StakingGate({ profile, match, onResolved }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "unlocked") {
-          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id });
+          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
         } else if (data.status === "awaiting_other_stake") {
           setCurrent((m) => ({ ...m, my_staked: true }));
         } else {
@@ -90,28 +90,13 @@ export default function StakingGate({ profile, match, onResolved }) {
     });
   };
 
-  const cardStyle = {
-    background: "rgba(0,0,0,0.4)",
-    border: "1px solid rgba(0, 240, 255, 0.2)",
-    borderRadius: "24px",
-    padding: "1.5rem",
-    textAlign: "left",
-  };
-  const labelStyle = {
-    color: "var(--primary)",
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    textTransform: "uppercase",
-    marginBottom: "0.75rem",
-    letterSpacing: "0.05em",
-  };
-
   const busy = confirming || isPending;
 
   return (
     <div style={{ width: "100%", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div className="bg-orb orb-1"></div>
-      <div className="bg-orb orb-2"></div>
+      <div className="identity-badge">
+        Signed in as <strong style={{ color: "var(--paper)" }}>{profile?.name || "you"}</strong>
+      </div>
 
       <main
         className="onboarding-container"
@@ -126,46 +111,30 @@ export default function StakingGate({ profile, match, onResolved }) {
         </p>
 
         <div style={{ width: "100%", maxWidth: "560px", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={cardStyle}>
-            <p style={labelStyle}>Commitment Stake</p>
+          <div className="panel">
+            <p className="panel-label">Commitment Stake</p>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.95rem" }}>
+              <span className="mono-value" style={{ fontSize: "0.95rem" }}>
                 {stakeAmountAvax} AVAX (Fuji testnet)
               </span>
-              <span style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+              <span style={{ color: current.my_staked ? "var(--signal)" : "var(--muted)", fontSize: "0.85rem" }}>
                 {current.my_staked ? "You've staked" : "Not staked yet"}
               </span>
             </div>
           </div>
 
           {error && (
-            <p style={{ color: "#ffbe50", fontSize: "0.9rem", textAlign: "center", margin: 0 }}>{error}</p>
+            <p style={{ color: "var(--warn)", fontSize: "0.9rem", textAlign: "center", margin: 0 }}>{error}</p>
           )}
 
           {isWaiting ? (
-            <div style={{ textAlign: "center", padding: "1rem", color: "var(--text-muted)" }}>
-              <div
-                className="spinner"
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  margin: "0 auto 0.75rem",
-                  border: "3px solid rgba(255,255,255,0.1)",
-                  borderTopColor: "var(--primary)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              ></div>
+            <div style={{ textAlign: "center", padding: "1rem", color: "var(--muted)" }}>
+              <div className="spinner" style={{ width: "28px", height: "28px", margin: "0 auto 0.75rem" }}></div>
               You're staked. Waiting for {current.other_user?.name || "them"} to stake too.
             </div>
           ) : (
             <div style={{ display: "flex", justifyContent: "center", marginTop: "0.5rem" }}>
-              <button
-                onClick={handleStake}
-                disabled={busy}
-                className="action-btn ready"
-                style={{ padding: "0.9rem 1.75rem", borderRadius: "100px" }}
-              >
+              <button onClick={handleStake} disabled={busy} className="btn-primary" style={{ padding: "0.9rem 1.75rem" }}>
                 {busy ? "Confirming..." : `Stake ${stakeAmountAvax} AVAX to unlock chat`}
               </button>
             </div>

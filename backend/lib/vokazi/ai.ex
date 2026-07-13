@@ -97,10 +97,16 @@ defmodule Vokazi.AI do
   introduction copy so we don't need a second LLM call for that later.
 
   `user_a` and `user_b` are maps with `:offer_text`, `:need_text`, `:role`.
-  Returns `{:ok, %{score:, is_valid:, reasoning:, strengths:, gaps:, intro_message:}}`.
-  `strengths` and `gaps` are short lists so a match never reads as a bare,
-  unexplained percentage - a 60% score should make it obvious what the
-  other 40% is.
+  Returns `{:ok, %{score:, is_valid:, reasoning:, strengths:, gaps:, intro_message:, pitch_a:, pitch_b:}}`.
+
+  `reasoning`/`strengths`/`gaps` are the shared, third-person analyst
+  verdict (kept for internal/logging use). `pitch_a` and `pitch_b` are
+  what each person actually sees: a personalized, second-person
+  `%{"headline", "strengths", "gaps"}` written directly to that person
+  ("you need X because...") rather than an unexplained percentage or a
+  report about two strangers - the goal is for the match screen to feel
+  like Vokazi already knows this person and their needs, since that
+  trust is what makes someone willing to pay the commitment stake.
   """
   def validate_match(user_a, user_b) do
     api_key = System.get_env("GEMINI_API_KEY")
@@ -150,6 +156,23 @@ defmodule Vokazi.AI do
       - "intro_message": if is_valid is true, a warm 2-3 sentence introduction addressed to
         both #{name_a} and #{name_b} by name, explaining why they should meet and what each
         brings the other. If is_valid is false, an empty string.
+      - "pitch_a": a personalized pitch shown only to #{name_a}, written speaking directly
+        to them as "you" (never in the third person, never call them by name) - as if you
+        already know them and their business. An object with:
+          - "headline": one or two warm, confident sentences on why THEY specifically
+            should meet #{name_b} - e.g. "You need capital and go-to-market muscle to scale
+            past your infrastructure bottleneck - #{name_b} brings exactly that."
+          - "strengths": 2-4 short strings, second person, on what #{name_b} concretely
+            brings that answers #{name_a}'s stated need (e.g. "#{name_b} directly covers
+            your need for dedicated funding and GTM execution").
+          - "gaps": 1-3 short strings, second person, on what's still uncertain or worth
+            asking about before committing (e.g. "Worth confirming whether #{name_b}'s
+            check size matches what you're raising").
+      - "pitch_b": the mirror of "pitch_a" - shown only to #{name_b}, speaking to them as
+        "you", explaining why #{name_a} answers THEIR need. Same object shape.
+      Both pitches must be grounded in the actual Offer/Need text above - never invent
+      details, and keep the same honesty bar as "gaps": a 90% match still has real
+      caveats worth naming.
       """
 
       body = %{
@@ -172,7 +195,9 @@ defmodule Vokazi.AI do
                reasoning: parsed["reasoning"] || "",
                strengths: List.wrap(parsed["strengths"]),
                gaps: List.wrap(parsed["gaps"]),
-               intro_message: parsed["intro_message"] || ""
+               intro_message: parsed["intro_message"] || "",
+               pitch_a: parse_pitch(parsed["pitch_a"]),
+               pitch_b: parse_pitch(parsed["pitch_b"])
              }}
           rescue
             e ->
@@ -186,4 +211,14 @@ defmodule Vokazi.AI do
       end
     end
   end
+
+  defp parse_pitch(%{} = pitch) do
+    %{
+      "headline" => pitch["headline"] || "",
+      "strengths" => List.wrap(pitch["strengths"]),
+      "gaps" => List.wrap(pitch["gaps"])
+    }
+  end
+
+  defp parse_pitch(_), do: %{"headline" => "", "strengths" => [], "gaps" => []}
 end

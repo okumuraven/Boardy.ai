@@ -58,6 +58,7 @@ export default function App() {
   }, [activeAccount]);
 
   const [activeChatRoomId, setActiveChatRoomId] = useState(null);
+  const [chatPartnerName, setChatPartnerName] = useState(null);
   const [pendingMatch, setPendingMatch] = useState(null);
 
   // Checks whether this user already has an active match - awaiting
@@ -77,6 +78,7 @@ export default function App() {
       .then(data => {
         const match = data?.match || null;
         if (match?.status === "unlocked" && match.chat_room_id) {
+          setChatPartnerName(match.other_user?.name || null);
           setActiveChatRoomId(match.chat_room_id);
           setPendingMatch(null);
         } else {
@@ -109,9 +111,10 @@ export default function App() {
       .catch(err => { console.error(err); return { status: "error" }; });
   };
 
-  const handleMatchResolved = ({ unlocked, declined, awaitingStake, chatRoomId }) => {
+  const handleMatchResolved = ({ unlocked, declined, awaitingStake, chatRoomId, otherUserName }) => {
     if (unlocked && chatRoomId) {
       setPendingMatch(null);
+      setChatPartnerName(otherUserName || null);
       setActiveChatRoomId(chatRoomId);
     } else if (declined) {
       setPendingMatch(null);
@@ -155,7 +158,17 @@ export default function App() {
     }
 
     if (activeChatRoomId) {
-      return <ChatRoomView roomId={activeChatRoomId} profile={profile} onBack={() => setActiveChatRoomId(null)} />;
+      return (
+        <ChatRoomView
+          roomId={activeChatRoomId}
+          profile={profile}
+          partnerName={chatPartnerName}
+          onBack={() => {
+            setActiveChatRoomId(null);
+            setChatPartnerName(null);
+          }}
+        />
+      );
     }
 
     if (pendingMatch?.status === "pending") {

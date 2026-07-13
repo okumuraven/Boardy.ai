@@ -25,6 +25,11 @@ defmodule Vokazi.Matchmaking.Match do
     field :ai_strengths, {:array, :string}, default: []
     field :ai_gaps, {:array, :string}, default: []
     field :intro_message, :string
+    # Personalized, second-person pitch shown to each side ("you need X
+    # because...") instead of the shared third-person analyst report
+    # above - %{"headline" => .., "strengths" => [..], "gaps" => [..]}.
+    field :pitch_a, :map
+    field :pitch_b, :map
 
     # Each side's independent decision on whether to proceed, reviewed
     # before either party is asked to commit to anything further.
@@ -63,6 +68,8 @@ defmodule Vokazi.Matchmaking.Match do
       :ai_strengths,
       :ai_gaps,
       :intro_message,
+      :pitch_a,
+      :pitch_b,
       :user_a_response,
       :user_b_response,
       :decline_reason,

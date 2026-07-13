@@ -17,9 +17,20 @@ defmodule VokaziWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
+  # Connect params always arrive as strings (they travel as a query
+  # string on the websocket upgrade request, same as every other param
+  # in this app) - assigning the raw string here would silently break
+  # every integer comparison against user_a_id/user_b_id downstream.
   @impl true
-  def connect(%{"user_id" => user_id}, socket, _connect_info) do
+  def connect(%{"user_id" => user_id}, socket, _connect_info) when is_integer(user_id) do
     {:ok, assign(socket, :user_id, user_id)}
+  end
+
+  def connect(%{"user_id" => user_id}, socket, _connect_info) when is_binary(user_id) do
+    case Integer.parse(user_id) do
+      {id, ""} -> {:ok, assign(socket, :user_id, id)}
+      _ -> :error
+    end
   end
 
   def connect(_params, _socket, _connect_info) do

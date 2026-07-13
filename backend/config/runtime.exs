@@ -21,7 +21,13 @@ if System.get_env("PHX_SERVER") do
 end
 
 config :vokazi, VokaziWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+  http: [port: String.to_integer(System.get_env("PORT", "4000"))],
+  # The frontend (localhost:5173) and backend (localhost:4000) are
+  # different origins, so Phoenix's default websocket origin check would
+  # otherwise silently reject every chat socket connection. This mirrors
+  # the intent already written in dev.exs, which never actually applies
+  # here since this container runs with MIX_ENV=prod.
+  check_origin: false
 
 # Avalanche Fuji JSON-RPC endpoint used by Vokazi.Avalanche to submit the
 # owner-only `createMatch` tx and to independently verify stakes via

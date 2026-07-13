@@ -388,7 +388,9 @@ defmodule Vokazi.Matchmaking do
       ai_reasoning: ai_result.reasoning,
       ai_strengths: ai_result.strengths,
       ai_gaps: ai_result.gaps,
-      intro_message: ai_result.intro_message
+      intro_message: ai_result.intro_message,
+      pitch_a: ai_result.pitch_a,
+      pitch_b: ai_result.pitch_b
     })
     |> Repo.insert()
     |> case do

@@ -24,20 +24,7 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
           <span className="brand-text">Vokazi</span>
         </div>
         <div>
-          <button 
-            onClick={onWhitepaperClick} 
-            style={{ 
-              background: 'transparent', 
-              border: 'none', 
-              color: 'var(--text-muted)', 
-              cursor: 'pointer', 
-              fontSize: '0.95rem', 
-              fontWeight: 500,
-              transition: 'color 0.2s'
-            }} 
-            onMouseOver={(e) => e.target.style.color = '#fff'} 
-            onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
-          >
+          <button onClick={onWhitepaperClick} className="nav-link">
             Read Whitepaper
           </button>
         </div>
@@ -45,10 +32,10 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
 
       {/* Dynamic Immersive Onboarding */}
       <main className="onboarding-container">
-        
+
         <h1 className="ai-greeting">
           I find you the right people. <br />
-          <span className="gradient-text">You build the future.</span>
+          <span className="accent-text">You build the future.</span>
         </h1>
         
         <p className="ai-subtext">

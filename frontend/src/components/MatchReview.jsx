@@ -22,6 +22,13 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const isWaiting = match.my_response === "accepted" && match.other_response !== "accepted";
 
+  // Personalized, second-person pitch ("you need X because...") - falls
+  // back to the older shared third-person fields for matches created
+  // before this existed, so nothing breaks for in-flight matches.
+  const headline = match.my_pitch?.headline || match.ai_reasoning;
+  const strengths = match.my_pitch?.strengths?.length ? match.my_pitch.strengths : match.ai_strengths;
+  const gaps = match.my_pitch?.gaps?.length ? match.my_pitch.gaps : match.ai_gaps;
+
   useEffect(() => {
     if (!isWaiting) return;
 
@@ -31,7 +38,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         const data = await res.json();
         if (data.status === "unlocked") {
           clearInterval(pollRef.current);
-          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id });
+          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id, otherUserName: match.other_user?.name });
         } else if (data.status === "declined") {
           clearInterval(pollRef.current);
           onResolvedRef.current({ declined: true });
@@ -86,26 +93,11 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
     respond("declined", declineReason.trim());
   };
 
-  const cardStyle = {
-    background: "rgba(0,0,0,0.4)",
-    border: "1px solid rgba(0, 240, 255, 0.2)",
-    borderRadius: "24px",
-    padding: "1.5rem",
-    textAlign: "left",
-  };
-  const labelStyle = {
-    color: "var(--primary)",
-    fontSize: "0.8rem",
-    fontWeight: 600,
-    textTransform: "uppercase",
-    marginBottom: "0.75rem",
-    letterSpacing: "0.05em",
-  };
-
   return (
     <div style={{ width: "100%", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <div className="bg-orb orb-1"></div>
-      <div className="bg-orb orb-2"></div>
+      <div className="identity-badge">
+        Signed in as <strong style={{ color: "var(--paper)" }}>{profile?.name || "you"}</strong>
+      </div>
 
       <main
         className="onboarding-container"
@@ -117,39 +109,36 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         <p className="ai-subtext" style={{ marginBottom: "0.5rem" }}>
           {match.other_user?.name || "Someone"} · {match.other_user?.role || "unspecified role"}
         </p>
-        <div
-          className="gradient-text"
-          style={{ fontSize: "2.5rem", fontWeight: 700, marginBottom: "1.5rem" }}
-        >
+        <div className="match-score">
           {Math.round(match.ai_score)}% match
         </div>
 
         <div style={{ width: "100%", maxWidth: "640px", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={cardStyle}>
-            <p style={labelStyle}>Why this match</p>
-            <div style={{ color: "rgba(255,255,255,0.85)", fontSize: "0.95rem", lineHeight: "1.6" }}>
-              {match.ai_reasoning}
+          <div className="panel">
+            <p className="panel-label">Why this match</p>
+            <div style={{ color: "rgba(237,232,221,0.85)", fontSize: "0.95rem", lineHeight: "1.6" }}>
+              {headline}
             </div>
           </div>
 
-          {match.ai_strengths?.length > 0 && (
-            <div style={cardStyle}>
-              <p style={labelStyle}>What lines up</p>
-              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(255,255,255,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
-                {match.ai_strengths.map((s, i) => (
+          {strengths?.length > 0 && (
+            <div className="panel">
+              <p className="panel-label">What this brings you</p>
+              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(237,232,221,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
+                {strengths.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          {match.ai_gaps?.length > 0 && (
-            <div style={{ ...cardStyle, borderColor: "rgba(255, 190, 80, 0.25)" }}>
-              <p style={{ ...labelStyle, color: "#ffbe50" }}>
+          {gaps?.length > 0 && (
+            <div className="panel warn">
+              <p className="panel-label warn">
                 Worth knowing (the rest of the {100 - Math.round(match.ai_score)}%)
               </p>
-              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(255,255,255,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
-                {match.ai_gaps.map((g, i) => (
+              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(237,232,221,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
+                {gaps.map((g, i) => (
                   <li key={i}>{g}</li>
                 ))}
               </ul>
@@ -157,40 +146,20 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
           )}
 
           {isWaiting ? (
-            <div style={{ textAlign: "center", padding: "1rem", color: "var(--text-muted)" }}>
-              <div
-                className="spinner"
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  margin: "0 auto 0.75rem",
-                  border: "3px solid rgba(255,255,255,0.1)",
-                  borderTopColor: "var(--primary)",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              ></div>
+            <div style={{ textAlign: "center", padding: "1rem", color: "var(--muted)" }}>
+              <div className="spinner" style={{ width: "28px", height: "28px", margin: "0 auto 0.75rem" }}></div>
               You're in. Waiting for {match.other_user?.name || "them"} to respond.
             </div>
           ) : showDeclineForm ? (
-            <div style={cardStyle}>
-              <p style={labelStyle}>Why isn't this a fit?</p>
+            <div className="panel">
+              <p className="panel-label">Why isn't this a fit?</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
                 {DECLINE_REASONS.map((r) => (
                   <button
                     key={r}
                     onClick={() => setDeclineReason(r)}
                     disabled={busy}
-                    style={{
-                      background: declineReason === r ? "rgba(0, 240, 255, 0.15)" : "transparent",
-                      border:
-                        declineReason === r ? "1px solid var(--primary)" : "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: "100px",
-                      color: "rgba(255,255,255,0.85)",
-                      padding: "0.5rem 1rem",
-                      fontSize: "0.85rem",
-                      cursor: busy ? "default" : "pointer",
-                    }}
+                    className={`chip ${declineReason === r ? "selected" : ""}`}
                   >
                     {r}
                   </button>
@@ -204,10 +173,10 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
                 rows={2}
                 style={{
                   width: "100%",
-                  background: "rgba(0,0,0,0.3)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: "12px",
-                  color: "rgba(255,255,255,0.9)",
+                  background: "var(--ink)",
+                  border: "1px solid var(--ink-line)",
+                  borderRadius: "4px",
+                  color: "var(--paper)",
                   padding: "0.75rem",
                   fontSize: "0.9rem",
                   resize: "vertical",
@@ -215,7 +184,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
                 }}
               />
               {declineError && (
-                <p style={{ color: "#ffbe50", fontSize: "0.85rem", margin: "0.5rem 0 0" }}>{declineError}</p>
+                <p style={{ color: "var(--warn)", fontSize: "0.85rem", margin: "0.5rem 0 0" }}>{declineError}</p>
               )}
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1rem" }}>
                 <button
@@ -225,51 +194,21 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
                     setDeclineError("");
                   }}
                   disabled={busy}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    borderRadius: "100px",
-                    color: "var(--text-muted)",
-                    padding: "0.7rem 1.25rem",
-                    fontSize: "0.9rem",
-                    cursor: busy ? "default" : "pointer",
-                  }}
+                  className="btn-ghost"
                 >
                   Back
                 </button>
-                <button
-                  onClick={submitDecline}
-                  disabled={busy}
-                  className="action-btn ready"
-                  style={{ padding: "0.7rem 1.5rem", borderRadius: "100px" }}
-                >
+                <button onClick={submitDecline} disabled={busy} className="btn-primary">
                   {busy ? "Submitting..." : "Confirm Decline"}
                 </button>
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "0.5rem" }}>
-              <button
-                onClick={() => setShowDeclineForm(true)}
-                disabled={busy}
-                style={{
-                  background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  borderRadius: "100px",
-                  color: "var(--text-muted)",
-                  padding: "0.9rem 1.5rem",
-                  fontSize: "0.95rem",
-                  cursor: busy ? "default" : "pointer",
-                }}
-              >
+              <button onClick={() => setShowDeclineForm(true)} disabled={busy} className="btn-ghost">
                 Not Right Now
               </button>
-              <button
-                onClick={() => respond("accepted")}
-                disabled={busy}
-                className="action-btn ready"
-                style={{ padding: "0.9rem 1.75rem", borderRadius: "100px" }}
-              >
+              <button onClick={() => respond("accepted")} disabled={busy} className="btn-primary">
                 I'm Interested
               </button>
             </div>
