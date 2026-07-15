@@ -6,6 +6,7 @@ export default function ProfileSetup({ onComplete, phone }) {
   const [phoneNumber, setPhoneNumber] = useState(phone || '');
   const [role, setRole] = useState('founder');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const activeAccount = useActiveAccount();
 
   useEffect(() => {
@@ -20,13 +21,14 @@ export default function ProfileSetup({ onComplete, phone }) {
     if (phoneNumber.length < 9) return alert("Please enter a valid phone number");
     
     setIsSubmitting(true);
-    
+    setSubmitError('');
+
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
 
       const response = await fetch(`${apiUrl}/api/profiles`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'X-Tunnel-Skip-AntiPhishing-Page': 'true'
         },
@@ -44,11 +46,12 @@ export default function ProfileSetup({ onComplete, phone }) {
       }
       const data = await response.json();
       onComplete({ name, phoneNumber, role, id: data.id });
-      
+
     } catch (error) {
-      console.warn("Backend is offline. Proceeding to Dashboard in Offline Mode.");
-      // Fallback for MVP testing so you are never stuck on this screen
-      onComplete({ name, phoneNumber, role, id: activeAccount?.address || "local_testing_id" });
+      // Never silently proceed on failure - a fake local profile means the
+      // interview that follows has nowhere real to be saved.
+      console.error("Profile creation failed:", error);
+      setSubmitError("Couldn't reach the server to save your profile. Check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +135,9 @@ export default function ProfileSetup({ onComplete, phone }) {
               <div className="spinner" style={{ width: '24px', height: '24px' }}></div>
             ) : 'Start Voice Interview'}
           </button>
+          {submitError && (
+            <p style={{ color: 'var(--warn)', fontSize: '0.9rem', textAlign: 'center', margin: 0 }}>{submitError}</p>
+          )}
         </form>
 
       </main>

@@ -4,13 +4,14 @@ Vokazi is the Web3 evolution of professional matchmaking, built specifically for
 
 Instead of traditional forms or cold emails, Vokazi uses a **conversational onboarding flow** combined with a **Web3 Trust-Gate**. Users drop their phone number, authenticate via Google (which secretly provisions an Avalanche C-Chain wallet via Thirdweb), and complete a live voice interview with our AI agent (powered by Vapi). 
 
-The AI extracts their "Needs" and "Offers", generates 1536-dimensional embeddings, and uses `pgvector` to find perfect matches. To unlock introductions and automatically schedule a meeting, both parties must stake a micro-commitment (USDC) on Avalanche, completely eliminating ghosting and spam.
+The AI (Google Gemini) extracts their "Needs" and "Offers", generates 1536-dimensional embeddings, and uses `pgvector` to find perfect matches. Both parties then review the AI's match score/reasoning and must mutually accept before a real on-chain commitment (0.01 AVAX each, staked from their own wallet on Avalanche Fuji) unlocks a live chat room — completely eliminating ghosting and spam.
 
 ## 🚀 Architecture
-- **Frontend**: React + Vite + Tailwind CSS + Thirdweb (In-App Wallets via Google OAuth) + Vapi Web SDK
-- **Backend**: Elixir + Phoenix (REST API & Webhooks)
-- **Database**: PostgreSQL with `pgvector` for Cosine Similarity Matching
-- **Smart Contracts**: Avalanche Fuji Testnet (Bilateral Staking & Escrow)
+- **Frontend**: React + Vite + custom CSS ("ink and brass" design system) + Thirdweb (In-App Wallets via Google OAuth) + Vapi Web SDK
+- **Backend**: Elixir + Phoenix (REST API, Webhooks & real-time Channels)
+- **Database**: PostgreSQL with `pgvector` for bidirectional Cosine Similarity Matching
+- **AI**: Google Gemini (`gemini-embedding-2` for vectors, `gemini-3.5-flash` for summarization & match validation)
+- **Smart Contracts**: Avalanche Fuji Testnet — `VokaziMatchStaking.sol` (live), `VokaziMilestoneEscrow.sol` (deployed, not yet wired into the app)
 - **Infrastructure**: Fully Dockerized (Monorepo)
 
 ## 🛠️ Prerequisites
@@ -52,7 +53,10 @@ Open your browser and navigate to: `http://localhost:5173`
 1. **Conversational Onboarding**: User inputs phone number in a chat UI.
 2. **Invisible Wallet**: User signs in with Google, automatically provisioning a Thirdweb Avalanche wallet.
 3. **Voice Interview**: User talks to the Vapi AI Agent in the browser to log their Needs/Offers.
-4. **AI Match & Staking**: The backend finds a high-confidence vector match. Both users must stake USDC on Avalanche to unlock the chat and calendar invite.
+4. **AI Match & Mutual Consent**: The backend finds a high-confidence vector match, Gemini validates and scores it, and both users independently review and accept (or decline with a reason) on the `MatchReview` screen.
+5. **Trust-Gate & Staking**: Once both accept, the backend registers the match on `VokaziMatchStaking.sol` and each user stakes 0.01 AVAX from their own wallet. The backend verifies both stakes directly on-chain before unlocking a real-time chat room.
+
+> Note: automatic calendar/meeting scheduling is on the roadmap but not yet built — see `ROADMAP.md`.
 
 ## 🤝 Contributing
 Clone the repo, set up your `.env`, and ensure Docker is running. The Elixir backend uses `network_mode: "host"` to bypass Docker DNS issues and features blazing-fast hot-reloading. See `ROADMAP.md` for our 3-month scaling plan.
