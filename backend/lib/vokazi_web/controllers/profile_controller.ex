@@ -32,6 +32,7 @@ defmodule VokaziWeb.ProfileController do
       wallet_address: wallet_address,
       full_name: params["full_name"],
       role: params["role"],
+      email: params["email"],
       onboarding_completed: true
     })
 
@@ -86,6 +87,7 @@ defmodule VokaziWeb.ProfileController do
       changeset = Profile.changeset(profile, %{
         offer_text: "AI: I am an expert Web3 and React developer looking for a fast-paced team.",
         need_text: "Need: Looking for a blockchain startup with a solid product roadmap.",
+        contact_preference: "call",
         offer_vector: mock_vector,
         need_vector: mock_vector
       })
@@ -103,16 +105,17 @@ defmodule VokaziWeb.ProfileController do
     
     if profile do
       # Extract intelligent summary via Gemini Flash
-      {offer, need} = case Vokazi.AI.extract_summary(transcript) do
-        {:ok, o, n} -> {o, n}
-        _ -> {"Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "..."}
+      {offer, need, contact_preference} = case Vokazi.AI.extract_summary(transcript) do
+        {:ok, o, n, pref} -> {o, n, pref}
+        _ -> {"Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "call"}
       end
 
       # 1. Save the raw transcript AND the extracted summaries
       changeset = Profile.changeset(profile, %{
         raw_transcript: transcript,
         offer_text: offer,
-        need_text: need
+        need_text: need,
+        contact_preference: contact_preference
       })
       updated_profile = Vokazi.Repo.update!(changeset)
       

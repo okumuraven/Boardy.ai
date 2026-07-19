@@ -58,6 +58,7 @@ export default function App() {
   }, [activeAccount]);
 
   const [activeChatRoomId, setActiveChatRoomId] = useState(null);
+  const [activeMatchId, setActiveMatchId] = useState(null);
   const [chatPartnerName, setChatPartnerName] = useState(null);
   const [pendingMatch, setPendingMatch] = useState(null);
 
@@ -79,6 +80,7 @@ export default function App() {
         const match = data?.match || null;
         if (match?.status === "unlocked" && match.chat_room_id) {
           setChatPartnerName(match.other_user?.name || null);
+          setActiveMatchId(match.match_id);
           setActiveChatRoomId(match.chat_room_id);
           setPendingMatch(null);
         } else {
@@ -111,10 +113,11 @@ export default function App() {
       .catch(err => { console.error(err); return { status: "error" }; });
   };
 
-  const handleMatchResolved = ({ unlocked, declined, awaitingStake, chatRoomId, otherUserName }) => {
+  const handleMatchResolved = ({ unlocked, declined, awaitingStake, matchId, chatRoomId, otherUserName }) => {
     if (unlocked && chatRoomId) {
       setPendingMatch(null);
       setChatPartnerName(otherUserName || null);
+      setActiveMatchId(matchId || null);
       setActiveChatRoomId(chatRoomId);
     } else if (declined) {
       setPendingMatch(null);
@@ -161,10 +164,12 @@ export default function App() {
       return (
         <ChatRoomView
           roomId={activeChatRoomId}
+          matchId={activeMatchId}
           profile={profile}
           partnerName={chatPartnerName}
           onBack={() => {
             setActiveChatRoomId(null);
+            setActiveMatchId(null);
             setChatPartnerName(null);
           }}
         />

@@ -5,6 +5,12 @@ defmodule VokaziWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # Google's OAuth redirect lands here as a plain browser navigation
+  # (Accept: text/html), so it can't go through the `:api` pipeline's
+  # `:accepts, ["json"]` plug without a 406.
+  pipeline :browser_redirect do
+  end
+
   scope "/api", VokaziWeb do
     pipe_through :api
 
@@ -18,5 +24,21 @@ defmodule VokaziWeb.Router do
     get "/matches/pending", MatchController, :pending_for_user
     get "/matches/:id/status", MatchController, :status
     post "/matchmaking/find_match", MatchController, :find_match
+
+    # Escrow-Gated Google Calendar
+    get "/matches/:id/schedule", SchedulingController, :show
+    get "/matches/:id/schedule/status", SchedulingController, :status
+    get "/matches/:id/schedule/connect_url", SchedulingController, :connect_url
+    post "/matches/:id/schedule/decline_calendar", SchedulingController, :decline_calendar
+    post "/matches/:id/schedule/availability", SchedulingController, :submit_availability
+    post "/matches/:id/schedule/contact_preference", SchedulingController, :set_contact_preference
+    post "/matches/:id/schedule/select_slot", SchedulingController, :select_slot
+    post "/matches/:id/schedule/remind", SchedulingController, :remind
+  end
+
+  scope "/api/auth/google/calendar", VokaziWeb do
+    pipe_through :browser_redirect
+
+    get "/callback", GoogleOAuthController, :callback
   end
 end

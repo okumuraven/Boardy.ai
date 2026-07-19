@@ -29,7 +29,7 @@ export default function StakingGate({ profile, match, onResolved }) {
         const data = await res.json();
         if (data.status === "unlocked") {
           clearInterval(pollRef.current);
-          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
+          onResolvedRef.current({ unlocked: true, matchId: current.match_id, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
         } else {
           setCurrent(data);
         }
@@ -52,7 +52,7 @@ export default function StakingGate({ profile, match, onResolved }) {
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "unlocked") {
-          onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
+          onResolvedRef.current({ unlocked: true, matchId: current.match_id, chatRoomId: data.chat_room_id, otherUserName: current.other_user?.name });
         } else if (data.status === "awaiting_other_stake") {
           setCurrent((m) => ({ ...m, my_staked: true }));
         } else {

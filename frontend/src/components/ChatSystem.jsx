@@ -1,9 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
+import SchedulingFlow from "../features/scheduling";
 
 const HISTORY_PAGE_SIZE = 50;
 
-export default function ChatRoomView({ roomId, profile, partnerName, onBack }) {
+export default function ChatRoomView({ roomId, matchId, profile, partnerName, onBack }) {
+  // Auto-reopens the scheduling panel if we're landing back here right
+  // after Google's OAuth redirect (a full page navigation, so any prior
+  // React state was lost) - SchedulingFlow reads the same query params
+  // to show a connect success/error banner before clearing them.
+  const [showScheduling, setShowScheduling] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has("calendar_connected") || params.has("calendar_connect_error");
+  });
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [connectionState, setConnectionState] = useState("connecting"); // connecting | joined | error
@@ -114,9 +123,9 @@ export default function ChatRoomView({ roomId, profile, partnerName, onBack }) {
     <div className="chat-panel animate-in">
 
       {/* Header */}
-      <div className="chat-header">
+      <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
+          <button onClick={showScheduling ? () => setShowScheduling(false) : onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
             ←
           </button>
           <div>
@@ -127,8 +136,17 @@ export default function ChatRoomView({ roomId, profile, partnerName, onBack }) {
             </span>
           </div>
         </div>
+        {!showScheduling && matchId && (
+          <button onClick={() => setShowScheduling(true)} className="btn-ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
+            📅 Schedule Intro Call
+          </button>
+        )}
       </div>
 
+      {showScheduling ? (
+        <SchedulingFlow matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setShowScheduling(false)} />
+      ) : (
+      <>
       {/* Messages Area */}
       <div className="chat-messages custom-scrollbar">
         {connectionState === "error" ? (
@@ -179,6 +197,8 @@ export default function ChatRoomView({ roomId, profile, partnerName, onBack }) {
           Send
         </button>
       </form>
+      </>
+      )}
     </div>
   );
 }

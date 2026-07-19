@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useActiveAccount } from "thirdweb/react";
+import { getUserEmail } from "thirdweb/wallets/in-app";
+import { client } from "../config/thirdweb";
 
 export default function ProfileSetup({ onComplete, phone }) {
   const [name, setName] = useState('');
@@ -26,6 +28,11 @@ export default function ProfileSetup({ onComplete, phone }) {
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
 
+      // Best-effort - the in-app wallet's Google email, so this account
+      // has a real address on file for calendar invites later even if
+      // the user later declines linking Calendar for a specific intro.
+      const email = await getUserEmail({ client }).catch(() => undefined);
+
       const response = await fetch(`${apiUrl}/api/profiles`, {
         method: 'POST',
         headers: {
@@ -36,7 +43,8 @@ export default function ProfileSetup({ onComplete, phone }) {
           wallet_address: activeAccount?.address,
           full_name: name,
           phone_number: phoneNumber,
-          role: role
+          role: role,
+          email: email
         }),
       });
 

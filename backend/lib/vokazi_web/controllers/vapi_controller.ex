@@ -37,7 +37,7 @@ defmodule VokaziWeb.VapiController do
     # 🛡️ Pillar 3: Graceful AI Fallbacks
     analysis = message["analysis"] || %{}
     structured_data = analysis["structuredData"] || %{}
-    {offer, need} = resolve_offer_and_need(structured_data, transcript, call_id)
+    {offer, need, contact_preference} = resolve_offer_and_need(structured_data, transcript, call_id)
 
     case resolve_profile(message) do
       nil ->
@@ -51,7 +51,8 @@ defmodule VokaziWeb.VapiController do
           Profile.changeset(profile, %{
             raw_transcript: transcript,
             offer_text: offer,
-            need_text: need
+            need_text: need,
+            contact_preference: contact_preference
           })
 
         updated_profile = Repo.update!(changeset)
@@ -66,20 +67,30 @@ defmodule VokaziWeb.VapiController do
   # back to our own Gemini-based extraction instead of dumping the raw
   # transcript into offer_text — only if that also fails do we keep the
   # transcript as a last resort so we never lose the interview outright.
-  defp resolve_offer_and_need(%{"offer_text" => offer, "need_text" => need}, _transcript, _call_id)
+  defp resolve_offer_and_need(
+         %{"offer_text" => offer, "need_text" => need} = structured_data,
+         _transcript,
+         _call_id
+       )
        when is_binary(offer) and is_binary(need) do
-    {offer, need}
+    contact_preference =
+      case structured_data["contact_preference"] do
+        pref when pref in ["call", "video", "chat"] -> pref
+        _ -> "call"
+      end
+
+    {offer, need, contact_preference}
   end
 
   defp resolve_offer_and_need(_structured_data, transcript, call_id) do
     case Vokazi.AI.extract_summary(transcript) do
-      {:ok, offer, need} ->
+      {:ok, offer, need, contact_preference} ->
         Logger.info("Vapi webhook: Vapi structuredData missing, used Gemini fallback extraction for call_id=#{call_id}")
-        {offer, need}
+        {offer, need, contact_preference}
 
       {:error, reason} ->
         Logger.error("Vapi webhook: Gemini fallback extraction failed for call_id=#{call_id}: #{inspect(reason)}. Saving raw transcript instead.")
-        {transcript, "Requires manual parsing. Raw transcript saved."}
+        {transcript, "Requires manual parsing. Raw transcript saved.", "call"}
     end
   end
 

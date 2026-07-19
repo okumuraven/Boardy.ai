@@ -37,27 +37,29 @@ defmodule Vokazi.AI do
   end
 
   @doc """
-  Calls Gemini 1.5 Flash to intelligently extract the user's Offer and Need from the raw transcript.
+  Calls Gemini 1.5 Flash to intelligently extract the user's Offer, Need,
+  and preferred way to connect for an intro call from the raw transcript.
   """
   def extract_summary(transcript) do
     api_key = System.get_env("GEMINI_API_KEY")
-    
+
     if is_nil(api_key) or api_key == "" do
       {:error, :missing_api_key}
     else
       url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
-      
+
       prompt = """
-      You are an expert B2B matchmaker and executive summary writer. Read the conversation below and extract the user's Offer and Need.
+      You are an expert B2B matchmaker and executive summary writer. Read the conversation below and extract the user's Offer, Need, and contact preference.
       1. "offer": What is the user's core skill, product, or value proposition? (1-2 sentences). Make it sound incredibly strong, professional, and confident. Use high-impact action verbs.
       2. "need": What is the user's biggest bottleneck or requirement? (1-2 sentences). Frame this professionally as a strategic requirement or investment opportunity.
-      
+      3. "contact_preference": how they'd rather connect with a future intro - exactly one of "call", "video", or "chat". Infer this from anything they said about preferring to talk, hop on video, or message first. Default to "call" if nothing indicates a preference.
+
       Rules:
-      - Return ONLY a valid JSON object with keys "offer" and "need".
+      - Return ONLY a valid JSON object with keys "offer", "need", and "contact_preference".
       - DO NOT quote the raw conversation. Synthesize it into a highly polished, professional executive summary.
       - Ensure the tone is persuasive, strong, and business-focused.
       - If the conversation is cut off or missing details, make your best professional inference or write "Not explicitly stated".
-      
+
       Conversation Transcript:
       #{transcript}
       """
@@ -68,19 +70,22 @@ defmodule Vokazi.AI do
           responseMimeType: "application/json"
         }
       }
-      
+
       case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
         {:ok, %Req.Response{status: 200, body: data}} ->
           try do
             text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
-            parsed = Jason.decode!(text_response)
+            parsed = Jason.decode!(extract_json_object(text_response))
 
             offer = parsed["offer"] || "Not specified"
             need = parsed["need"] || "Not specified"
+            contact_preference = parse_contact_preference(parsed["contact_preference"])
 
-            {:ok, offer, need}
+            {:ok, offer, need, contact_preference}
           rescue
-            _ -> {:error, "Failed to parse JSON"}
+            e ->
+              Logger.error("Vokazi.AI: failed to parse extract_summary JSON: #{inspect(e)}. Raw text: #{inspect(get_in(data, ["candidates", Access.at(0), "content", "parts", Access.at(0), "text"]))}")
+              {:error, "Failed to parse JSON"}
           end
         error ->
           Logger.error("Vokazi.AI: Gemini summary extraction failed: #{inspect(error)}")
@@ -88,6 +93,9 @@ defmodule Vokazi.AI do
       end
     end
   end
+
+  defp parse_contact_preference(pref) when pref in ["call", "video", "chat"], do: pref
+  defp parse_contact_preference(_), do: "call"
 
   @doc """
   Asks Gemini to make the final call on whether a pgvector-shortlisted
@@ -186,7 +194,7 @@ defmodule Vokazi.AI do
         {:ok, %Req.Response{status: 200, body: data}} ->
           try do
             text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
-            parsed = Jason.decode!(text_response)
+            parsed = Jason.decode!(extract_json_object(text_response))
 
             {:ok,
              %{
@@ -209,6 +217,48 @@ defmodule Vokazi.AI do
           Logger.error("Vokazi.AI: Gemini match validation call failed: #{inspect(error)}")
           {:error, "Failed to call Gemini"}
       end
+    end
+  end
+
+  @doc """
+  Despite `responseMimeType: "application/json"`, gemini-3.5-flash
+  sometimes appends a stray extra "}" (or other trailing bytes) after an
+  otherwise complete, valid JSON object - which makes `Jason.decode!`
+  reject the whole string since it requires no trailing content. This
+  scans for the first structurally-balanced `{...}` (tracking string
+  literals/escapes so braces inside quoted text don't miscount) and
+  decodes only that, discarding anything Gemini tacked on afterward.
+  Public so other Gemini-calling modules (e.g. `Vokazi.Scheduling.Briefing`)
+  can reuse the same fix instead of duplicating it.
+  """
+  def extract_json_object(text) do
+    trimmed = String.trim(text)
+
+    case find_balanced_object_end(trimmed) do
+      nil -> trimmed
+      end_index -> String.slice(trimmed, 0, end_index)
+    end
+  end
+
+  defp find_balanced_object_end(text) do
+    text
+    |> String.to_charlist()
+    |> Enum.with_index()
+    |> Enum.reduce_while({0, false, false}, fn {char, index}, {depth, in_string, escaped} ->
+      cond do
+        escaped -> {:cont, {depth, in_string, false}}
+        char == ?\\ and in_string -> {:cont, {depth, in_string, true}}
+        char == ?" -> {:cont, {depth, not in_string, false}}
+        in_string -> {:cont, {depth, in_string, false}}
+        char == ?{ -> {:cont, {depth + 1, in_string, false}}
+        char == ?} and depth - 1 == 0 -> {:halt, index + 1}
+        char == ?} -> {:cont, {depth - 1, in_string, false}}
+        true -> {:cont, {depth, in_string, false}}
+      end
+    end)
+    |> case do
+      index when is_integer(index) -> index
+      _ -> nil
     end
   end
 

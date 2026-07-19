@@ -24,14 +24,14 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 *Objective: Get the first 100 users through the door, testing the Voice AI, and proving the UX.*
 
 ### Frontend Team (React / Vite)
-- [ ] **Conversational Onboarding UI:** Build a landing page that mimics a chat interface. *"Hey, I'm Vokazi. Drop your phone number to get started."*
-- [ ] **Thirdweb Integration:** Implement "Sign in with Google" using Thirdweb's In-App Wallets. Verify that an Avalanche wallet address is successfully generated upon login.
-- [ ] **Instant Voice AI:** Integrate the Vapi Web SDK. Upon login, show a microphone pulse animation: *"Vokazi is ready to listen."* The user must be able to complete their interview in the browser.
+- [x] **Conversational Onboarding UI:** Landing/onboarding flow live.
+- [x] **Thirdweb Integration:** "Sign in with Google" via Thirdweb In-App Wallets, Avalanche wallet auto-provisioned.
+- [x] **Instant Voice AI:** Vapi Web SDK integrated with mic-pulse UI (`VoiceInterview.jsx`); interview completes fully in-browser.
 
 ### Backend Team (Elixir / Phoenix)
-- [ ] **Webhook Catcher:** Finalize the `/api/vapi` POST endpoint to receive the "End of Call Report" from Vapi.
-- [ ] **Data Storage:** Save the parsed transcript, the user's `need_text`, and `offer_text` into PostgreSQL.
-- [ ] **Mock Matching:** Write a simple script to pair users manually or via basic text search so we can start matching the first 100 users while the vector math is being built.
+- [x] **Webhook Catcher:** `/api/vapi` POST endpoint live, handles End-of-Call report + identity resolution via `assistantOverrides.metadata`.
+- [x] **Data Storage:** Transcript, `need_text`, `offer_text` persisted to PostgreSQL.
+- [x] **Real Matching (superseded the "mock" plan):** Went straight to real pgvector + Gemini matching below rather than a manual/text-search placeholder.
 
 ---
 
@@ -55,15 +55,17 @@ Our main competitor (Boardy) relies on an "invisible UI" (WhatsApp/Email only) a
 *Objective: Finalize the viral loop, ensure retention, and scale aggressively to 1,000 active users.*
 
 ### Full Stack Engineering
-- [ ] **Escrow-Gated Google Calendar:** Use the Google OAuth calendar permissions gathered in Phase 1. When Phoenix receives the "unlocked" signal from AvaCloud, automatically find a mutual free slot and send a calendar invite to both founders containing their meeting agenda.
-- [ ] **Real-Time Chat Rooms:** Provision secure Phoenix WebSocket channels so matched founders can message each other directly on the Vokazi platform.
-- [ ] **Work Escrow Contracts (Bonus):** Deploy a secondary Avalanche contract allowing founders to lock funds for milestone-based work payments.
+- [x] **Real-Time Chat Rooms:** Phoenix Channels + Presence, keyset-paginated history, join-time authorization (`Chat.participant?/2`), composite message indexes, automated channel tests. Unlocks the moment both stakes verify on-chain.
+- [ ] **⭐ NEXT UP: Wire the Milestone Escrow Contract:** `VokaziMilestoneEscrow.sol` is already deployed to Fuji but not yet called from anywhere in the app. This is the natural extension of the Trust-Gate story we already shipped for match staking — reuse the same "backend re-reads on-chain state, never trusts the frontend" pattern from `Vokazi.Avalanche`.
+- [ ] **Escrow-Gated Google Calendar:** Use the Google OAuth calendar permissions gathered in Phase 1. Once a chat room unlocks, automatically find a mutual free slot and send a calendar invite to both founders containing their meeting agenda.
 - [ ] **Notification Engine:** Integrate Whapi.cloud (WhatsApp) or Telegram. Push mobile alerts to users when a new match is found to drive them back to the platform.
 
 ---
 
 ## 🏢 Phase 4: Vokazi Enterprise (The Talent Marketplace)
 *Objective: Launch our B2B monetization engine. Solve enterprise recruiting inefficiencies using AI & Escrow.*
+
+> ⏸️ **Paused per Kuzana's 2026-07-18 session guidance: monetization work is deprioritized for now.** Focus is the core matching + Trust-Gate + chat loop above until told otherwise.
 
 ### The Enterprise Workflow
 - [ ] **Talent Bounties:** Enable large companies to post job openings and stake a recruitment bounty (e.g., $500 USDC) plus a "Candidate Time-Incentive" (e.g., $10 USDC).
