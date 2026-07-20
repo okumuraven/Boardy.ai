@@ -34,6 +34,15 @@ defmodule VokaziWeb.Router do
     post "/matches/:id/schedule/contact_preference", SchedulingController, :set_contact_preference
     post "/matches/:id/schedule/select_slot", SchedulingController, :select_slot
     post "/matches/:id/schedule/remind", SchedulingController, :remind
+
+    # In-App Notification Hub (notification_system.md Phase 1)
+    get "/notifications", NotificationController, :index
+    post "/notifications/:id/read", NotificationController, :mark_read
+    post "/notifications/mark_all_read", NotificationController, :mark_all_read
+
+    # Web Push (notification_system.md Phase 2)
+    post "/push_subscriptions", PushSubscriptionController, :create
+    delete "/push_subscriptions", PushSubscriptionController, :delete
   end
 
   scope "/api/auth/google/calendar", VokaziWeb do

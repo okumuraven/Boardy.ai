@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import ChatRoomView from './components/ChatSystem';
 import MatchReview from './components/MatchReview';
 import StakingGate from './components/StakingGate';
+import NotificationBell from './features/notifications';
 
 export default function App() {
   const activeAccount = useActiveAccount();
@@ -61,6 +62,7 @@ export default function App() {
   const [activeMatchId, setActiveMatchId] = useState(null);
   const [chatPartnerName, setChatPartnerName] = useState(null);
   const [pendingMatch, setPendingMatch] = useState(null);
+  const [startInScheduling, setStartInScheduling] = useState(false);
 
   // Checks whether this user already has an active match - awaiting
   // mutual consent, awaiting an on-chain stake, or already unlocked (so
@@ -128,6 +130,47 @@ export default function App() {
     }
   };
 
+  // Notifications carry a JSON `link` (room, match, the sender's name,
+  // and whether this was a scheduling nudge) - set all of it at once so
+  // clicking one lands the user somewhere useful immediately: the right
+  // person's name in the header, the Schedule button available, and -
+  // for a calendar reminder specifically - already on the scheduling
+  // screen rather than a chat thread they'd have to notice a button in.
+  const handleOpenNotification = (notification) => {
+    try {
+      const data = JSON.parse(notification.link);
+      if (!data.room_id) return;
+      setActiveChatRoomId(data.room_id);
+      setActiveMatchId(data.match_id || null);
+      setChatPartnerName(data.partner_name || null);
+      setStartInScheduling(!!data.open_scheduling);
+    } catch {
+      // Older notifications predate this JSON link format - nothing to navigate to.
+    }
+  };
+
+  // The two ways a Web Push click reaches the app: an already-open tab
+  // gets `postMessage`d by service-worker.js's notificationclick
+  // handler; a fully-closed app instead opens a fresh tab carrying the
+  // link as a query param (same pattern as the Google Calendar OAuth
+  // redirect elsewhere in this app).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const link = params.get("notification_link");
+    if (link) {
+      handleOpenNotification({ link });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    const handleMessage = (event) => {
+      if (event.data?.type === "notification_click") {
+        handleOpenNotification({ link: event.data.link });
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", handleMessage);
+    return () => navigator.serviceWorker?.removeEventListener("message", handleMessage);
+  }, []);
+
   useEffect(() => {
     window.onMatchUnlocked = (roomId) => {
       setActiveChatRoomId(roomId);
@@ -167,10 +210,12 @@ export default function App() {
           matchId={activeMatchId}
           profile={profile}
           partnerName={chatPartnerName}
+          startInScheduling={startInScheduling}
           onBack={() => {
             setActiveChatRoomId(null);
             setActiveMatchId(null);
             setChatPartnerName(null);
+            setStartInScheduling(false);
           }}
         />
       );
@@ -184,11 +229,28 @@ export default function App() {
       return <MatchReview profile={profile} initialMatch={pendingMatch} onResolved={handleMatchResolved} />;
     }
 
-    return <Dashboard profile={profile} onInterviewComplete={() => fetchProfile(false)} onFindMatch={findMatch} />;
+    return (
+      <Dashboard
+        profile={profile}
+        onInterviewComplete={() => fetchProfile(false)}
+        onFindMatch={findMatch}
+      />
+    );
   };
 
   return (
     <div className={`app-container ${(!activeAccount && !showLogin) ? 'no-padding' : ''}`}>
+      {/* Mounted here, not inside any individual screen, so the live
+          notification channel stays connected no matter which screen is
+          active (MatchReview, StakingGate, chat, Dashboard) - matching
+          notification_system.md's "joined once at app load" design.
+          Previously this only lived inside Dashboard's nav, which meant
+          a user reviewing a new match had zero live connection at all. */}
+      {profile && (
+        <div style={{ position: 'fixed', top: '1rem', right: '1.25rem', zIndex: 50 }}>
+          <NotificationBell profile={profile} onOpen={handleOpenNotification} />
+        </div>
+      )}
       {renderScreen()}
     </div>
   );

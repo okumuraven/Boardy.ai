@@ -3,6 +3,7 @@ defmodule VokaziWeb.UserSocket do
 
   ## Channels
   channel "chat_room:*", VokaziWeb.ChatRoomChannel
+  channel "user:*", VokaziWeb.NotificationChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

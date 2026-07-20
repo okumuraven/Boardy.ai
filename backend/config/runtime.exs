@@ -37,6 +37,20 @@ config :ethereumex,
 
 config :ethers, secp256k1_module: ExSecp256k1
 
+# Web Push (VAPID) - notification_system.md Phase 2. Keys are generated
+# once via `mix generate.vapid.keys`, free, no third-party account.
+config :web_push_elixir,
+  vapid_public_key: System.get_env("VAPID_PUBLIC_KEY"),
+  vapid_private_key: System.get_env("VAPID_PRIVATE_KEY"),
+  vapid_subject: System.get_env("VAPID_SUBJECT") || "mailto:team@vokazi.app"
+
+# Durable retryable delivery jobs for Web Push (free, open-source Oban
+# core only - no Oban Web/Pro).
+config :vokazi, Oban,
+  engine: Oban.Engines.Basic,
+  repo: Vokazi.Repo,
+  queues: [push: 5]
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

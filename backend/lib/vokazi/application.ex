@@ -13,6 +13,7 @@ defmodule Vokazi.Application do
       {DNSCluster, query: Application.get_env(:vokazi, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Vokazi.PubSub},
       VokaziWeb.Presence,
+      {Oban, Application.fetch_env!(:vokazi, Oban)},
       # Start a worker by calling: Vokazi.Worker.start_link(arg)
       # {Vokazi.Worker, arg},
       # Start to serve requests, typically the last entry

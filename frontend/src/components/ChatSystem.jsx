@@ -4,12 +4,15 @@ import SchedulingFlow from "../features/scheduling";
 
 const HISTORY_PAGE_SIZE = 50;
 
-export default function ChatRoomView({ roomId, matchId, profile, partnerName, onBack }) {
-  // Auto-reopens the scheduling panel if we're landing back here right
-  // after Google's OAuth redirect (a full page navigation, so any prior
-  // React state was lost) - SchedulingFlow reads the same query params
-  // to show a connect success/error banner before clearing them.
+export default function ChatRoomView({ roomId, matchId, profile, partnerName, startInScheduling, onBack }) {
+  // Opens straight into the scheduling panel when a calendar-reminder
+  // notification click asked for it (`startInScheduling`), or when
+  // we're landing back here right after Google's OAuth redirect (a full
+  // page navigation, so any prior React state was lost) - SchedulingFlow
+  // reads the same query params to show a connect success/error banner
+  // before clearing them.
   const [showScheduling, setShowScheduling] = useState(() => {
+    if (startInScheduling) return true;
     const params = new URLSearchParams(window.location.search);
     return params.has("calendar_connected") || params.has("calendar_connect_error");
   });

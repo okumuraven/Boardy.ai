@@ -171,7 +171,8 @@ defmodule Vokazi.Scheduling do
       Chat.create_message(%{
         content: "🔔 Reminder from #{sender.full_name}: ready to lock in a time for our intro call?",
         sender_id: user_id,
-        chat_room_id: room.id
+        chat_room_id: room.id,
+        notification_type: "calendar_reminder"
       })
 
     VokaziWeb.Endpoint.broadcast!("chat_room:#{room.id}", "new_msg", %{
