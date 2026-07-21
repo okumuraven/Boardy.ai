@@ -46,6 +46,11 @@ defmodule VokaziWeb.Router do
     # Web Push (notification_system.md Phase 2)
     post "/push_subscriptions", PushSubscriptionController, :create
     delete "/push_subscriptions", PushSubscriptionController, :delete
+
+    # Personal agenda items - user-owned, never match-scoped
+    get "/personal_events", PersonalEventController, :index
+    post "/personal_events", PersonalEventController, :create
+    delete "/personal_events/:id", PersonalEventController, :delete
   end
 
   scope "/api/auth/google/calendar", VokaziWeb do

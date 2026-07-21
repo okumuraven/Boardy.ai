@@ -9,8 +9,11 @@ const MONTH_NAMES = [
 
 // A real, navigable month grid - `eventDates` is a Set of "YYYY-MM-DD"
 // keys derived from actual confirmed/proposed schedule data (see
-// CalendarView), never illustrative placeholder dates.
-export default function MiniCalendar({ eventDates }) {
+// CalendarView), never illustrative placeholder dates. Clicking a day
+// filters the agenda list below to that date instead of trying to cram
+// a text label into a 24px cell - `onSelectDate`/`selectedDate` drive
+// that filter from the parent.
+export default function MiniCalendar({ eventDates, selectedDate, onSelectDate }) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
 
@@ -47,17 +50,21 @@ export default function MiniCalendar({ eventDates }) {
           <span className="dow" key={i}>{d}</span>
         ))}
         {cells.map((cell, i) => (
-          <span
+          <button
             key={i}
+            type="button"
+            disabled={cell.faded}
+            onClick={() => cell.key && onSelectDate?.(cell.key === selectedDate ? null : cell.key)}
             className={[
               "day",
               cell.faded ? "faded" : "",
               cell.key === todayKey ? "today" : "",
               cell.key && eventDates.has(cell.key) ? "has-event" : "",
+              cell.key && cell.key === selectedDate ? "selected" : "",
             ].filter(Boolean).join(" ")}
           >
             {cell.day}
-          </span>
+          </button>
         ))}
       </div>
     </div>

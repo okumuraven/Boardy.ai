@@ -10,6 +10,7 @@ defmodule Vokazi.Scheduling.MyFreeDays do
   """
 
   alias Vokazi.Repo
+  alias Vokazi.PersonalEvents
   alias Vokazi.Scheduling.{CredentialStore, GoogleCalendarClient, IntroSchedule, SlotMatcher}
 
   @lookahead_days 4
@@ -39,7 +40,8 @@ defmodule Vokazi.Scheduling.MyFreeDays do
 
       case GoogleCalendarClient.freebusy(access_token, range_start, range_end) do
         {:ok, busy} ->
-          windows = SlotMatcher.free_windows_from_busy(busy, range_start, range_end, @business_start_hour, @business_end_hour)
+          all_busy = busy ++ personal_event_busy_ranges(user_id, range_start, range_end)
+          windows = SlotMatcher.free_windows_from_busy(all_busy, range_start, range_end, @business_start_hour, @business_end_hour)
           {:ok, group_by_date(windows) |> annotate_with_other_offer(match, user_id)}
 
         {:error, _reason} ->
@@ -48,6 +50,25 @@ defmodule Vokazi.Scheduling.MyFreeDays do
     else
       {:error, :not_connected} -> {:error, :calendar_not_connected}
     end
+  end
+
+  # Personal agenda items the user added themselves (Vokazi.PersonalEvents)
+  # count as busy time too, same as Google Calendar - so a commitment
+  # that isn't on Google (or that this user tracks manually) still keeps
+  # this window off the list of days offered for a new intro.
+  defp personal_event_busy_ranges(user_id, range_start, range_end) do
+    first_date = DateTime.to_date(range_start)
+    last_date = DateTime.to_date(range_end)
+
+    user_id
+    |> PersonalEvents.list_for_user()
+    |> Enum.filter(&(Date.compare(&1.date, first_date) != :lt and Date.compare(&1.date, last_date) != :gt))
+    |> Enum.map(fn event ->
+      %{
+        start: DateTime.new!(event.date, event.start_time, "Etc/UTC") |> DateTime.to_iso8601(),
+        end: DateTime.new!(event.date, event.end_time, "Etc/UTC") |> DateTime.to_iso8601()
+      }
+    end)
   end
 
   defp group_by_date(windows) do

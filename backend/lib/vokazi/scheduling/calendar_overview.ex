@@ -29,9 +29,11 @@ defmodule Vokazi.Scheduling.CalendarOverview do
   end
 
   defp summarize(match, user_id) do
-    other_user_id = if match.user_a_id == user_id, do: match.user_b_id, else: match.user_a_id
+    is_a = match.user_a_id == user_id
+    other_user_id = if is_a, do: match.user_b_id, else: match.user_a_id
     other_user = Repo.get(User, other_user_id)
     schedule = Repo.get_by(IntroSchedule, match_id: match.id)
+    agenda = schedule && Map.get(schedule, if(is_a, do: :agenda_summary_a, else: :agenda_summary_b))
 
     %{
       match_id: match.id,
@@ -40,9 +42,13 @@ defmodule Vokazi.Scheduling.CalendarOverview do
       proposed_slots: (schedule && schedule.proposed_slots) || [],
       confirmed_start: schedule && schedule.confirmed_start,
       confirmed_end: schedule && schedule.confirmed_end,
-      google_meet_link: schedule && schedule.google_meet_link
+      google_meet_link: schedule && schedule.google_meet_link,
+      my_briefing: decode_briefing(agenda)
     }
   end
+
+  defp decode_briefing(nil), do: nil
+  defp decode_briefing(json), do: Jason.decode!(json)
 
   # Confirmed calls first (soonest first), then anything still in
   # progress, then matches that haven't started scheduling at all.

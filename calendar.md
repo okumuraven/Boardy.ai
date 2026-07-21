@@ -1,8 +1,9 @@
 # Chat & Escrow-Gated Calendar — How They're Built
 
-Reference doc written 2026-07-19, right after the Calendar feature shipped, to ground the next
-conversation about a notification system. Both systems are real and working (not mocked) — this
-documents actual code, not intent.
+Reference doc written 2026-07-19, right after the Calendar feature first shipped, then substantially
+revised 2026-07-21 once the scheduling flow was redesigned around a curated day-picker + a real
+cross-match Agenda view. Both systems are real and working (not mocked) — this documents actual
+code, not intent.
 
 ---
 
@@ -93,23 +94,85 @@ is weaker than chat's; it's polling, not a channel subscription.
 
 ---
 
-## 3. The gap this exposes — why notifications are urgent, not a nice-to-have
+## 3. The gap that existed here — closed by the notification system
 
-Everything above shares one failure mode: **the system only ever tells someone something happened
-if they are looking at the right screen at the right moment.**
+Everything above shared one failure mode: the system only ever told someone something happened if
+they were looking at the right screen at the right moment. A chat message or a Calendar reminder was
+just a `"new_msg"` broadcast, invisible to anyone not currently joined to that channel — which is
+exactly what caused Hasan Ali's reminder to land silently while Jose Yusu was elsewhere in the app.
 
-Concretely, right now:
-- A chat message only reaches you if your `ChatRoomChannel` socket is live and joined to that exact
-  room's topic. Close the tab, and it's gone — no push, no email, no badge, nothing waiting for you
-  when you come back beyond what's in `history` next time you rejoin.
-- A Calendar reminder is a `"new_msg"` broadcast exactly like the above — same blind spot. This is
-  precisely what just happened: Hasan Ali's reminder was created and broadcast correctly, but Jose
-  Yusu wasn't connected to that channel at the time, so it went nowhere.
-- A new match, a mutual-consent request, a stake needed, a slot proposed — every one of these is a
-  state change with zero out-of-band signal. The only way to learn about any of them today is to
-  already be in the app, polling or joined to the right channel.
+This is now closed: see `notification_system.md` for the in-app notification hub (Phase 1) and Web
+Push (Phase 2), both shipped and wired into the events described in this doc (new match, reminder,
+slot proposed, call confirmed). Notification clicks route into the right screen (chat + scheduling
+drawer opened to the right match), not a bare, nameless conversation.
 
-`ROADMAP.md`'s Phase 3 already names a "Notification Engine" (Whapi.cloud/WhatsApp or Telegram) as
-next-up, for the same underlying reason: driving users back to the platform when something needs
-their attention. The Calendar reminder landing silently is the clearest, most concrete example yet
-of why that can't stay deprioritized.
+---
+
+## 4. The curated day-picker — connecting Calendar no longer silently auto-schedules
+
+The first version of this feature auto-pulled a Calendar-connected user's *entire* free calendar the
+moment they connected, and used all of it as their offered availability. That's gone. Connecting
+Calendar now only unlocks an assisted picker — the user still has to explicitly choose which days
+they're willing to offer, same as someone entering availability manually. Both paths converge on the
+exact same field (`manual_availability_a/b` on `intro_schedules`) and the exact same trigger
+(`Vokazi.Scheduling.submit_manual_availability/3`), so `SlotProposal` doesn't know or care which path
+produced them.
+
+**`Vokazi.Scheduling.handle_oauth_callback/2`** (`backend/lib/vokazi/scheduling.ex`) now only stores
+the credential and flips `consent_a`/`consent_b` true — it does **not** call `SlotProposal` anymore.
+
+**`Vokazi.Scheduling.MyFreeDays.fetch/2`** (`backend/lib/vokazi/scheduling/my_free_days.ex`) computes
+this user's real free windows for the next 4 days (`GoogleCalendarClient.freebusy/3` inverted via
+`SlotMatcher.free_windows_from_busy/5`, clipped to 8am–6pm), grouped by date. Each day is annotated
+with `other_offered`: the window the *other* side has already submitted for that same date, if any —
+so whichever side picks second sees which days already overlap and is steered toward them instead of
+picking blind. This never exposes anything beyond what the other side already chose to share; their
+raw calendar is never visible to anyone but them. `frontend/src/features/scheduling/DayPicker.jsx`
+renders this, sorts overlapping days first, and defaults the selected time window to the actual
+overlap when one exists (`bestDefaultWindow`) instead of just the first free slot of the day.
+
+**OAuth scope note (a real bug this surfaced):** `calendar.events` alone is not enough for a Freebusy
+query — Google returns `403 ACCESS_TOKEN_SCOPE_INSUFFICIENT` without `calendar.readonly` too
+(`GoogleOAuth.@scope` now requests both). Existing connected users' stored refresh tokens don't
+retroactively gain the new scope — `MyFreeDays.fetch/2` maps that specific failure to
+`{:error, :calendar_reauth_required}`, and `DayPicker.jsx` surfaces a **Reconnect Google Calendar**
+button rather than a dead-end error, so this self-heals without needing a manual DB fix.
+
+Once both sides have submitted (`submit_manual_availability/3` called from either path),
+`Vokazi.Scheduling.SlotProposal.maybe_run/2` runs in the background: intersects both sides' windows
+(`SlotMatcher.propose_slots/2`) and generates a private per-side AI briefing about the other person
+(`Vokazi.Scheduling.Briefing`, Gemini). Known gap, not yet fixed: a Gemini timeout on one side's call
+leaves that side's `agenda_summary` null with no retry — the UI degrades gracefully (blank
+summary/talking-points section, nothing crashes), but the briefing never backfills for that match.
+
+---
+
+## 5. Personal Events — a user's own agenda, feeding back into future scheduling
+
+`Vokazi.PersonalEvents` (`backend/lib/vokazi/personal_events.ex`) is a small, deliberately separate
+context — not nested under `Vokazi.Scheduling` — for agenda items a user adds themselves: title,
+date, start/end time. No match, no consent, no escrow gate, never visible to anyone else, never
+synced to Google. `POST/GET /api/personal_events`, `DELETE /api/personal_events/:id` (ownership
+checked server-side; deleting someone else's id 404s rather than confirming it exists).
+
+The reason this exists rather than just being a nice-to-have: `MyFreeDays.fetch/2` folds a user's
+personal events into the same busy-range list as Google's Freebusy result before computing free
+windows, so a commitment that only lives in Vokazi (not on Google Calendar) still correctly blocks
+that time from being offered to a *new* match. Verified live: a 3–4pm personal event on a given day
+correctly splits that day's offered window into two (before/after) rather than being ignored.
+
+## 6. The Calendar tab — a real cross-match Agenda, not a card list
+
+`Vokazi.Scheduling.CalendarOverview.list_for_user/1` aggregates every unlocked match's scheduling
+state for one user (confirmed/proposed/not-started, plus that side's private briefing). The frontend
+(`frontend/src/features/calendar/CalendarView.jsx`) merges this with `PersonalEvents.list_for_user/1`
+into one chronological, day-grouped agenda — "Today / Tomorrow / Thu, Jul 23" headers, each line
+reading in plain language ("11:00 AM · Call with Hasan Ali", "3:00 PM – 4:00 PM · Dentist
+appointment"). Matches with no date yet (nothing proposed) surface separately under "Not yet
+scheduled" rather than cluttering the dated list.
+
+The mini month-grid (`MiniCalendar.jsx`) deliberately does not try to cram event text into 24px day
+cells — instead a day cell shows a dot when something's scheduled, and clicking it filters the
+agenda below to that date (the same interaction Google Calendar/Fantastical use for their own mini
+pickers). Adding a personal event is a slim inline form (`AddPersonalEventForm.jsx`, native
+date/time inputs), not a modal.
