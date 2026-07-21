@@ -7,6 +7,15 @@ defmodule VokaziWeb.MatchController do
   alias Vokazi.Matchmaking.Match
 
   @doc """
+  All of this user's matches (any status short of declined/slashed) -
+  the source for the Matches list UI, distinct from `pending_for_user/2`
+  which only ever returns the single next thing to resolve.
+  """
+  def index(conn, %{"user_id" => user_id}) do
+    json(conn, %{matches: Matchmaking.list_for_user(to_int(user_id))})
+  end
+
+  @doc """
   On-demand "Find a Match" button - runs the pgvector + AI pipeline right
   now instead of waiting for the next interview/vector update.
   """

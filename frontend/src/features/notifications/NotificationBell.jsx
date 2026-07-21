@@ -119,7 +119,7 @@ export default function NotificationBell({ profile, onOpen }) {
       {open && (
         <div
           className="panel"
-          style={{ position: "absolute", top: "calc(100% + 0.5rem)", right: 0, width: "320px", maxHeight: "400px", overflowY: "auto", zIndex: 20, padding: "0.75rem" }}
+          style={{ position: "absolute", bottom: 0, left: "calc(100% + 0.75rem)", width: "320px", maxHeight: "400px", overflowY: "auto", zIndex: 30, padding: "0.75rem" }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
             <p className="panel-label" style={{ margin: 0 }}>Notifications</p>

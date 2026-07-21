@@ -16,7 +16,9 @@ defmodule VokaziWeb.ProfileController do
           role: user.role,
           onboarding_completed: user.onboarding_completed,
           offer_text: if(user.profile, do: user.profile.offer_text, else: nil),
-          need_text: if(user.profile, do: user.profile.need_text, else: nil)
+          need_text: if(user.profile, do: user.profile.need_text, else: nil),
+          phone_number: if(user.profile, do: user.profile.phone_number, else: nil),
+          contact_preference: if(user.profile, do: user.profile.contact_preference, else: "call")
         })
     end
   end
@@ -41,11 +43,19 @@ defmodule VokaziWeb.ProfileController do
         {:ok, updated_user} ->
           # 3. Create or update profile with the phone number
           profile = Vokazi.Repo.get_by(Profile, user_id: updated_user.id) || %Profile{user_id: updated_user.id}
-          
-          profile_changeset = Profile.changeset(profile, %{
-            phone_number: params["phone_number"],
-            user_id: updated_user.id
-          })
+
+          # contact_preference is only ever set here when the caller (the
+          # Profile edit view) actually sends one - never overwrite the
+          # AI-inferred value from the voice interview with a blank one
+          # just because an older caller (initial onboarding) doesn't know
+          # about this field.
+          profile_attrs = %{phone_number: params["phone_number"], user_id: updated_user.id}
+          profile_attrs =
+            if params["contact_preference"],
+              do: Map.put(profile_attrs, :contact_preference, params["contact_preference"]),
+              else: profile_attrs
+
+          profile_changeset = Profile.changeset(profile, profile_attrs)
           
           case Vokazi.Repo.insert_or_update(profile_changeset) do
             {:ok, _} -> updated_user

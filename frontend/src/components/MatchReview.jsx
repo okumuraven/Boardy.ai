@@ -94,7 +94,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
   };
 
   return (
-    <div style={{ width: "100%", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ width: "100%", height: "100%", overflowY: "auto", display: "flex", flexDirection: "column" }}>
       <div className="identity-badge">
         Signed in as <strong style={{ color: "var(--paper)" }}>{profile?.name || "you"}</strong>
       </div>

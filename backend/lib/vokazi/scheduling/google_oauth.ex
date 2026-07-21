@@ -14,7 +14,12 @@ defmodule Vokazi.Scheduling.GoogleOAuth do
 
   require Logger
 
-  @scope "openid email https://www.googleapis.com/auth/calendar.events"
+  # calendar.events alone grants creating/reading real events, but NOT
+  # freebusy queries - Google's Freebusy API requires calendar.readonly
+  # (or broader) and returns 403 insufficient_scope without it. Both
+  # together cover "find free days" (readonly) and "create the real
+  # event" (events).
+  @scope "openid email https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly"
   @token_url "https://oauth2.googleapis.com/token"
   @userinfo_url "https://openidconnect.googleapis.com/v1/userinfo"
 

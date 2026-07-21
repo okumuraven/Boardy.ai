@@ -3,6 +3,11 @@ defmodule VokaziWeb.SchedulingController do
 
   alias Vokazi.Scheduling
 
+  @doc "Every unlocked match's scheduling state for this user - the Calendar tab."
+  def calendar(conn, %{"user_id" => user_id}) do
+    json(conn, %{schedules: Scheduling.list_for_user(to_int(user_id))})
+  end
+
   @doc "Fetches (or creates) this match's intro schedule for the calling user."
   def show(conn, %{"id" => match_id, "user_id" => user_id}) do
     respond(conn, Scheduling.get_or_create_schedule(to_int(match_id), to_int(user_id)))
@@ -17,6 +22,14 @@ defmodule VokaziWeb.SchedulingController do
   def connect_url(conn, %{"id" => match_id, "user_id" => user_id}) do
     case Scheduling.connect_calendar_url(to_int(match_id), to_int(user_id)) do
       {:ok, url} -> json(conn, %{connect_url: url})
+      error -> respond(conn, error)
+    end
+  end
+
+  @doc "This user's real free days for the next few days - powers the assisted day-picker."
+  def my_free_days(conn, %{"id" => match_id, "user_id" => user_id}) do
+    case Scheduling.my_free_days(to_int(match_id), to_int(user_id)) do
+      {:ok, days} -> json(conn, %{days: days})
       error -> respond(conn, error)
     end
   end
@@ -65,6 +78,12 @@ defmodule VokaziWeb.SchedulingController do
 
   defp respond(conn, {:error, :reminder_on_cooldown}),
     do: conn |> put_status(:too_many_requests) |> json(%{error: "You've already sent a reminder recently"})
+
+  defp respond(conn, {:error, :calendar_not_connected}),
+    do: conn |> put_status(:unprocessable_entity) |> json(%{error: "Calendar isn't connected for this intro"})
+
+  defp respond(conn, {:error, :calendar_reauth_required}),
+    do: conn |> put_status(:unprocessable_entity) |> json(%{error: "calendar_reauth_required", message: "Your Calendar connection needs to be renewed"})
 
   defp respond(conn, {:error, _reason}),
     do: conn |> put_status(:unprocessable_entity) |> json(%{error: "Request failed"})

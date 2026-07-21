@@ -1,27 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useActiveAccount } from "thirdweb/react";
 import LandingPage from './components/LandingPage';
 import Whitepaper from './components/Whitepaper';
 import Login from './components/Login';
 import ProfileSetup from './components/ProfileSetup';
-import Dashboard from './components/Dashboard';
-import ChatRoomView from './components/ChatSystem';
-import MatchReview from './components/MatchReview';
-import StakingGate from './components/StakingGate';
-import NotificationBell from './features/notifications';
+import AppShell from './features/shell/AppShell';
 
 export default function App() {
   const activeAccount = useActiveAccount();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [profileFetchError, setProfileFetchError] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showWhitepaper, setShowWhitepaper] = useState(false);
   const [collectedPhone, setCollectedPhone] = useState('');
+  const [pendingMatchOpen, setPendingMatchOpen] = useState(null);
 
   // Fetches the profile tied to the connected wallet. Reused both on wallet
   // connect (to restore a returning user without re-asking their details)
   // and after a "Redo Interview" call ends (to pull the freshly-updated
   // offer/need text once the webhook has finished processing it).
+  //
+  // Distinguishes "this wallet genuinely has no profile" (a real 404)
+  // from any other failure (network blip, wrong API URL, backend down) -
+  // conflating the two used to silently bounce a returning user into
+  // ProfileSetup and ask them to re-type their phone number from
+  // scratch on any transient hiccup, risking a mismatched number
+  // overwriting the real one already on file.
   const fetchProfile = (showSpinner = true) => {
     if (!activeAccount?.address) return Promise.resolve(null);
     if (showSpinner) setIsLoading(true);
@@ -32,20 +37,31 @@ export default function App() {
         'X-Tunnel-Skip-AntiPhishing-Page': 'true'
       }
     })
-      .then(res => res.ok ? res.json() : null)
+      .then(res => {
+        if (res.status === 404) return { notFound: true };
+        if (!res.ok) throw new Error(`profile fetch failed with status ${res.status}`);
+        return res.json();
+      })
       .then(data => {
-        if (data && data.onboarding_completed) {
+        setProfileFetchError(false);
+        if (data && !data.notFound && data.onboarding_completed) {
           setProfile({
             name: data.full_name,
             role: data.role,
             id: data.id,
             offer_text: data.offer_text,
-            need_text: data.need_text
+            need_text: data.need_text,
+            phone_number: data.phone_number,
+            contact_preference: data.contact_preference
           });
         }
         return data;
       })
-      .catch(err => { console.error(err); return null; })
+      .catch(err => {
+        console.error(err);
+        setProfileFetchError(true);
+        return null;
+      })
       .finally(() => { if (showSpinner) setIsLoading(false); });
   };
 
@@ -55,50 +71,12 @@ export default function App() {
       fetchProfile();
     } else {
       setProfile(null);
+      setProfileFetchError(false);
     }
   }, [activeAccount]);
 
-  const [activeChatRoomId, setActiveChatRoomId] = useState(null);
-  const [activeMatchId, setActiveMatchId] = useState(null);
-  const [chatPartnerName, setChatPartnerName] = useState(null);
-  const [pendingMatch, setPendingMatch] = useState(null);
-  const [startInScheduling, setStartInScheduling] = useState(false);
-
-  // Checks whether this user already has an active match - awaiting
-  // mutual consent, awaiting an on-chain stake, or already unlocked (so
-  // a returning user lands back in the right screen instead of an empty
-  // "no match" state). Reused on profile load and after every step of
-  // the consent/staking flow, since each step needs the next screen's
-  // fresh data rather than guessing it locally.
-  const fetchPendingMatch = useCallback(() => {
-    if (!profile?.id) {
-      setPendingMatch(null);
-      return;
-    }
-    const apiUrl = import.meta.env.VITE_API_URL;
-    fetch(`${apiUrl}/api/matches/pending?user_id=${profile.id}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        const match = data?.match || null;
-        if (match?.status === "unlocked" && match.chat_room_id) {
-          setChatPartnerName(match.other_user?.name || null);
-          setActiveMatchId(match.match_id);
-          setActiveChatRoomId(match.chat_room_id);
-          setPendingMatch(null);
-        } else {
-          setPendingMatch(match);
-        }
-      })
-      .catch(err => console.error(err));
-  }, [profile?.id]);
-
-  useEffect(() => {
-    fetchPendingMatch();
-  }, [fetchPendingMatch]);
-
-  // Passed down to Dashboard's "Find a Match" action - triggers the
-  // matching pipeline on demand and shows the review screen immediately
-  // if a candidate clears validation.
+  // Passed to Home's "Find a Match" action - on a fresh match, jumps the
+  // shell straight to it instead of leaving the user to notice it later.
   const findMatch = () => {
     if (!profile?.id) return Promise.resolve({ status: "queued" });
     const apiUrl = import.meta.env.VITE_API_URL;
@@ -109,41 +87,23 @@ export default function App() {
     })
       .then(res => res.json())
       .then(data => {
-        if (data.status === "matched") setPendingMatch(data);
+        if (data.status === "matched" && data.match_id) {
+          setPendingMatchOpen({ matchId: data.match_id, openScheduling: false });
+        }
         return data;
       })
       .catch(err => { console.error(err); return { status: "error" }; });
   };
 
-  const handleMatchResolved = ({ unlocked, declined, awaitingStake, matchId, chatRoomId, otherUserName }) => {
-    if (unlocked && chatRoomId) {
-      setPendingMatch(null);
-      setChatPartnerName(otherUserName || null);
-      setActiveMatchId(matchId || null);
-      setActiveChatRoomId(chatRoomId);
-    } else if (declined) {
-      setPendingMatch(null);
-    } else if (awaitingStake) {
-      // Mutual consent just completed - refetch to pick up the "pending"
-      // status (and onchain_match_id) so renderScreen swaps to StakingGate.
-      fetchPendingMatch();
-    }
-  };
-
-  // Notifications carry a JSON `link` (room, match, the sender's name,
-  // and whether this was a scheduling nudge) - set all of it at once so
-  // clicking one lands the user somewhere useful immediately: the right
-  // person's name in the header, the Schedule button available, and -
-  // for a calendar reminder specifically - already on the scheduling
-  // screen rather than a chat thread they'd have to notice a button in.
+  // Notifications carry a JSON `link` (match id, and whether this was a
+  // calendar reminder that should open straight into scheduling) - see
+  // AppShell for how this actually navigates the shell.
   const handleOpenNotification = (notification) => {
     try {
       const data = JSON.parse(notification.link);
-      if (!data.room_id) return;
-      setActiveChatRoomId(data.room_id);
-      setActiveMatchId(data.match_id || null);
-      setChatPartnerName(data.partner_name || null);
-      setStartInScheduling(!!data.open_scheduling);
+      if (data.match_id) {
+        setPendingMatchOpen({ matchId: data.match_id, openScheduling: !!data.open_scheduling });
+      }
     } catch {
       // Older notifications predate this JSON link format - nothing to navigate to.
     }
@@ -171,15 +131,6 @@ export default function App() {
     return () => navigator.serviceWorker?.removeEventListener("message", handleMessage);
   }, []);
 
-  useEffect(() => {
-    window.onMatchUnlocked = (roomId) => {
-      setActiveChatRoomId(roomId);
-    };
-    return () => {
-      delete window.onMatchUnlocked;
-    };
-  }, []);
-
   const renderScreen = () => {
     if (isLoading) {
       return (
@@ -190,67 +141,46 @@ export default function App() {
       );
     }
 
+    // A returning, already-onboarded wallet whose profile fetch failed
+    // (not a clean 404) - never fall through to ProfileSetup here, since
+    // that would ask them to re-enter their phone number and risk a
+    // mismatched number silently overwriting the real one on file.
+    if (activeAccount && profileFetchError) {
+      return (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', maxWidth: '360px', margin: '0 auto' }}>
+          <p style={{ marginBottom: '1.25rem' }}>Couldn't reach Vokazi to load your account. Your details are safe - this is just a connection hiccup.</p>
+          <button onClick={() => fetchProfile()} className="btn-primary">Try again</button>
+        </div>
+      );
+    }
+
     if (!activeAccount) {
       if (showWhitepaper) return <Whitepaper onBack={() => setShowWhitepaper(false)} />;
       if (showLogin) return <Login onBack={() => setShowLogin(false)} collectedPhone={collectedPhone} />;
-      return <LandingPage 
-                onJoinClick={(phone) => { setCollectedPhone(phone); setShowLogin(true); }} 
-                onWhitepaperClick={() => setShowWhitepaper(true)} 
+      return <LandingPage
+                onJoinClick={(phone) => { setCollectedPhone(phone); setShowLogin(true); }}
+                onWhitepaperClick={() => setShowWhitepaper(true)}
              />;
     }
-    
+
     if (activeAccount && !profile) {
       return <ProfileSetup onComplete={setProfile} phone={collectedPhone} />;
     }
 
-    if (activeChatRoomId) {
-      return (
-        <ChatRoomView
-          roomId={activeChatRoomId}
-          matchId={activeMatchId}
-          profile={profile}
-          partnerName={chatPartnerName}
-          startInScheduling={startInScheduling}
-          onBack={() => {
-            setActiveChatRoomId(null);
-            setActiveMatchId(null);
-            setChatPartnerName(null);
-            setStartInScheduling(false);
-          }}
-        />
-      );
-    }
-
-    if (pendingMatch?.status === "pending") {
-      return <StakingGate profile={profile} match={pendingMatch} onResolved={handleMatchResolved} />;
-    }
-
-    if (pendingMatch) {
-      return <MatchReview profile={profile} initialMatch={pendingMatch} onResolved={handleMatchResolved} />;
-    }
-
     return (
-      <Dashboard
+      <AppShell
         profile={profile}
         onInterviewComplete={() => fetchProfile(false)}
         onFindMatch={findMatch}
+        onProfileUpdated={() => fetchProfile(false)}
+        pendingMatchOpen={pendingMatchOpen}
+        onConsumePendingMatchOpen={() => setPendingMatchOpen(null)}
       />
     );
   };
 
   return (
     <div className={`app-container ${(!activeAccount && !showLogin) ? 'no-padding' : ''}`}>
-      {/* Mounted here, not inside any individual screen, so the live
-          notification channel stays connected no matter which screen is
-          active (MatchReview, StakingGate, chat, Dashboard) - matching
-          notification_system.md's "joined once at app load" design.
-          Previously this only lived inside Dashboard's nav, which meant
-          a user reviewing a new match had zero live connection at all. */}
-      {profile && (
-        <div style={{ position: 'fixed', top: '1rem', right: '1.25rem', zIndex: 50 }}>
-          <NotificationBell profile={profile} onOpen={handleOpenNotification} />
-        </div>
-      )}
       {renderScreen()}
     </div>
   );

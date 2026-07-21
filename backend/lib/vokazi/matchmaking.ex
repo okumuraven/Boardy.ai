@@ -39,6 +39,46 @@ defmodule Vokazi.Matchmaking do
   def get_match!(id), do: Repo.get!(Match, id)
 
   @doc """
+  All of a user's matches (excluding dead-end declined/slashed ones),
+  most recently updated first - the source for the Matches list UI. A
+  user can be in several matches simultaneously (an active unlocked
+  chat, a still-pending mutual review, an awaiting-stake match can all
+  coexist), so this returns all of them rather than the single
+  "next thing to resolve" match `pending_for_user`-style lookups return.
+  """
+  def list_for_user(user_id) do
+    Match
+    |> where([m], (m.user_a_id == ^user_id or m.user_b_id == ^user_id) and m.status not in ["declined", "slashed"])
+    |> order_by([m], desc: m.updated_at)
+    |> Repo.all()
+    |> Enum.map(&match_summary(&1, user_id))
+  end
+
+  defp match_summary(match, user_id) do
+    {other_user_id, my_response} =
+      if match.user_a_id == user_id do
+        {match.user_b_id, match.user_a_response}
+      else
+        {match.user_a_id, match.user_b_response}
+      end
+
+    other_user = Repo.get(User, other_user_id)
+    chat_room = if match.status == "unlocked", do: Repo.get_by(Chat.ChatRoom, match_id: match.id)
+    last_message = chat_room && List.last(Chat.list_recent_messages(chat_room.id, 1))
+
+    %{
+      match_id: match.id,
+      status: match.status,
+      ai_score: match.ai_score,
+      my_response: my_response,
+      chat_room_id: chat_room && chat_room.id,
+      other_user: %{name: other_user && other_user.full_name},
+      last_message: last_message && %{body: last_message.content, inserted_at: last_message.inserted_at},
+      updated_at: match.updated_at
+    }
+  end
+
+  @doc """
   Runs the full pipeline for a user whose vectors were just (re)generated.
   Creates a "pending_consent" match - awaiting both people's review of the
   AI's score/reasoning/breakdown - if a candidate clears both the

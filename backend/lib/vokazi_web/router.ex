@@ -21,14 +21,17 @@ defmodule VokaziWeb.Router do
     post "/vapi", VapiController, :webhook
     post "/matches/:id/respond", MatchController, :respond
     post "/matches/:id/confirm-stake", MatchController, :confirm_stake
+    get "/matches", MatchController, :index
     get "/matches/pending", MatchController, :pending_for_user
     get "/matches/:id/status", MatchController, :status
     post "/matchmaking/find_match", MatchController, :find_match
 
     # Escrow-Gated Google Calendar
+    get "/schedules", SchedulingController, :calendar
     get "/matches/:id/schedule", SchedulingController, :show
     get "/matches/:id/schedule/status", SchedulingController, :status
     get "/matches/:id/schedule/connect_url", SchedulingController, :connect_url
+    get "/matches/:id/schedule/my_free_days", SchedulingController, :my_free_days
     post "/matches/:id/schedule/decline_calendar", SchedulingController, :decline_calendar
     post "/matches/:id/schedule/availability", SchedulingController, :submit_availability
     post "/matches/:id/schedule/contact_preference", SchedulingController, :set_contact_preference

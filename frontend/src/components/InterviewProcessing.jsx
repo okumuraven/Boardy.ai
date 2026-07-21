@@ -27,18 +27,15 @@ export default function InterviewProcessing() {
   const progress = Math.min(92, Math.round((elapsed / EXPECTED_SECONDS) * 100));
 
   return (
-    <main
-      className="onboarding-container"
-      style={{ justifyContent: "center", animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
-    >
-      <h1 className="ai-greeting" style={{ fontSize: "2.4rem", marginBottom: "0.5rem" }}>
+    <div style={{ textAlign: "center", animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}>
+      <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "1.6rem", margin: "0 0 0.5rem", color: "var(--paper)" }}>
         Processing your interview...
-      </h1>
-      <p className="ai-subtext" style={{ maxWidth: "600px", marginBottom: "2.5rem" }}>
+      </h2>
+      <p style={{ color: "var(--muted)", fontSize: "0.92rem", maxWidth: "520px", margin: "0 auto 2rem" }}>
         This usually takes under a minute. We'll take you to your profile automatically the moment it's ready.
       </p>
 
-      <div style={{ width: "100%", maxWidth: "440px" }}>
+      <div style={{ width: "100%", maxWidth: "440px", margin: "0 auto" }}>
         <div className="progress-track">
           <div className="progress-fill" style={{ width: `${progress}%` }}></div>
         </div>
@@ -64,6 +61,6 @@ export default function InterviewProcessing() {
           })}
         </ul>
       </div>
-    </main>
+    </div>
   );
 }

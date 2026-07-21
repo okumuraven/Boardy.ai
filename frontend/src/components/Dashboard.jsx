@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { useDisconnect, useActiveWallet } from "thirdweb/react";
-import { client, activeChain } from "../config/thirdweb";
 import Vapi from "@vapi-ai/web";
 import InterviewProcessing from "./InterviewProcessing";
 import ProfileSummary from "./ProfileSummary";
 import VoiceInterview from "./VoiceInterview";
 
+// Owns the voice-interview lifecycle and the offer/need summary - no
+// longer renders its own top nav, since the app shell now provides
+// persistent chrome (and the wallet-disconnect action lives on the
+// Profile view instead).
 export default function Dashboard({ profile, onInterviewComplete, onFindMatch }) {
-  const wallet = useActiveWallet();
-  const { disconnect } = useDisconnect();
   const [callStatus, setCallStatus] = useState("inactive"); // inactive, connecting, active
   const [vapiInstance, setVapiInstance] = useState(null);
   const [transcript, setTranscript] = useState("");
@@ -165,27 +165,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
   };
 
   return (
-    <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-
-      {/* Header */}
-      <nav className="nav-bar">
-        <div className="brand-logo-container">
-          <div className="vokazi-icon">V</div>
-          <span className="brand-text">Vokazi Intelligence</span>
-        </div>
-        <div className="nav-actions">
-          <div className="user-pill">
-            {profile?.name || 'Verified Identity'}
-          </div>
-          <button
-            onClick={() => { if (wallet) disconnect(wallet); }}
-            className="btn-ghost btn-sm"
-          >
-            Disconnect
-          </button>
-        </div>
-      </nav>
-
+    <div style={{ width: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       {processingRedo ? (
         <InterviewProcessing />
       ) : view === "summary" ? (

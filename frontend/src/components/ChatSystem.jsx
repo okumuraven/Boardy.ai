@@ -124,84 +124,93 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
 
   return (
     <div className="chat-panel animate-in">
+      <div className="chat-column">
 
-      {/* Header */}
-      <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button onClick={showScheduling ? () => setShowScheduling(false) : onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
-            ←
-          </button>
-          <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
-            <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span className={`dot ${otherOnline ? 'online' : ''}`}></span>
-              {connectionState === "joined" ? (otherOnline ? "Online now" : "Offline") : connectionState === "error" ? "Connection failed" : "Connecting..."}
-            </span>
+        {/* Header */}
+        <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <button onClick={onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
+              ←
+            </button>
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
+              <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span className={`dot ${otherOnline ? 'online' : ''}`}></span>
+                {connectionState === "joined" ? (otherOnline ? "Online now" : "Offline") : connectionState === "error" ? "Connection failed" : "Connecting..."}
+              </span>
+            </div>
           </div>
+          {matchId && (
+            <button
+              onClick={() => setShowScheduling((v) => !v)}
+              className={showScheduling ? "btn-primary" : "btn-ghost"}
+              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            >
+              📅 {showScheduling ? "Hide Schedule" : "Schedule Intro Call"}
+            </button>
+          )}
         </div>
-        {!showScheduling && matchId && (
-          <button onClick={() => setShowScheduling(true)} className="btn-ghost" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}>
-            📅 Schedule Intro Call
+
+        {/* Messages Area */}
+        <div className="chat-messages custom-scrollbar">
+          {connectionState === "error" ? (
+            <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
+          ) : messages.length === 0 ? (
+            <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--paper)' }}>You're connected</p>
+              <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
+                Say hello to {partnerName || "your match"} - this is a real, private conversation between the two of you.
+              </p>
+            </div>
+          ) : (
+            <>
+              {hasMoreHistory && (
+                <button onClick={handleLoadMore} disabled={loadingMore} className="btn-ghost" style={{ alignSelf: 'center', padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
+                  {loadingMore ? "Loading..." : "Load earlier messages"}
+                </button>
+              )}
+              {messages.map((msg) => {
+                const isMe = msg.sender_id === profile.id;
+                return (
+                  <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
+                    <div className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
+                      {msg.content}
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem', textAlign: isMe ? 'right' : 'left' }}>
+                      {new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
+            disabled={connectionState !== "joined"}
+            className="chat-input"
+          />
+          <button type="submit" className="btn-primary" style={{ padding: '0 1.5rem', height: '100%' }} disabled={!newMessage.trim() || connectionState !== "joined"}>
+            Send
           </button>
-        )}
+        </form>
       </div>
 
-      {showScheduling ? (
-        <SchedulingFlow matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setShowScheduling(false)} />
-      ) : (
-      <>
-      {/* Messages Area */}
-      <div className="chat-messages custom-scrollbar">
-        {connectionState === "error" ? (
-          <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
-        ) : messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto' }}>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--paper)' }}>You're connected</p>
-            <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
-              Say hello to {partnerName || "your match"} - this is a real, private conversation between the two of you.
-            </p>
-          </div>
-        ) : (
-          <>
-            {hasMoreHistory && (
-              <button onClick={handleLoadMore} disabled={loadingMore} className="btn-ghost" style={{ alignSelf: 'center', padding: '0.4rem 1rem', fontSize: '0.8rem' }}>
-                {loadingMore ? "Loading..." : "Load earlier messages"}
-              </button>
-            )}
-            {messages.map((msg) => {
-              const isMe = msg.sender_id === profile.id;
-              return (
-                <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                  <div className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
-                    {msg.content}
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem', textAlign: isMe ? 'right' : 'left' }}>
-                    {new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                </div>
-              );
-            })}
-          </>
-        )}
-        <div ref={messagesEndRef} />
+      {/* Schedule panel - docked alongside the conversation, not replacing it */}
+      <div className={`chat-schedule-panel ${showScheduling ? "open" : ""}`}>
+        <div className="chat-schedule-panel-inner">
+          {showScheduling && matchId && (
+            <SchedulingFlow matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setShowScheduling(false)} />
+          )}
+        </div>
       </div>
-
-      {/* Input Area */}
-      <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
-          disabled={connectionState !== "joined"}
-          className="chat-input"
-        />
-        <button type="submit" className="btn-primary" style={{ padding: '0 1.5rem', height: '100%' }} disabled={!newMessage.trim() || connectionState !== "joined"}>
-          Send
-        </button>
-      </form>
-      </>
-      )}
     </div>
   );
 }

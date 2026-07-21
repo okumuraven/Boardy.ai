@@ -23,11 +23,14 @@ defmodule Vokazi.Scheduling do
 
   alias Vokazi.Repo
   alias Vokazi.Accounts.{User, Profile}
-  alias Vokazi.Chat
   alias Vokazi.Matchmaking.Match
-  alias Vokazi.Scheduling.{IntroSchedule, CredentialStore, SlotProposal, EventFinalizer}
+  alias Vokazi.Scheduling.{IntroSchedule, CredentialStore, SlotProposal, EventFinalizer, Reminder}
 
-  @reminder_cooldown_seconds 30 * 60
+  @doc """
+  Every unlocked match's scheduling state for this user - the source
+  for the Calendar tab. See `Vokazi.Scheduling.CalendarOverview`.
+  """
+  defdelegate list_for_user(user_id), to: Vokazi.Scheduling.CalendarOverview
 
   @doc "Fetches (or creates) the `IntroSchedule` for this match, gated on the match already being unlocked."
   def get_or_create_schedule(match_id, user_id) do
@@ -61,10 +64,9 @@ defmodule Vokazi.Scheduling do
   end
 
   @doc """
-  Called from the OAuth callback controller after Google redirects back
-  with a `code` + signed `state`. Stores the credential, marks this
-  side's per-intro consent as granted, and (if the other side has also
-  resolved) kicks off slot proposal in the background.
+  Stores the credential and marks Calendar consent granted - only
+  unlocks the assisted day-picker (`my_free_days/2`); slot proposal
+  doesn't run until days are actually offered.
   """
   def handle_oauth_callback(code, state) do
     with {:ok, %{user_id: user_id, match_id: match_id}} <- Vokazi.Scheduling.GoogleOAuth.verify_state(state),
@@ -74,10 +76,16 @@ defmodule Vokazi.Scheduling do
       CredentialStore.upsert(user_id, tokens)
 
       side = side_of(match, user_id)
-      {:ok, updated} = update_schedule(schedule, %{consent_field(side) => true})
-      SlotProposal.maybe_run(match, updated)
+      {:ok, _updated} = update_schedule(schedule, %{consent_field(side) => true})
 
       {:ok, match_id}
+    end
+  end
+
+  @doc "This user's real free days, annotated with the other side's already-offered window per date - see `Vokazi.Scheduling.MyFreeDays`."
+  def my_free_days(match_id, user_id) do
+    with {:ok, match} <- get_unlocked_match(match_id, user_id) do
+      Vokazi.Scheduling.MyFreeDays.fetch(match, user_id)
     end
   end
 
@@ -87,20 +95,26 @@ defmodule Vokazi.Scheduling do
          {:ok, schedule} <- fetch_schedule(match_id) do
       side = side_of(match, user_id)
       {:ok, updated} = update_schedule(schedule, %{consent_field(side) => false})
-      SlotProposal.maybe_run(match, updated)
       {:ok, view(updated, match, user_id)}
     end
   end
 
   @doc """
-  Manual fallback availability - `slots` is a list of
-  `%{"date" => "2026-08-01", "start" => "14:00", "end" => "17:00"}`.
+  The explicitly offered availability for this intro - `slots` is a
+  list of `%{"date" => "2026-08-01", "start" => "14:00", "end" => "17:00"}`.
+  Used by both paths: typed in directly by a manual user, or curated
+  from the real free-day picker by a Calendar-connected one. This is
+  what actually triggers slot proposal once both sides have submitted -
+  not merely connecting Calendar or declining.
   """
   def submit_manual_availability(match_id, user_id, slots) do
     with {:ok, match} <- get_unlocked_match(match_id, user_id),
          {:ok, schedule} <- fetch_schedule(match_id) do
+      # consent is never touched here - a Calendar-connected user
+      # submitting their curated day picks through this same function
+      # should never have it flip back to false.
       side = side_of(match, user_id)
-      {:ok, updated} = update_schedule(schedule, %{manual_field(side) => slots, consent_field(side) => false})
+      {:ok, updated} = update_schedule(schedule, %{manual_field(side) => slots})
       SlotProposal.maybe_run(match, updated)
       {:ok, view(updated, match, user_id)}
     end
@@ -139,49 +153,17 @@ defmodule Vokazi.Scheduling do
   end
 
   @doc """
-  Nudges the other side with a real chat message (rate-limited to once
-  per #{div(@reminder_cooldown_seconds, 60)} minutes so it stays a
-  courtesy, not spam) - reuses the existing chat infrastructure rather
-  than inventing a separate notification channel.
+  Nudges the other side with a real chat message. See
+  `Vokazi.Scheduling.Reminder` for the rate-limiting/delivery details.
   """
   def send_reminder(match_id, user_id) do
     with {:ok, match} <- get_unlocked_match(match_id, user_id),
          {:ok, schedule} <- fetch_schedule(match_id) do
-      if reminder_on_cooldown?(schedule) do
-        {:error, :reminder_on_cooldown}
-      else
-        post_reminder_message(match_id, user_id)
-        {:ok, updated} = update_schedule(schedule, %{last_reminder_sent_at: DateTime.utc_now() |> DateTime.truncate(:second)})
-        {:ok, view(updated, match, user_id)}
+      case Reminder.send(match_id, user_id, schedule) do
+        {:ok, updated} -> {:ok, view(updated, match, user_id)}
+        {:error, :on_cooldown} -> {:error, :reminder_on_cooldown}
       end
     end
-  end
-
-  defp reminder_on_cooldown?(%{last_reminder_sent_at: nil}), do: false
-
-  defp reminder_on_cooldown?(%{last_reminder_sent_at: last}) do
-    DateTime.diff(DateTime.utc_now(), last, :second) < @reminder_cooldown_seconds
-  end
-
-  defp post_reminder_message(match_id, user_id) do
-    sender = Repo.get!(User, user_id)
-    room = Chat.get_chat_room_by_match_id!(match_id)
-
-    {:ok, message} =
-      Chat.create_message(%{
-        content: "🔔 Reminder from #{sender.full_name}: ready to lock in a time for our intro call?",
-        sender_id: user_id,
-        chat_room_id: room.id,
-        notification_type: "calendar_reminder"
-      })
-
-    VokaziWeb.Endpoint.broadcast!("chat_room:#{room.id}", "new_msg", %{
-      id: message.id,
-      content: message.content,
-      sender_id: message.sender_id,
-      sender_name: sender.full_name,
-      inserted_at: message.inserted_at
-    })
   end
 
   # --- Gate + lookups -------------------------------------------------
@@ -240,12 +222,10 @@ defmodule Vokazi.Scheduling do
       status: schedule.status,
       created_at: schedule.inserted_at,
       my_consent: my_consent,
-      # Resolved once either Calendar is connected, or manual
-      # availability has actually been submitted (consent alone is
-      # `false` the instant Calendar is declined, before the
-      # availability form is filled in) - this is what the frontend
-      # uses to decide "show the form" vs "show the waiting screen."
-      my_resolved: my_consent == true or (my_consent == false and Map.get(schedule, manual_field(side)) != []),
+      # True once this side has actually submitted offered availability
+      # (curated from Calendar, or typed manually) - not merely having
+      # decided whether to connect Calendar at all.
+      my_resolved: Map.get(schedule, manual_field(side)) != [],
       proposed_slots: schedule.proposed_slots,
       my_selected_slot: Map.get(schedule, selected_slot_field(side)),
       other_confirmed_own_slot: not is_nil(Map.get(schedule, selected_slot_field(other_side))),
@@ -255,7 +235,7 @@ defmodule Vokazi.Scheduling do
       my_briefing: decode_briefing(Map.get(schedule, agenda_field(side))),
       my_contact_preference: my_override || (my_profile && my_profile.contact_preference) || "call",
       last_reminder_sent_at: schedule.last_reminder_sent_at,
-      reminder_cooldown_seconds: @reminder_cooldown_seconds,
+      reminder_cooldown_seconds: Reminder.cooldown_seconds(),
       other_user: %{
         name: other_user && other_user.full_name,
         default_contact_preference: other_profile && other_profile.contact_preference

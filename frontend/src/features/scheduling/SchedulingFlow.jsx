@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import CalendarConsent from "./CalendarConsent";
 import AvailabilityForm from "./AvailabilityForm";
+import DayPicker from "./DayPicker";
 import SlotPicker from "./SlotPicker";
 import BriefingCard from "./BriefingCard";
 import WaitingPanel from "./WaitingPanel";
@@ -155,6 +156,14 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
           onRemind={() => post("/schedule/remind", {})}
           busy={busy}
           connectionError={connectionError}
+        />
+      ) : schedule?.my_consent === true ? (
+        <DayPicker
+          matchId={matchId}
+          profile={profile}
+          partnerName={partnerName}
+          onSubmit={(slots) => post("/schedule/availability", { slots })}
+          busy={busy}
         />
       ) : schedule?.my_consent === false ? (
         <AvailabilityForm onSubmit={(slots) => post("/schedule/availability", { slots })} busy={busy} />
