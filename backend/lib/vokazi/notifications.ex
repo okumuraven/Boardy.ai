@@ -59,7 +59,7 @@ defmodule Vokazi.Notifications do
   end
 
   defp enqueue_push_jobs(user_id, body, link) do
-    payload = %{title: "Vokazi", body: body, link: link}
+    payload = %{title: "Kuzana Connect", body: body, link: link}
 
     user_id
     |> push_subscriptions_for()

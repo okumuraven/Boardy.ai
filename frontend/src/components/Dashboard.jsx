@@ -151,7 +151,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
         // webhook, so the backend never has to parse it out of the transcript.
         await vapiInstance?.start(assistantId, {
           metadata: {
-            vokazi_user_id: profile.id,
+            kuzana_user_id: profile.id,
           },
         });
       } catch (err) {

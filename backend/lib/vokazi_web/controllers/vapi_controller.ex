@@ -43,7 +43,7 @@ defmodule VokaziWeb.VapiController do
       nil ->
         Logger.error(
           "Vapi webhook: could not resolve a profile for call_id=#{call_id}. " <>
-            "No assistantOverrides.metadata.vokazi_user_id and no matching customer number on the call payload."
+            "No assistantOverrides.metadata.kuzana_user_id and no matching customer number on the call payload."
         )
 
       profile ->
@@ -95,15 +95,15 @@ defmodule VokaziWeb.VapiController do
   end
 
   # 🔗 Pillar 2: Identity Resolution (via Vapi's `metadata` passthrough)
-  # The frontend passes `assistantOverrides: {metadata: {vokazi_user_id: ...}}`
+  # The frontend passes `assistantOverrides: {metadata: {kuzana_user_id: ...}}`
   # when starting the call. Vapi echoes it back untouched on every server
   # event, so we read it directly instead of parsing the transcript.
   # Falls back to the caller's phone number for real (Phase 3) PSTN calls,
   # which is a *phone_number* lookup, not a *user_id* lookup.
   defp resolve_profile(message) do
     user_id =
-      (get_in(message, ["call", "assistantOverrides", "metadata", "vokazi_user_id"]) ||
-         get_in(message, ["call", "metadata", "vokazi_user_id"]))
+      (get_in(message, ["call", "assistantOverrides", "metadata", "kuzana_user_id"]) ||
+         get_in(message, ["call", "metadata", "kuzana_user_id"]))
       |> parse_int()
 
     cond do

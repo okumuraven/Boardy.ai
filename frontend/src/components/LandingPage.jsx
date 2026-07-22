@@ -25,7 +25,7 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
         </div>
         <div>
           <button onClick={onWhitepaperClick} className="nav-link">
-            Read Whitepaper
+            How It Works
           </button>
         </div>
       </nav>

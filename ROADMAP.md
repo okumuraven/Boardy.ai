@@ -117,48 +117,90 @@ community's own members told Kuzana they wanted.
 ## 🧭 Phase 4: Kuzana MVP Parity (Next Up)
 *Objective: Close the gap between what we've built and what Kuzana's own members explicitly asked
 for in the July 2026 Discovery Report (`kuzana_connect_discovery.md`). These are day-one asks from
-real interviews, not speculative features.*
+real interviews, not speculative features. Design discussion held 2026-07-23 - decisions below are
+the outcome of that discussion, kept here so the build can be followed step by step.*
 
 ### Discovery & Directory
-- [ ] **Searchable, filterable member directory** — a browsable list of all members, independent
-  of the AI-suggested match queue. This was the single most-requested item across the 15
-  interviews and is explicitly called out as a "day one" feature in Kuzana's own MVP
-  recommendation. Additive to AI matching, not a replacement for it.
+- [ ] **Searchable, filterable member directory** — a new tab in the app (alongside Home/Matches/
+  Calendar/Profile), independent of the AI-suggested match queue. This was the single
+  most-requested item across the 15 interviews and is explicitly called out as a "day one" feature
+  in Kuzana's own MVP recommendation. Additive to AI matching, not a replacement for it. UX: a
+  search box plus tappable filter chips (industry, "looking for") — the same interaction pattern
+  as filtering products on any shopping app, not an advanced-search form. Each result renders as a
+  compact card: name, role, industry, a one-line offer snippet, and tags for what they need/offer.
 - [ ] **Industry/sector taxonomy**, split out as its own filterable field from `role` — real
   members are agribusiness, logistics, finance, real estate, branding, sustainability, consulting,
-  not "founder/developer/designer/investor." Raised independently by multiple interviewees.
+  not "founder/developer/designer/investor." Raised independently by multiple interviewees. UX: a
+  short, fixed list (10–15 options, drawn from Kuzana's actual member industries) as a single
+  dropdown during setup — not an open-ended taxonomy someone has to self-categorize into.
 - [ ] **Structured "looking for" / "can help with" tags** on top of the existing voice-derived
   `offer_text`/`need_text` — funding, customers, partners, mentors, hiring — so the directory can
-  be filtered, not just semantically matched.
-- [ ] **Portfolio/website link field** on profiles.
+  be filtered, not just semantically matched. UX decision: **do not add a new manual tagging
+  form.** Gemini auto-extracts these tags from the same interview transcript it already processes
+  (same pattern as the existing offer/need extraction), and the member just confirms/edits the
+  suggested chips afterward. Zero new steps added to onboarding — this stays a byproduct of the
+  interview they already did, not a second form to fill in.
+- [ ] **Portfolio/website link field** on profiles — a single optional text field, no real UX risk.
+
+### Directory Contact Model — decided (2026-07-23)
+The open question was: once someone finds a person in the directory, what happens next? Resolved
+as a combination of both options originally on the table, explicitly **without** a payment layer:
+- **Browsing/search is fully open** — anyone can search and filter the whole directory, no
+  restriction, no gate (the openness half of the original "Option B").
+- **Contact still goes through the existing mutual-consent flow** — tapping "Connect" on a
+  directory profile runs through the same AI-reasoning / accept-decline screen already built for
+  suggested matches, just user-initiated instead of AI-initiated. Raw contact info (phone, etc.)
+  is never displayed directly; nobody is ever reachable without both sides agreeing first (the
+  mechanism half of the original "Option A"). This keeps one consistent "how do you talk to
+  someone" rule across the entire app, whether the AI suggested the person or you found them
+  yourself.
+- **No payment/monetization gate is being built on top of this right now.** Per direct guidance
+  from the Kuzana representative (reconfirmed 2026-07-23), monetization is explicitly off the
+  table for now — see Phase 5 below, which stays paused. This open-browse + consent-gated-contact
+  model is designed so a paid tier *could* sit on top of it later without changing the underlying
+  mechanic, but building that gate is not in scope today.
 
 ### Investor & Lender View
 - [ ] **A distinct investor/lender profile type**, not a shared shape with founder profiles:
   condensed business summary, funding stage, amount sought, key financials/traction. Directly
   requested by the NAIBAN member and by Korir (Vula East Africa) — both explicitly framed Connect
-  as a deal-flow/sourcing tool, not a peer-networking tool, from their side of the table.
+  as a deal-flow/sourcing tool, not a peer-networking tool, from their side of the table. UX
+  decision: keep the warm voice interview as the front door for everyone (it's what gives every
+  profile personality/context) - but for anyone selecting "seeking investment," add a short,
+  explicitly-labeled structured form afterward for the numeric fields (funding stage, amount
+  sought, monthly revenue/turnover). Numbers should never come from a spoken transcript alone -
+  mishearing "500 thousand" as "5 million" would be a real, embarrassing bug, and is exactly the
+  kind of mistake the Discovery Report's own "Note to Kyle" flagged as a real member complaint
+  (financials misread during a funding review). Investors/lenders get the mirror image: a short
+  structured form for check size and sectors of interest, no voice interview needed since they're
+  not the ones being pitched.
 - [ ] **Funding-type segmentation** — equity, loans, grants, working capital treated as distinct
   filterable categories rather than one "seeking investment" bucket, per Korir's specific
   suggestion.
 
 ### Trust & Presentation
 - [ ] **Neutral business-stage field** — a plain descriptor ("Idea stage" / "Early revenue" /
-  "Scaling"), not a tier badge. Directly responds to a named risk in the Discovery Report: one
-  interviewee said Kuzana already feels like "a place for big businesses," which made her feel
-  inferior as an earlier-stage founder. Worth a pass on `StatsCard.jsx`'s activity-based rank
-  language too, to make sure it doesn't compound the same feeling.
+  "Scaling"), rendered as a plain grey label - not a tier badge, not gold/colored styling that
+  implies ranking. Directly responds to a named risk in the Discovery Report: one interviewee said
+  Kuzana already feels like "a place for big businesses," which made her feel inferior as an
+  earlier-stage founder. Worth a pass on `StatsCard.jsx`'s activity-based rank language too, to
+  make sure it doesn't compound the same feeling for a less-active or earlier-stage member.
 - [ ] **Surface existing GitHub verification more prominently** in the directory context — this
   already exists (`SocialProfiles`) and reasonably covers the "member verification/authenticity"
-  ask, it just isn't visible where members are actually browsing yet.
+  ask, it just isn't visible where members are actually browsing yet. UX: a small verified-checkmark
+  next to the name on directory cards and the profile itself.
 
 ---
 
 ## 💰 Phase 5: Monetization — What Kuzana's Own Members Already Asked For
-*Objective: replace the old, speculative "Vokazi Enterprise" AVAX-bounty talent-marketplace vision
-below with something grounded in Kuzana's own member interviews. This supersedes the 2026-07-18
-guidance that paused monetization work — that pause was about the old speculative direction, not
-about monetization generally. Nothing here is built yet, and no pricing is fixed; this is a scoped
-direction to align with Kuzana on, not a shipped decision.*
+*Objective: keep a scoped, evidence-backed monetization shape on record for when Kuzana is ready to
+discuss it - not to build it now. This replaces the old, speculative "Vokazi Enterprise"
+AVAX-bounty talent-marketplace vision below (which is dropped, not just paused - see the
+superseded note). But the pause on monetization work itself is still fully in effect: the Kuzana
+representative's 2026-07-18 guidance to deprioritize monetization was reconfirmed directly on
+2026-07-23 - do not start building anything in this phase until told otherwise. Nothing here is
+built, nothing is scheduled; it exists only so the shape (paid direct-contact tier, investor/lender
+deal-flow tier) is ready to discuss whenever Kuzana raises it.*
 
 - [ ] **Paid direct-contact tier** — open browsing/discovery of the directory, with direct member
   contact gated behind a paid tier. This is Kuzana's own stated MVP gate, and Samuel Kagwe asked,

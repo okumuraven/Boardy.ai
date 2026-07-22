@@ -1,10 +1,10 @@
 // Web Push (notification_system.md Phase 2). This is what reaches a
-// user even with every Vokazi tab fully closed - the one thing the
+// user even with every Kuzana Connect tab fully closed - the one thing the
 // in-app Phoenix Channel layer (Phase 1) can never do on its own.
 
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
-  const title = data.title || "Vokazi";
+  const title = data.title || "Kuzana Connect";
 
   const options = {
     body: data.body || "",

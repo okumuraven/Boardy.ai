@@ -6,11 +6,11 @@ export default function Whitepaper({ onBack }) {
       </button>
 
       <div className="animate-in">
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'clamp(1.9rem, 5vw, 2.5rem)', marginBottom: '0.5rem' }}>Kuzana Connect Lightpaper</h1>
-        <p style={{ fontSize: '0.9rem', color: 'var(--brass)', fontWeight: 600, marginBottom: '4rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Version 1.0.0 · How it works</p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 'clamp(1.9rem, 5vw, 2.5rem)', marginBottom: '0.5rem' }}>How Kuzana Connect Works</h1>
+        <p style={{ fontSize: '0.9rem', color: 'var(--brass)', fontWeight: 600, marginBottom: '4rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>The short version, before you dive in</p>
 
         <section style={{ marginBottom: '3.5rem' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ink-line)', paddingBottom: '1rem' }}>1. Abstract &amp; The Problem</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ink-line)', paddingBottom: '1rem' }}>1. The Problem</h2>
           <p style={{ marginBottom: '1.5rem', color: 'var(--muted)', fontSize: '1.05rem' }}>
             The current landscape of professional networking is fundamentally broken. Platforms like LinkedIn and X are saturated with noise, spam, and superficial connections. Finding a genuine co-founder, a high-level lead developer, or an aligned investor takes months of manual searching and vetting.
           </p>
@@ -20,7 +20,7 @@ export default function Whitepaper({ onBack }) {
         </section>
 
         <section style={{ marginBottom: '3.5rem' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ink-line)', paddingBottom: '1rem' }}>2. Architecture &amp; The AI Oracle</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--ink-line)', paddingBottom: '1rem' }}>2. How the Matching Works</h2>
           <p style={{ marginBottom: '1.5rem', color: 'var(--muted)', fontSize: '1.05rem' }}>
             No long, tedious forms. Just a natural, 5-minute voice interview with our AI.
           </p>
