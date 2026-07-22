@@ -51,11 +51,27 @@ defmodule VokaziWeb.Router do
     get "/personal_events", PersonalEventController, :index
     post "/personal_events", PersonalEventController, :create
     delete "/personal_events/:id", PersonalEventController, :delete
+
+    # Social profile - GitHub (OAuth-verified) + LinkedIn/X/portfolio links
+    get "/profiles/:user_id/social", SocialProfileController, :show
+    post "/profiles/:user_id/social/links", SocialProfileController, :upsert_links
+    get "/profiles/:user_id/social/github/connect_url", SocialProfileController, :github_connect_url
+    delete "/profiles/:user_id/social/github", SocialProfileController, :github_disconnect
+
+    # Reputation - connections/rank, and the redacted match-counterpart reveal
+    get "/profiles/:user_id/stats", ReputationController, :own_stats
+    get "/matches/:id/counterpart_profile", ReputationController, :counterpart_profile
   end
 
   scope "/api/auth/google/calendar", VokaziWeb do
     pipe_through :browser_redirect
 
     get "/callback", GoogleOAuthController, :callback
+  end
+
+  scope "/api/auth/github", VokaziWeb do
+    pipe_through :browser_redirect
+
+    get "/callback", GithubOAuthController, :callback
   end
 end

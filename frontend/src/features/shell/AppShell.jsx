@@ -26,8 +26,19 @@ const initials = (name) =>
 // pattern in App.jsx. `pendingMatchOpen` is how a notification click
 // (Bell dropdown, Web Push, or the service-worker/URL-param fallback in
 // App.jsx) reaches the right match regardless of which tab is active.
+// GitHub OAuth (Social Profile connect) redirects back to `/` - land on
+// Profile so the connected/error banner is immediately visible. Read as
+// a lazy initial state (not an effect) so it's resolved before
+// SocialProfileSection's own mount effect clears these same query params
+// - effects fire child-first, so an effect here would lose the race.
+const initialTabFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("github_connected") || params.has("github_connect_error")) return "profile";
+  return "home";
+};
+
 export default function AppShell({ profile, onInterviewComplete, onFindMatch, onProfileUpdated, pendingMatchOpen, onConsumePendingMatchOpen }) {
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState(initialTabFromUrl);
   const [openRequest, setOpenRequest] = useState(null);
 
   useEffect(() => {

@@ -14,11 +14,17 @@ defmodule Vokazi.Accounts.User do
     timestamps()
   end
 
+  # Closed set, not free text - Vokazi.Reputation ranks users within
+  # their role category, so a stray value here would either fragment
+  # into its own lonely category or crash that grouping outright.
+  @roles ["founder", "developer", "designer", "investor"]
+
   @doc false
   def changeset(user, attrs) do
     user
     |> cast(attrs, [:email, :full_name, :role, :wallet_address, :onboarding_completed])
     |> validate_required([:wallet_address, :full_name, :role])
+    |> validate_inclusion(:role, @roles)
     |> unique_constraint(:wallet_address)
     |> unique_constraint(:email)
   end

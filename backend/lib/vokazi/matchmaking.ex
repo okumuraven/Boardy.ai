@@ -38,6 +38,9 @@ defmodule Vokazi.Matchmaking do
 
   def get_match!(id), do: Repo.get!(Match, id)
 
+  @doc "Is this match unlocked, and is this user actually a participant - see `Vokazi.Matchmaking.UnlockGate`."
+  defdelegate unlocked_match_for(match_id, user_id), to: Vokazi.Matchmaking.UnlockGate
+
   @doc """
   All of a user's matches (excluding dead-end declined/slashed ones),
   most recently updated first - the source for the Matches list UI. A

@@ -1,20 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
 import SchedulingFlow from "../features/scheduling";
+import MatchProfilePanel from "../features/matches/MatchProfilePanel";
 
 const HISTORY_PAGE_SIZE = 50;
 
 export default function ChatRoomView({ roomId, matchId, profile, partnerName, startInScheduling, onBack }) {
-  // Opens straight into the scheduling panel when a calendar-reminder
-  // notification click asked for it (`startInScheduling`), or when
-  // we're landing back here right after Google's OAuth redirect (a full
-  // page navigation, so any prior React state was lost) - SchedulingFlow
-  // reads the same query params to show a connect success/error banner
-  // before clearing them.
-  const [showScheduling, setShowScheduling] = useState(() => {
-    if (startInScheduling) return true;
+  // One docked side panel, not two competing ones - `null | "schedule" |
+  // "profile"`. Opens straight into scheduling when a calendar-reminder
+  // notification click asked for it (`startInScheduling`), or when we're
+  // landing back here right after Google's OAuth redirect (a full page
+  // navigation, so any prior React state was lost) - SchedulingFlow reads
+  // the same query params to show a connect success/error banner before
+  // clearing them.
+  const [panelView, setPanelView] = useState(() => {
+    if (startInScheduling) return "schedule";
     const params = new URLSearchParams(window.location.search);
-    return params.has("calendar_connected") || params.has("calendar_connect_error");
+    return params.has("calendar_connected") || params.has("calendar_connect_error") ? "schedule" : null;
   });
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -141,18 +143,27 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
             </div>
           </div>
           {matchId && (
-            <button
-              onClick={() => setShowScheduling((v) => !v)}
-              className={showScheduling ? "btn-primary" : "btn-ghost"}
-              style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-            >
-              📅 {showScheduling ? "Hide Schedule" : "Schedule Intro Call"}
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => setPanelView((v) => (v === "profile" ? null : "profile"))}
+                className={panelView === "profile" ? "btn-primary" : "btn-ghost"}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+              >
+                {panelView === "profile" ? "Hide Profile" : `View ${partnerName || "Profile"}`}
+              </button>
+              <button
+                onClick={() => setPanelView((v) => (v === "schedule" ? null : "schedule"))}
+                className={panelView === "schedule" ? "btn-primary" : "btn-ghost"}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+              >
+                📅 {panelView === "schedule" ? "Hide Schedule" : "Schedule Intro Call"}
+              </button>
+            </div>
           )}
         </div>
 
         {/* Messages Area */}
-        <div className="chat-messages custom-scrollbar">
+        <div className="chat-messages">
           {connectionState === "error" ? (
             <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
           ) : messages.length === 0 ? (
@@ -203,11 +214,15 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
         </form>
       </div>
 
-      {/* Schedule panel - docked alongside the conversation, not replacing it */}
-      <div className={`chat-schedule-panel ${showScheduling ? "open" : ""}`}>
-        <div className="chat-schedule-panel-inner">
-          {showScheduling && matchId && (
-            <SchedulingFlow matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setShowScheduling(false)} />
+      {/* Side panel - docked alongside the conversation, not replacing it.
+          One slot, not two: schedule and profile share it. */}
+      <div className={`chat-side-panel ${panelView ? "open" : ""}`}>
+        <div className="chat-side-panel-inner">
+          {panelView === "schedule" && matchId && (
+            <SchedulingFlow matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setPanelView(null)} />
+          )}
+          {panelView === "profile" && matchId && (
+            <MatchProfilePanel matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setPanelView(null)} />
           )}
         </div>
       </div>

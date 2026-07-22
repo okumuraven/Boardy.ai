@@ -30,6 +30,7 @@ mix phx.server
 - `GET /api/schedules` / `GET /api/matches/:id/schedule*` - Escrow-Gated Calendar (per-match consent, curated day-picker, slot proposal/confirmation). See `calendar.md`.
 - `GET/POST /api/personal_events`, `DELETE /api/personal_events/:id` - a user's own agenda items, independent of any match; feed into the day-picker's free-day computation. See `calendar.md`.
 - `GET /api/notifications`, `POST /api/push_subscriptions` - in-app + Web Push notifications. See `notification_system.md`.
+- `GET/POST /api/profiles/:user_id/social*` - Social Profile: GitHub (OAuth-verified, no scope requested beyond public profile read) + trust-on-submit LinkedIn/X/portfolio links. See `social_media.md`.
 
 ## 🔗 Smart Contract Integration
 The backend serves as the authoritative matchmaker for the `VokaziMatchStaking` contract. Once a high-synergy match is found via `pgvector`, the backend signals the frontend to prompt for a USDC stake on Avalanche Fuji. After both parties stake, the backend automatically schedules an Escrow-Gated Google Meeting.
