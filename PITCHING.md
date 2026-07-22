@@ -1,71 +1,137 @@
-# 🎙️ Vokazi: The Official Pitch Script
+# 🎙️ Kuzana Connect: Pitch & Business Case
 
-*This document contains the core narrative, talking points, and specific phrasing for the Vokazi team to use during the Hackathon pitch and investor meetings.*
+*This document contains the core narrative for pitching Kuzana Connect — both to hackathon judges
+and, more importantly, to Kuzana directly as a tool worth funding, licensing, or acquiring outright.
+It replaces an earlier version of this script built around an on-chain staking mechanic ("The
+Trust-Gate") that was removed at Kuzana's own request on 2026-07-22 — see `ROADMAP.md`'s pivot note
+and `boardy_comparison.md`. Nothing below references crypto, wallets, or staking; the live product
+doesn't either.*
 
 ---
 
-## 🛑 The Hook (0:00 - 0:30)
-**Goal:** Grab their attention immediately by explaining a massive problem they already understand, but presenting an angle they haven’t considered.
+## The Hook (0:00 – 0:30)
+
+**Goal:** Open with Kuzana's own problem, in their own members' words — not a generic pitch.
 
 **Speaker:**
-> "Right now, professional networking and enterprise recruiting are broken. Platforms like LinkedIn and cold emails create a massive 'Spam Cannon' effect. Major banks and tech firms in the Silicon Savannah waste hundreds of hours conducting interviews with unqualified candidates, while top-tier developers ignore recruiters because they refuse to do unpaid technical tests. On the founder side, networking is plagued by ghosting and low-intent meetings. 
+> "Kuzana already has the thing every accelerator wants — a network of serious founders, investors,
+> operators, and lenders who trust each other. But right now, finding the right person inside that
+> network means posting in WhatsApp and hoping the right person happens to scroll past it.
 >
-> We are here to solve this. We built **Vokazi: The Escrow-Backed Talent Intelligence Network.**"
-
----
-
-## 💡 The Solution & Core MVP (0:30 - 1:30)
-**Goal:** Explain *how* the MVP works today without overwhelming them with crypto jargon. Focus on the seamless UX.
-
-**Speaker:**
-> "Vokazi acts as an elite, AI-driven matchmaker. Here is how it works:
-> 
-> First, a user drops their phone number on our site and signs in with Google. Behind the scenes, we use **Thirdweb** to instantly provision an invisible **Avalanche C-Chain Wallet**. The user experiences zero crypto friction—no MetaMask, no seed phrases.
-> 
-> Next, our embedded **Vapi Voice AI** conducts a secure, in-browser interview to understand exactly what the user is building and what they need. We convert this transcript into 1536-dimensional vectors using **Google Gemini**, and run bidirectional similarity math in our PostgreSQL database using `pgvector`. Gemini then acts as a judgment layer on top of the vector shortlist — scoring the fit, and generating a plain-language reasoning, strengths, and gaps breakdown neither user has to guess at."
-
----
-
-## 🔐 The "Trust-Gate" (1:30 - 2:30)
-**Goal:** Explain your massive competitive advantage. Why are you better than standard AI networking apps?
-
-**Speaker:**
-> "Here is our secret weapon: **The Trust-Gate.** 
-> 
-> When our AI finds a hyper-accurate match—say a founder looking for a Lead Elixir Dev—we don't just send an email. We halt the introduction and show both sides the AI's full reasoning. Only once both parties independently accept does the gate open: each must stake **0.01 AVAX**, live on-chain from their own wallet, on the Avalanche network to unlock the match. 
-> 
-> Our backend never takes the frontend's word for it — it re-reads the smart contract directly to confirm both stakes before unlocking a live chat room between the two parties. This forces total financial accountability and completely filters out the noise. Escrow-gated meeting scheduling is the next layer we're building on top of this same on-chain verification."
-
----
-
-## 🏢 The Enterprise Expansion (Monetization) (2:30 - 3:30)
-**Goal:** Prove that this is a massive B2B SaaS business, not just a small side project. 
-
-**Speaker:**
-> "But networking is just Phase 1. The real monetization engine is **Vokazi Enterprise**.
-> 
-> Large companies can post a job opening and stake an **AVAX Recruitment Bounty**, plus a smaller **AVAX Time-Incentive**. 
-> 
-> Our Voice AI then proactively calls matched developers from our verified database and conducts a graded technical interview based on the company's specific rubric. If the developer passes the AI screen, they are invited to talk to the human hiring manager. 
+> We didn't guess this was the problem. We know it, because Kuzana's own community team interviewed
+> 15 real members in July 2026 to check. One founder said she'd been an active member for months and
+> still didn't know who else was in the group or what they did. Another said he joined specifically
+> looking for partners and advisors and never found them. Nearly everyone described the exact same
+> experience: post and wait.
 >
-> Because of the Avalanche Smart Contract, the developer is guaranteed the time-incentive just for showing up. This completely eliminates candidate ghosting for the enterprise. When the final hire is made, the recruitment bounty is automatically routed into the Vokazi treasury as pure revenue. *(This Enterprise tier is our roadmap vision — not yet built; today's live MVP is the peer-to-peer Trust-Gate above.)*"
+> We built **Kuzana Connect** to fix that — not as a hackathon idea, but as the searchable, AI-backed
+> version of what Kyle and the team already do by hand in Strategy Board meetings every week."
 
 ---
 
-## 🚀 The Closing (3:30 - 4:00)
-**Goal:** End on a high note, demonstrating traction and the future vision.
+## The Solution & Core MVP (0:30 – 1:30)
+
+**Goal:** Explain how it works today, plainly.
 
 **Speaker:**
-> "We are building the future of verified professional synergy. We have the architecture running, the Thirdweb integration is live, and our AI is conducting interviews today. 
+> "Here's how it works. A member signs in with Google — no separate account, no password, no crypto
+> wallet to fund. They then do a short, natural voice interview in the browser with our AI agent,
+> which extracts what they're offering and what they need in their own words.
 >
-> We are Vokazi. We find you the right people, so you can build the future. Thank you."
+> We convert that into vector embeddings with Google Gemini and run bidirectional similarity search
+> in PostgreSQL with `pgvector`. Gemini then acts as a judgment layer on top of the shortlist —
+> scoring the fit, and writing out a plain-language reasoning, strengths, and gaps breakdown neither
+> side has to guess at.
+>
+> Both members see that full breakdown and independently accept or decline. The moment both say yes,
+> the match unlocks — real-time chat, and a mutual scheduling flow where both sides offer their real
+> free days and the system finds the overlap and books the call. No blast intros, no auto-added group
+> chats, no one committed to a conversation they didn't agree to."
+
+---
+
+## Why This Isn't Just Another AI Matchmaker (1:30 – 2:15)
+
+**Goal:** Land the differentiation without leaning on a mechanic that no longer exists.
+
+**Speaker:**
+> "Voice-AI matching by itself is becoming a commodity — Boardy AI does a version of this globally,
+> for free, with no financial or Web3 layer at all. Copying that isn't a business.
+>
+> Our edge is that this is being built **for one specific, already-vetted community**, using data on
+> exactly how that community already networks, validated directly by 15 of its own members before we
+> wrote most of this scope. That's not a generic matchmaking app looking for a market — it's a tool
+> shaped by the market that's going to use it."
+
+---
+
+## Why Kuzana Should Invest In — or Buy — This (2:15 – 3:15)
+
+**Goal:** Make the business case directly, using Kuzana's own research as the evidence.
+
+**Speaker:**
+> "We're not asking Kuzana to take this on faith. Your own Discovery Report from July 2026 already
+> validated the exact thing we're building:
+>
+> - Every one of the 15 members interviewed immediately understood the value of Connect —  nobody
+>   questioned whether it was needed, the conversation went straight to *how it should work*.
+> - Industry categorization was raised, unprompted, by multiple members as a 'day one, not future
+>   enhancement' requirement. We're building it as one.
+> - A member of the Nairobi Business Angels Network told your team he sees Connect as a **deal-flow
+>   platform** — a way to discover and screen investable businesses without relying on referrals or
+>   cold outreach — and asked directly when it would be ready.
+> - Korir at Vula East Africa said the same thing from the lender's side, and asked for companies to
+>   be segmented by the type of funding they need — equity, loans, grants — not treated as one bucket.
+> - Samuel Kagwe asked, without being prompted, whether Connect would be free or paid. That's a
+>   member already assuming a monetized product is coming.
+>
+> That's five separate, independent signals from your own community that this has real value beyond
+> a hackathon demo — and a validated shape for what the paid version should gate: open discovery,
+> paid direct contact, and a dedicated deal-flow view for the investors and lenders already asking
+> for one.
+>
+> This is the pitch: Kuzana isn't being asked to bet on an unproven idea. You're being shown the tool
+> your own members already told you they wanted, built and working, ready to deploy into your
+> existing community this week."
+
+---
+
+## The Closing (3:15 – 3:45)
+
+**Speaker:**
+> "We are Kuzana Connect. We're not recreating LinkedIn, and we're not asking your members to learn
+> anything new — we're making the network you've already built discoverable, the way your own
+> members asked for it to be. Thank you."
 
 ---
 
 ## 🧠 Q&A Prep (Anticipated Questions)
 
-**Q: "Why do you need blockchain for this? Can't you just use Stripe?"**
-**A:** "Stripe requires hefty minimum fixed fees ($0.30 per charge), which makes a sub-dollar micro-stake completely unviable due to margin collapse. Furthermore, Stripe cannot easily manage automated, multi-party escrow release without complex regulatory compliance. Avalanche smart contracts let us do trustless, low-cost micro-transactions (our live stake is 0.01 AVAX) globally, with zero payment processor in the loop."
+**Q: "Why should Kuzana invest in or buy this instead of building it in-house?"**
+**A:** "The scoping work is already done — 15 real interviews, a feature list your own team
+validated, and a working system built against it. Building this in-house means restarting that
+discovery process with a general engineering team; we're handing over something already shaped by
+your community's own stated requirements."
 
-**Q: "Are you calling people's mobile phones? Isn't Twilio expensive?"**
-**A:** "For our MVP, we engineered it to use WebRTC in-browser VoIP. When a user logs in, the Voice AI interview happens over their data connection. This drops our telecommunications cost to $0.00, allowing us to acquire our first 1,000 users with incredibly low Customer Acquisition Cost (CAC)."
+**Q: "Didn't you say something earlier about a blockchain trust mechanism? What happened to that?"**
+**A:** "We built it, tested it, and removed it — on Kuzana's own instruction, after a direct
+conversation with your team confirmed it was adding friction a Kenyan SME founder had no reason to
+absorb. The current product has zero crypto, zero wallets, and zero staking. Our edge is match
+quality and community-specific validation, not a financial commitment device."
+
+**Q: "What's the monetization plan?"**
+**A:** "Two tiers, both directly requested by your own members in the Discovery Report: a paid tier
+that gates direct contact after free browsing/discovery, and a deal-flow tier for investors and
+lenders who want structured, filterable access to vetted businesses. We haven't fixed pricing —
+that's a conversation to have with Kuzana directly, grounded in what your membership tiers already
+look like, not a number we'd invent unilaterally."
+
+**Q: "Are you calling people's phones? Is this expensive to run?"**
+**A:** "No — the voice interview runs entirely in-browser over the user's own data connection via
+WebRTC, so there's no telephony cost per interview."
+
+**Q: "What data do you actually have on real usage?"**
+**A:** "The AI matching pipeline, mutual-consent flow, real-time chat, and calendar scheduling are
+all live and tested end-to-end. What's not yet built is the searchable member directory, industry
+taxonomy, and investor/lender profile type your Discovery Report calls for — that's the immediate
+next phase, not a future maybe. See `ROADMAP.md`."

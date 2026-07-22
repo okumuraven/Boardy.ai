@@ -117,6 +117,18 @@ the *language* around it (§4, item 3) is free upside; removing the mechanic its
 Vokazi a slower, more expensive Boardy clone with no differentiation left. The goal is "as easy as
 Boardy to get *to* the stake decision," not "as easy as Boardy to skip commitment entirely."
 
+> **Update, 2026-07-22:** as noted at the top of this document, the stake was removed entirely -
+> so the gap this section identifies (something has to filter for seriousness) is real and still
+> unanswered by "removed, nothing replaces it." Kuzana's own July 2026 member interviews
+> (`kuzana_connect_discovery.md`, §8) independently confirm members *want* some filter - Peter
+> Okwara pays into his own community specifically because a small paywall filters out unserious
+> members, and Kenn Andika separately stressed vetting is what keeps a network valuable. Read
+> together with the Playbook's own $400 cash-deposit discussion (`kuzana_playbook.md`, §4), the
+> pattern is consistent: members object to *crypto/wallet* friction specifically, not to *all*
+> signal-of-seriousness mechanisms. The validated replacement isn't a stake, it's the paid
+> direct-contact tier scoped in `ROADMAP.md` Phase 5 - a plain paywall, not a financial commitment
+> device, gating contact rather than the match itself.
+
 ---
 
 ## 6. Methodology

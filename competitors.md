@@ -95,7 +95,17 @@ While there is no direct 1:1 competitor in Africa doing exactly what Vokazi does
 
 ## Our Blue-Ocean Opportunity
 
-Networking in Kenya is currently fragmented into WhatsApp groups, physical hubs, and manual introductions. No one in Africa is using Voice AI to automate the discovery phase, and no one — including Boardy globally — is using real on-chain micro-staking to solve the trust/follow-through problem. By pairing the pgvector-matched voice interview with the Avalanche Trust-Gate, we can credibly claim to be the first to combine both, provided we're honest (per above) about which of Boardy's problems that staking mechanic actually solves.
+> **Update, 2026-07-22:** the paragraph below originally named on-chain micro-staking as our
+> differentiator. That mechanic is gone (see `boardy_comparison.md`). Our actual differentiator
+> now is narrower but more defensible: match quality (pgvector + Gemini) plus being built
+> specifically *for* Kuzana's own community, validated directly by 15 of that community's own
+> members in a July 2026 Discovery Report (`kuzana_connect_discovery.md`) rather than designed
+> against an assumed market. Boardy is a general-purpose global tool with no community-specific
+> validation behind its feature set; Kuzana Connect's roadmap is scoped item-by-item against what
+> Kuzana's own founders, investors, and lenders explicitly asked for - including a deal-flow view
+> for investors and lenders that Boardy, as a peer-to-peer networking tool, has no equivalent of.
+
+Networking in Kenya is currently fragmented into WhatsApp groups, physical hubs, and manual introductions. No one in Africa is using Voice AI to automate the discovery phase the way Kuzana Connect does, purpose-built around one already-vetted, already-serious community rather than a cold-started general market.
 
 ---
 

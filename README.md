@@ -1,23 +1,38 @@
-# Vokazi.ai 🎙️ 🤝
+# Kuzana Connect 🎙️🤝
 
-Vokazi is the Web3 evolution of professional matchmaking, built specifically for the Silicon Savannah. 
+Kuzana Connect is an AI-driven member-discovery and matchmaking tool built specifically for
+Kuzana's own community of founders, investors, operators, lenders, and consultants.
 
-Instead of traditional forms or cold emails, Vokazi uses a **conversational onboarding flow** combined with a **Web3 Trust-Gate**. Users drop their phone number, authenticate via Google (which secretly provisions an Avalanche C-Chain wallet via Thirdweb), and complete a live voice interview with our AI agent (powered by Vapi). 
+Instead of relying on WhatsApp posts and chance encounters, members complete a **conversational
+onboarding flow**: sign in with Google (no separate account, no password), then do a live voice
+interview with our AI agent (powered by Vapi) that extracts what they're offering and what they
+need, in their own words.
 
-The AI (Google Gemini) extracts their "Needs" and "Offers", generates 1536-dimensional embeddings, and uses `pgvector` to find perfect matches. Both parties then review the AI's match score/reasoning and must mutually accept before a real on-chain commitment (0.01 AVAX each, staked from their own wallet on Avalanche Fuji) unlocks a live chat room — completely eliminating ghosting and spam.
+The AI (Google Gemini) turns that transcript into vector embeddings and uses `pgvector` to find
+genuinely complementary matches. Both members review the AI's match score and reasoning and must
+independently accept before anything unlocks — the moment both say yes, a real-time chat room
+opens and a mutual scheduling flow finds a call time that works for both sides.
+
+> **2026-07-22:** an earlier version of this product included an on-chain "Trust-Gate" — a small
+> Avalanche stake required from both sides before a match unlocked. That mechanic was removed
+> entirely at Kuzana's direct request: it introduced more friction (a funded crypto wallet) than
+> the ghosting problem it solved was worth. There is no blockchain, wallet, or staking step
+> anywhere in the current product. See `ROADMAP.md` and `boardy_comparison.md` for the full
+> reasoning.
 
 ## 🚀 Architecture
-- **Frontend**: React + Vite + custom CSS ("ink and brass" design system) + Thirdweb (In-App Wallets via Google OAuth) + Vapi Web SDK
+- **Frontend**: React + Vite + custom CSS (Kuzana Connect design system — Space Grotesk / Inter,
+  Kuzana's brand palette) + Thirdweb (Google sign-in only, for identity) + Vapi Web SDK
 - **Backend**: Elixir + Phoenix (REST API, Webhooks & real-time Channels)
-- **Database**: PostgreSQL with `pgvector` for bidirectional Cosine Similarity Matching
-- **AI**: Google Gemini (`gemini-embedding-2` for vectors, `gemini-3.5-flash` for summarization & match validation)
-- **Smart Contracts**: Avalanche Fuji Testnet — `VokaziMatchStaking.sol` (live), `VokaziMilestoneEscrow.sol` (deployed, not yet wired into the app)
-- **Infrastructure**: Fully Dockerized (Monorepo)
+- **Database**: PostgreSQL with `pgvector` for bidirectional cosine-similarity matching
+- **AI**: Google Gemini (`gemini-embedding-2` for vectors, Gemini for summarization & match
+  validation)
+- **Infrastructure**: Fully Dockerized (monorepo)
 
 ## 🛠️ Prerequisites
 - [Docker & Docker Compose](https://www.docker.com/)
 - Node.js (for local frontend development)
-- A Thirdweb Client ID (for wallet connections)
+- A Thirdweb Client ID (for Google sign-in)
 - A Vapi.ai Public Key & Assistant ID (for the voice AI)
 
 ## ⚡ Quick Start (For Teams)
@@ -32,10 +47,13 @@ VITE_API_URL=http://localhost:4000
 ```
 
 ### 2. Configure Vapi.ai Agent
-For the AI Oracle to successfully extract "Offers" and "Needs", configure your Vapi Assistant:
-1. **System Prompt**: Copy the contents of `vapi_system_prompt.txt` into the Assistant's System Prompt box.
-2. **First Message**: Set to: *"Hey there, welcome to Vokazi. Tell me a bit about what you're currently building?"*
-3. **Structured Data**: Go to the **Analysis** tab -> **Structured Data Extraction** and paste the JSON schema found in `vapi_schema.json`.
+For the AI agent to successfully extract "Offers" and "Needs," configure your Vapi Assistant:
+1. **System Prompt**: Copy the contents of `vapi_system_prompt.txt` into the Assistant's System
+   Prompt box.
+2. **First Message**: Set to something like: *"Hey there, welcome to Kuzana Connect. Tell me a bit
+   about what you're currently building?"*
+3. **Structured Data**: Go to the **Analysis** tab -> **Structured Data Extraction** and paste the
+   JSON schema found in `vapi_schema.json`.
 
 ### 3. Boot the Infrastructure
 Run the entire stack (Database, Elixir Backend, React Frontend) via Docker:
@@ -43,20 +61,30 @@ Run the entire stack (Database, Elixir Backend, React Frontend) via Docker:
 docker compose up --build
 ```
 
-### 4. Access the DApp
+### 4. Access the App
 Open your browser and navigate to: `http://localhost:5173`
 
 - **Database**: Runs on `localhost:5432`
 - **Backend API**: Runs on `localhost:4000`
 
-## 🧠 How it Works
-1. **Conversational Onboarding**: User inputs phone number in a chat UI.
-2. **Invisible Wallet**: User signs in with Google, automatically provisioning a Thirdweb Avalanche wallet.
-3. **Voice Interview**: User talks to the Vapi AI Agent in the browser to log their Needs/Offers.
-4. **AI Match & Mutual Consent**: The backend finds a high-confidence vector match, Gemini validates and scores it, and both users independently review and accept (or decline with a reason) on the `MatchReview` screen.
-5. **Trust-Gate & Staking**: Once both accept, the backend registers the match on `VokaziMatchStaking.sol` and each user stakes 0.01 AVAX from their own wallet. The backend verifies both stakes directly on-chain before unlocking a real-time chat room.
+## 🧠 How It Works
+1. **Conversational Onboarding**: User enters their phone number in a chat-style UI.
+2. **Google Sign-In**: User signs in with Google via Thirdweb — identity only, no wallet is
+   provisioned or required.
+3. **Voice Interview**: User talks to the Vapi AI agent in the browser to log their Needs/Offers.
+4. **AI Match & Mutual Consent**: The backend finds a high-confidence vector match, Gemini
+   validates and scores it, and both users independently review and accept (or decline with a
+   reason) on the `MatchReview` screen.
+5. **Unlock & Schedule**: The moment both sides accept, a real-time chat room opens. Each side
+   independently curates their real free days on a calendar day-picker; once both submit, the
+   backend intersects their windows and books the call automatically. See `calendar.md`.
 
-> Note: automatic calendar/meeting scheduling is on the roadmap but not yet built — see `ROADMAP.md`.
+Kuzana's own July 2026 member interviews (see `kuzana_connect_discovery.md`) validated this shape
+directly and surfaced what's still missing for a version Kuzana would deploy internally — a
+searchable member directory, industry categorization, and a distinct investor/lender profile view.
+See `ROADMAP.md` for how that's being scoped in, and `PITCHING.md` for the business case.
 
 ## 🤝 Contributing
-Clone the repo, set up your `.env`, and ensure Docker is running. The Elixir backend uses `network_mode: "host"` to bypass Docker DNS issues and features blazing-fast hot-reloading. See `ROADMAP.md` for our 3-month scaling plan.
+Clone the repo, set up your `.env`, and ensure Docker is running. The Elixir backend uses
+`network_mode: "host"` to bypass Docker DNS issues and features blazing-fast hot-reloading. See
+`ROADMAP.md` for the full engineering and growth plan.
