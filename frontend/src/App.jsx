@@ -135,7 +135,7 @@ export default function App() {
     if (isLoading) {
       return (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem', border: '3px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <div className="spinner" style={{ width: '40px', height: '40px', margin: '0 auto 1rem' }}></div>
           Loading your identity...
         </div>
       );
@@ -148,7 +148,7 @@ export default function App() {
     if (activeAccount && profileFetchError) {
       return (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', maxWidth: '360px', margin: '0 auto' }}>
-          <p style={{ marginBottom: '1.25rem' }}>Couldn't reach Vokazi to load your account. Your details are safe - this is just a connection hiccup.</p>
+          <p style={{ marginBottom: '1.25rem' }}>Couldn't reach Kuzana Connect to load your account. Your details are safe - this is just a connection hiccup.</p>
           <button onClick={() => fetchProfile()} className="btn-primary">Try again</button>
         </div>
       );

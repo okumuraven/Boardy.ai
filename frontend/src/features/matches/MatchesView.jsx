@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import ChatRoomView from "../../components/ChatSystem";
 import MatchReview from "../../components/MatchReview";
-import StakingGate from "../../components/StakingGate";
 import MatchesList from "./MatchesList";
 
 // The Matches tab: a list of every match this user is in (not just the
 // single "next thing to resolve" one), and a stage that renders whichever
-// screen that match's status calls for - chat, mutual-consent review, or
-// the staking gate - instead of those being separate full-screen states.
+// screen that match's status calls for - chat, or the mutual-consent
+// review - instead of those being separate full-screen states. Mutual
+// consent unlocks a match immediately now (no on-chain staking step in
+// between - removed per direct Kuzana feedback, see boardy_comparison.md),
+// so the only two statuses ever reaching this component are
+// "pending_consent" and "unlocked".
 export default function MatchesView({ profile, openRequest, onConsumeOpenRequest }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,11 +106,7 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
             >
               ← Back to matches
             </button>
-            {selectedDetail.status === "pending_consent" ? (
-              <MatchReview profile={profile} initialMatch={selectedDetail} onResolved={handleResolved} />
-            ) : (
-              <StakingGate profile={profile} match={selectedDetail} onResolved={handleResolved} />
-            )}
+            <MatchReview profile={profile} initialMatch={selectedDetail} onResolved={handleResolved} />
           </>
         )}
       </div>

@@ -6,7 +6,7 @@ const rankLabel = (rank, role) => {
   return `Ranked #${rank.rank} of ${rank.total_in_category} ${roleLabel}`;
 };
 
-// Vokazi's own version of a "connections" count - two honest, separately
+// Kuzana Connect's own version of a "connections" count - two honest, separately
 // shown numbers (matches unlocked, calls actually completed) plus a
 // role-scoped rank built from real data, not self-reported. Front and
 // center on your own profile as the motivating hook; a redacted version

@@ -1,31 +1,45 @@
+/* Kuzana Connect brand system (Kuzana Brand Guidelines 2025). Token
+   *names* are kept from the previous design (--ink, --brass, --paper...)
+   so every existing rule/inline style in this codebase repaints
+   correctly without being touched individually - only what each name
+   *resolves to* has changed. Light is the brand-accurate default;
+   :root[data-theme="dark"] below is our own extension (not in the
+   source guide, which is light/parchment-only) for a toggleable dark
+   mode using the same three brand hues recalibrated for a dark ground.
+
+   Color roles, per the guide: Focus Blue (30% - primary actions, key
+   data, structural headings) -> --brass (kept the name, not the hue).
+   Gold (3% - community/warmth/foundation) -> --signal (verified/online/
+   positive states - Gold reads as affirming, not the off-palette green
+   this token used to be). Coral (7% - energy/urgency/process) -> --warn
+   ("worth knowing"/caution - Coral's hustle-and-urgency read fits better
+   than the old amber). Page BG/Panel/Rule/Caption/Ink map directly. */
 :root {
-  /* Ink - warm, olive-leaning near-black. Deliberately not the typical
-     blue-black "AI navy". */
-  --ink: #0b0e0c;
-  --ink-raised: #14180f;
-  --ink-line: rgba(237, 232, 221, 0.1);
-  --ink-line-strong: rgba(237, 232, 221, 0.18);
+  --ink: #fafaf7;
+  --ink-raised: #f3f0ea;
+  --ink-line: rgba(26, 26, 26, 0.08);
+  --ink-line-strong: rgba(26, 26, 26, 0.16);
 
-  /* Brass - the single accent. Reads as value/commitment (the thing you
-     stake), never used as a decorative glow or gradient. */
-  --brass: #c99a44;
-  --brass-dim: rgba(201, 154, 68, 0.35);
-  --brass-wash: rgba(201, 154, 68, 0.1);
+  /* Focus Blue - the single primary accent. */
+  --brass: #4a6290;
+  --brass-dim: rgba(74, 98, 144, 0.35);
+  --brass-wash: rgba(74, 98, 144, 0.1);
 
-  /* Signal - functional state color only (online, verified, unlocked).
-     Kept separate from the accent so it never competes with it. */
-  --signal: #4bb37c;
-  --signal-wash: rgba(75, 179, 124, 0.12);
+  /* Gold - warm/affirming functional state (online, verified, unlocked). */
+  --signal: #fdc469;
+  --signal-wash: rgba(253, 196, 105, 0.18);
 
-  /* Warm amber - "worth knowing" / caution, distinct from both brass and signal. */
-  --warn: #d9a34d;
-  --warn-wash: rgba(217, 163, 77, 0.1);
+  /* Coral - energy/urgency, "worth knowing" caution. */
+  --warn: #fe7272;
+  --warn-wash: rgba(254, 114, 114, 0.1);
+  --warn-dim: rgba(254, 114, 114, 0.3);
 
-  --paper: #ede8dd;
-  --muted: #8b9188;
+  --paper: #1a1a1a;
+  --muted: #5a6172;
+  --faded: rgba(26, 26, 26, 0.3);
 
-  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-  --font-body: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Space Grotesk", -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", "Cascadia Code", Consolas, monospace;
 
   /* Back-compat aliases so any not-yet-migrated component still resolves
@@ -40,6 +54,30 @@
   --border-focus: var(--brass-dim);
 }
 
+/* Dark mode - same three brand hues, recalibrated for a dark ground
+   (brightened enough to hold contrast) rather than a literal inversion. */
+:root[data-theme="dark"] {
+  --ink: #15140f;
+  --ink-raised: #1f1d17;
+  --ink-line: rgba(243, 240, 234, 0.08);
+  --ink-line-strong: rgba(243, 240, 234, 0.16);
+
+  --brass: #86a0cc;
+  --brass-dim: rgba(134, 160, 204, 0.35);
+  --brass-wash: rgba(134, 160, 204, 0.12);
+
+  --signal: #fdc469;
+  --signal-wash: rgba(253, 196, 105, 0.15);
+
+  --warn: #fe7272;
+  --warn-wash: rgba(254, 114, 114, 0.14);
+  --warn-dim: rgba(254, 114, 114, 0.4);
+
+  --paper: #f3f0ea;
+  --muted: #9099ab;
+  --faded: rgba(243, 240, 234, 0.3);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -52,8 +90,6 @@ body {
   color: var(--paper);
   min-height: 100vh;
   overflow-x: hidden;
-  background-image: radial-gradient(circle at 1px 1px, rgba(237, 232, 221, 0.035) 1px, transparent 0);
-  background-size: 22px 22px;
 }
 
 .app-container {
@@ -111,19 +147,14 @@ body {
   gap: 0.75rem;
 }
 
-.vokazi-icon {
+/* Sizing wrapper for <KuzanaMark /> - the mark itself carries its own
+   colors (the three brand arcs), this just constrains its box. */
+.brand-mark {
   width: 36px;
   height: 36px;
-  background: transparent;
-  border: 1.5px solid var(--brass);
-  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.15rem;
-  color: var(--brass);
 }
 
 .brand-text {
@@ -134,26 +165,39 @@ body {
   white-space: nowrap;
 }
 
-/* Dynamic Onboarding UX */
+/* Onboarding/marketing composition - asymmetric golden-ratio split
+   (61.8% content / 38.2% visual), left-anchored text, per the brand
+   guide's own example layouts (not a centered hero). The visual column
+   (.onboarding-visual) holds the arc mark; collapses to a single
+   column on narrower screens since there's no room for a real split. */
 .onboarding-container {
   flex: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1.618fr 1fr;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 0 2rem;
-  max-width: 900px;
+  gap: 3rem;
+  text-align: left;
+  padding: 0 4rem;
+  max-width: 1200px;
   margin: 0 auto;
   z-index: 10;
   min-height: 100vh;
 }
 
+.onboarding-content { max-width: 560px; }
+
+.onboarding-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onboarding-visual svg { width: 100%; max-width: 280px; height: auto; }
+
 .ai-greeting {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 600;
   font-size: 3.1rem;
-  line-height: 1.2;
+  line-height: 1.15;
   letter-spacing: -0.01em;
   margin-bottom: 1.5rem;
   opacity: 0;
@@ -169,8 +213,8 @@ body {
 .ai-subtext {
   font-size: 1.1rem;
   color: var(--muted);
-  max-width: 600px;
-  margin: 0 auto 3rem auto;
+  max-width: 480px;
+  margin: 0 0 3rem;
   opacity: 0;
   transform: translateY(20px);
   animation: fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -223,7 +267,8 @@ body {
 }
 
 .premium-input::placeholder {
-  color: rgba(237, 232, 221, 0.25);
+  color: var(--muted);
+  opacity: 0.6;
 }
 
 .action-btn {
@@ -231,8 +276,8 @@ body {
   height: 54px;
   border-radius: 3px;
   border: none;
-  background: rgba(237, 232, 221, 0.05);
-  color: rgba(237, 232, 221, 0.3);
+  background: var(--ink-line);
+  color: var(--muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,7 +354,7 @@ body {
 }
 
 .panel-label.warn { color: var(--warn); }
-.panel.warn { border-color: rgba(217, 163, 77, 0.25); }
+.panel.warn { border-color: var(--warn-dim); }
 
 /* Stamped-document corner marks - a considered alternative to a glowing
    accent bar/rail. Used sparingly, not on every card. */
@@ -370,6 +415,22 @@ body {
   font-weight: 500;
   color: var(--brass);
   margin-bottom: 1.5rem;
+}
+
+/* Centered single-column stage (MatchReview) - content-dense, doesn't
+   fit the marketing onboarding-container's asymmetric split, but wants
+   the same "focused moment" centered treatment. */
+.centered-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  max-width: 720px;
+  margin: 0 auto;
+  min-height: 100vh;
 }
 
 .nav-link {
@@ -548,10 +609,20 @@ body {
   .spinner { animation-duration: 1.5s; }
 }
 
+@media (max-width: 900px) {
+  /* No room for a real 61.8/38.2 split below tablet width - collapse to
+     one column, text first, visual shrinks below it rather than beside. */
+  .onboarding-container { grid-template-columns: 1fr; text-align: center; }
+  .onboarding-content { max-width: 100%; margin: 0 auto; }
+  .onboarding-visual { order: -1; }
+  .onboarding-visual svg { max-width: 140px; }
+  .ai-subtext { margin-left: auto; margin-right: auto; }
+}
+
 @media (max-width: 768px) {
   .nav-bar { padding: 1.1rem 1.25rem; row-gap: 0.6rem; }
   .brand-text { font-size: 1.05rem; }
-  .vokazi-icon { width: 30px; height: 30px; font-size: 1rem; }
+  .brand-mark { width: 30px; height: 30px; }
   .nav-actions { width: 100%; justify-content: flex-start; }
   .user-pill { font-size: 0.82rem; padding: 0.4rem 0.75rem; }
 
@@ -597,13 +668,11 @@ body {
 }
 
 .shell-rail .rail-brand {
-  width: 34px; height: 34px; border-radius: 4px;
-  background: var(--brass); color: var(--ink);
-  font-family: var(--font-display);
+  width: 34px; height: 34px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem;
   margin-bottom: 1.75rem;
 }
+.shell-rail .rail-brand svg { width: 100%; height: 100%; }
 
 .rail-nav { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
 
@@ -635,6 +704,15 @@ body {
   font-family: var(--font-display); font-size: 0.8rem; color: var(--paper);
   cursor: pointer;
 }
+
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid var(--ink-line-strong); background: transparent; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.theme-toggle:hover { border-color: var(--brass-dim); color: var(--paper); }
+.theme-toggle svg { width: 16px; height: 16px; }
 
 .shell-tabbar { display: none; }
 
@@ -720,7 +798,7 @@ body {
 .profile-view-hero { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 2rem; }
 .profile-view-avatar {
   width: 72px; height: 72px; border-radius: 50%; flex-shrink: 0;
-  background: var(--brass-wash); border: 2px solid var(--brass); box-shadow: 0 0 0 4px var(--brass-wash);
+  background: var(--brass-wash); border: 2px solid var(--brass);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: 1.7rem; color: var(--brass);
 }
@@ -882,14 +960,14 @@ body {
 }
 .mini-cal-grid .day:hover:not(:disabled) { border-color: var(--ink-line-strong); }
 .mini-cal-grid .day:disabled { cursor: default; }
-.mini-cal-grid .day.faded { color: rgba(139, 145, 136, 0.35); }
+.mini-cal-grid .day.faded { color: var(--faded); }
 .mini-cal-grid .day.today { border-color: var(--ink-line-strong); }
 .mini-cal-grid .day.has-event { background: var(--brass-dim); color: var(--brass); font-weight: 700; border-color: var(--brass); }
 .mini-cal-grid .day.has-event::after {
   content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
   width: 4px; height: 4px; border-radius: 50%; background: var(--brass);
 }
-.mini-cal-grid .day.selected { border-color: var(--paper); box-shadow: 0 0 0 1px var(--paper); }
+.mini-cal-grid .day.selected { border: 2px solid var(--paper); }
 
 @media (max-width: 900px) {
   .calendar-view { flex-direction: column; }

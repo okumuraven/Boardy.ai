@@ -4,7 +4,7 @@ defmodule Vokazi.Scheduling.GoogleCalendarClient do
   creation). Every call takes a fresh, valid access token; refreshing an
   expired one is the caller's job (`Vokazi.Scheduling.CredentialStore.token_for/1`),
   so this stays a pure HTTP client with no token-lifecycle concerns of
-  its own - mirrors the "thin wrapper" style of `Vokazi.Avalanche`.
+  its own - mirrors the "thin wrapper" style of `Vokazi.SocialProfiles.GithubClient`.
   """
 
   require Logger

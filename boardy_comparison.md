@@ -1,5 +1,12 @@
 # Vokazi vs. Boardy AI — Friction & Complexity Audit
 
+> **Update, same day:** after this audit was written, the Kuzana representative met with the team
+> and gave direct instruction to remove the Avalanche staking step *entirely*, not just simplify its
+> language - overriding this doc's §5 recommendation to keep the mechanic. That's now done: no
+> staking, no wallet-funding blocker (nothing left to fund), items #2-4 below (jargon cleanup) were
+> applied as part of the same change. §5's reasoning is left below as the record of why the stake
+> was built in the first place, not as current guidance - see `ROADMAP.md`'s 2026-07-22 pivot note.
+
 **Written 2026-07-22.** Direct follow-up to `competitors.md`'s feature/traction comparison. That
 doc asked "who's ahead on what." This one asks a narrower, more actionable question: **exactly
 where does Vokazi make a user work harder than Boardy does, file by file, and what should we

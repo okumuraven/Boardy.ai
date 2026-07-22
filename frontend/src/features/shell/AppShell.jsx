@@ -4,6 +4,8 @@ import HomeView from "../home/HomeView";
 import MatchesView from "../matches/MatchesView";
 import CalendarView from "../calendar/CalendarView";
 import ProfileView from "../profile/ProfileView";
+import ThemeToggle from "./ThemeToggle";
+import KuzanaMark from "../../components/KuzanaMark";
 import { HomeIcon, MatchesIcon, CalendarIcon, ProfileIcon } from "./icons";
 
 const TABS = [
@@ -84,9 +86,10 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
   return (
     <div className="app-shell">
       <nav className="shell-rail">
-        <div className="rail-brand">V</div>
+        <div className="rail-brand"><KuzanaMark /></div>
         <div className="rail-nav">{navButtons("rail-btn", "active")}</div>
         <div className="rail-bottom">
+          <ThemeToggle />
           <NotificationBell profile={profile} onOpen={handleBellOpen} />
           <button className="rail-avatar" title={profile?.name || "Profile"} onClick={() => setActiveTab("profile")}>
             {initials(profile?.name)}

@@ -20,7 +20,6 @@ defmodule VokaziWeb.Router do
     post "/profiles", ProfileController, :create
     post "/vapi", VapiController, :webhook
     post "/matches/:id/respond", MatchController, :respond
-    post "/matches/:id/confirm-stake", MatchController, :confirm_stake
     get "/matches", MatchController, :index
     get "/matches/pending", MatchController, :pending_for_user
     get "/matches/:id/status", MatchController, :status

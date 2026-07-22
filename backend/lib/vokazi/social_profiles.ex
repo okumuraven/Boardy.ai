@@ -4,8 +4,8 @@ defmodule Vokazi.SocialProfiles do
   see `Vokazi.SocialProfiles.GithubOAuth`) plus LinkedIn/X/portfolio
   (trust-on-submit links). Lives entirely on the user's own Profile page
   today; feeding this into the AI intro briefing and gating raw-link
-  reveal to a matched user behind stake-unlock are deliberate next steps,
-  not built yet - see `social_media.md`.
+  reveal to a matched user behind match-unlock are deliberate next
+  steps, not built yet - see `social_media.md`.
   """
 
   alias Vokazi.Repo

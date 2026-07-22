@@ -46,7 +46,15 @@ Every specific headline number Boardy has publicized failed adversarial verifica
 
 ## 🏆 What This Means for Vokazi
 
-**Our genuinely defensible edge is NOT the voice-AI matching itself** — Boardy already does that well, for free, and it's becoming a commodity pattern. Our defensible edge is the **Web3 Trust-Gate as a commitment device**: Boardy has zero mechanism forcing follow-through once a match is made, and its own admitted weak points (mismatched intros, no motivation to re-engage) are exactly the kind of low-intent behavior a real AVAX stake is designed to filter out before a match ever gets that far.
+> **2026-07-22 update:** the Web3 staking mechanic this section originally named as our core
+> differentiator has been **removed entirely**, per direct feedback from a real Kuzana stakeholder
+> meeting - it was the single biggest source of friction in the whole funnel (see
+> `boardy_comparison.md` for the full audit). The analysis below is preserved as the reasoning that
+> led to building the stake in the first place - useful context for *why* that bet was made - but it
+> no longer describes the live system. Vokazi's actual differentiation today is match quality
+> (pgvector + Gemini) and transparent, mutual consent - not a financial commitment device.
+
+**Our genuinely defensible edge is NOT the voice-AI matching itself** — Boardy already does that well, for free, and it's becoming a commodity pattern. Our defensible edge *was* going to be the **Web3 Trust-Gate as a commitment device**: Boardy has zero mechanism forcing follow-through once a match is made, and its own admitted weak points (mismatched intros, no motivation to re-engage) are exactly the kind of low-intent behavior a real AVAX stake was designed to filter out before a match ever gets that far. That bet has since been abandoned in favor of reducing friction - see the update note above.
 
 **Growth/GTM lessons worth copying or adapting:**
 - Boardy turned its own fundraising conversation into a live product demo (the AI literally pitched the investors). Our equivalent: let the voice-AI interview and the on-chain match itself be the demo we show investors and judges, not slides describing it.

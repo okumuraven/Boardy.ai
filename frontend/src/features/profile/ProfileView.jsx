@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import SocialProfileSection from "./SocialProfileSection";
 import StatsCard from "./StatsCard";
+import ThemeToggle from "../shell/ThemeToggle";
 
 const initials = (name) =>
   (name || "?")
@@ -16,7 +17,7 @@ const CONTACT_LABEL = { call: "📞 Call", video: "🎥 Video", chat: "💬 Chat
 const ROLES = ["founder", "developer", "designer", "investor"];
 const roleTitle = (role) => (role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Member");
 
-// The first real place a user can see or change what Vokazi has on file
+// The first real place a user can see or change what Kuzana Connect has on file
 // for them - also where they see their own connections/rank (StatsCard)
 // and manage their social profile (SocialProfileSection).
 export default function ProfileView({ profile, onProfileUpdated }) {
@@ -132,6 +133,11 @@ export default function ProfileView({ profile, onProfileUpdated }) {
                 <button onClick={startEdit} className="btn-ghost" style={{ marginTop: "1.1rem" }}>Edit profile</button>
               </>
             )}
+          </div>
+
+          <div className="profile-view-row" style={{ background: "var(--ink-raised)", border: "1px solid var(--ink-line)", borderRadius: "6px", padding: "0.9rem 1.1rem" }}>
+            <span className="k">Appearance</span>
+            <ThemeToggle />
           </div>
 
           <button onClick={() => wallet && disconnect(wallet)} className="btn-ghost btn-sm profile-view-disconnect">

@@ -114,7 +114,7 @@ defmodule Vokazi.AI do
   ("you need X because...") rather than an unexplained percentage or a
   report about two strangers - the goal is for the match screen to feel
   like Vokazi already knows this person and their needs, since that
-  trust is what makes someone willing to pay the commitment stake.
+  trust is what makes someone willing to say yes.
   """
   def validate_match(user_a, user_b) do
     api_key = System.get_env("GEMINI_API_KEY")

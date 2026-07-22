@@ -44,9 +44,10 @@ maintains a local presence map; `ChatSystem.jsx`'s `updatePresence` callback der
 it tells you if someone is *currently connected*, not whether they saw anything.
 
 **The chat room's own gate:** a `ChatRoom` row is only ever created once a match fully unlocks —
-`Vokazi.Matchmaking.record_stake!/3` calls `Chat.create_chat_room/1` the moment both sides'
-Avalanche stakes are independently verified on-chain. There is no chat before that; the whole
-feature is downstream of the Trust-Gate.
+`Vokazi.Matchmaking.accept_match/2` calls `Chat.create_chat_room/1` the moment both sides mutually
+accept. There is no chat before that; the whole feature is downstream of match unlock. (An on-chain
+Avalanche staking step used to sit between mutual consent and unlock - removed 2026-07-22 per
+direct Kuzana feedback, see `boardy_comparison.md`; unlock now happens immediately on both-accept.)
 
 **Client:** `frontend/src/components/ChatSystem.jsx` (`ChatRoomView`). One `useEffect` owns the
 entire socket/channel lifecycle (connect → join → wire up `history`/`new_msg`/`presence_*` handlers

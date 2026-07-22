@@ -41,50 +41,13 @@ defmodule VokaziWeb.MatchController do
   end
 
   @doc """
-  Called once a user's wallet has submitted the `stake()` transaction.
-  The tx hash is only a hint - the backend independently re-reads the
-  match straight off the deployed contract before trusting anything.
-  """
-  def confirm_stake(conn, %{"id" => match_id, "user_id" => user_id, "tx_hash" => tx_hash}) do
-    match_id = to_int(match_id)
-    user_id = to_int(user_id)
-
-    case Matchmaking.record_stake!(match_id, user_id, tx_hash) do
-      {:ok, :unlocked, _match, room} ->
-        json(conn, %{status: "unlocked", chat_room_id: room.id})
-
-      {:ok, :awaiting_other_stake, _match} ->
-        json(conn, %{status: "awaiting_other_stake"})
-
-      {:error, :not_a_participant} ->
-        conn |> put_status(:forbidden) |> json(%{error: "Not a participant in this match"})
-
-      {:error, :not_awaiting_stake} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "This match isn't awaiting a stake"})
-
-      {:error, :onchain_registration_pending} ->
-        conn
-        |> put_status(:accepted)
-        |> json(%{error: "Match is still being registered on-chain, please retry shortly"})
-
-      {:error, :stake_not_yet_confirmed} ->
-        conn
-        |> put_status(:accepted)
-        |> json(%{error: "Your stake transaction hasn't confirmed on-chain yet, please retry shortly"})
-
-      {:error, _reason} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "Failed to verify stake"})
-    end
-  end
-
-  @doc """
-  Returns this user's current match, if any - awaiting mutual consent,
-  awaiting an on-chain stake, or already unlocked (so a returning user
-  lands back in the right screen instead of the "no match" empty
-  state). Includes the full transparent breakdown (score, reasoning,
-  strengths, gaps) and the other party's basics, plus the chat room id
-  once unlocked - or `null` if there's nothing active (declined/slashed
-  matches don't count; the user is free to be matched again).
+  Returns this user's current match, if any - awaiting mutual consent
+  or already unlocked (so a returning user lands back in the right
+  screen instead of the "no match" empty state). Includes the full
+  transparent breakdown (score, reasoning, strengths, gaps) and the
+  other party's basics, plus the chat room id once unlocked - or `null`
+  if there's nothing active (declined/slashed matches don't count; the
+  user is free to be matched again).
   """
   def pending_for_user(conn, %{"user_id" => user_id}) do
     user_id = to_int(user_id)
@@ -93,7 +56,7 @@ defmodule VokaziWeb.MatchController do
       Repo.one(
         from(m in Match,
           where:
-            m.status in ["pending_consent", "pending", "unlocked"] and
+            m.status in ["pending_consent", "unlocked"] and
               (m.user_a_id == ^user_id or m.user_b_id == ^user_id),
           order_by: [desc: m.inserted_at],
           limit: 1
@@ -118,10 +81,10 @@ defmodule VokaziWeb.MatchController do
   end
 
   @doc """
-  Lightweight polling target for a user already waiting on a specific
-  match: unlike `pending_for_user/2` (which only ever returns matches
-  still awaiting consent), this looks up one match by id regardless of
-  status, so the waiting side can tell *why* it stopped being "pending" -
+  Lightweight polling target for a user already waiting on the other
+  side's response: unlike `pending_for_user/2` (which only ever returns
+  matches still awaiting consent), this looks up one match by id
+  regardless of status, so the waiting side can tell what happened -
   the other person accepted (unlocked, with a room to join) or declined.
   """
   def status(conn, %{"id" => match_id, "user_id" => user_id}) do
@@ -156,8 +119,8 @@ defmodule VokaziWeb.MatchController do
       {:ok, :waiting_on_other, _match} ->
         json(conn, %{status: "waiting_on_other"})
 
-      {:ok, :awaiting_stake, _match} ->
-        json(conn, %{status: "awaiting_stake"})
+      {:ok, :unlocked, _match, room} ->
+        json(conn, %{status: "unlocked", chat_room_id: room.id})
 
       {:error, :not_a_participant} ->
         conn |> put_status(:forbidden) |> json(%{error: "Not a participant in this match"})
@@ -176,13 +139,11 @@ defmodule VokaziWeb.MatchController do
   end
 
   defp match_detail(match, user_id) do
-    {my_response, other_response, other_user_id, my_staked, other_staked, my_pitch} =
+    {my_response, other_response, other_user_id, my_pitch} =
       if match.user_a_id == user_id do
-        {match.user_a_response, match.user_b_response, match.user_b_id, match.user_a_staked,
-         match.user_b_staked, match.pitch_a}
+        {match.user_a_response, match.user_b_response, match.user_b_id, match.pitch_a}
       else
-        {match.user_b_response, match.user_a_response, match.user_a_id, match.user_b_staked,
-         match.user_a_staked, match.pitch_b}
+        {match.user_b_response, match.user_a_response, match.user_a_id, match.pitch_b}
       end
 
     other_user = Repo.get(User, other_user_id)
@@ -199,9 +160,6 @@ defmodule VokaziWeb.MatchController do
       my_pitch: my_pitch,
       my_response: my_response,
       other_response: other_response,
-      onchain_match_id: match.onchain_match_id,
-      my_staked: my_staked,
-      other_staked: other_staked,
       other_user: %{
         name: other_user && other_user.full_name,
         role: other_user && other_user.role,

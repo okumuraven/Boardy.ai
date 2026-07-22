@@ -9,7 +9,7 @@ import WaitingPanel from "./WaitingPanel";
 // Orchestrates the Escrow-Gated Google Calendar flow for one match:
 // per-intro consent -> availability (Calendar or manual) -> mutual slot
 // proposal + private briefing -> confirmed event. Only ever reachable
-// once the match's stake has already unlocked chat (`Vokazi.Scheduling`
+// once the match has already unlocked chat (`Vokazi.Scheduling`
 // re-checks this server-side regardless of what this component shows).
 export default function SchedulingFlow({ matchId, profile, partnerName, onClose }) {
   const [schedule, setSchedule] = useState(null);

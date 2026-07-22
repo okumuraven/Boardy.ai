@@ -61,8 +61,8 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
       });
       const data = await res.json();
 
-      if (data.status === "awaiting_stake") {
-        onResolvedRef.current({ awaitingStake: true });
+      if (data.status === "unlocked") {
+        onResolvedRef.current({ unlocked: true, chatRoomId: data.chat_room_id });
       } else if (data.status === "declined") {
         onResolvedRef.current({ declined: true });
       } else if (data.status === "waiting_on_other") {
@@ -100,8 +100,8 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
       </div>
 
       <main
-        className="onboarding-container"
-        style={{ justifyContent: "center", animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
+        className="centered-stage"
+        style={{ animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
       >
         <h1 className="ai-greeting" style={{ fontSize: "2.4rem", marginBottom: "0.25rem" }}>
           Match Found
@@ -116,7 +116,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         <div style={{ width: "100%", maxWidth: "640px", display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div className="panel">
             <p className="panel-label">Why this match</p>
-            <div style={{ color: "rgba(237,232,221,0.85)", fontSize: "0.95rem", lineHeight: "1.6" }}>
+            <div style={{ color: "var(--paper)", fontSize: "0.95rem", lineHeight: "1.6" }}>
               {headline}
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
           {strengths?.length > 0 && (
             <div className="panel">
               <p className="panel-label">What this brings you</p>
-              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(237,232,221,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
+              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "var(--paper)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                 {strengths.map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
@@ -137,7 +137,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
               <p className="panel-label warn">
                 Worth knowing (the rest of the {100 - Math.round(match.ai_score)}%)
               </p>
-              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "rgba(237,232,221,0.85)", fontSize: "0.9rem", lineHeight: "1.7" }}>
+              <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "var(--paper)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                 {gaps.map((g, i) => (
                   <li key={i}>{g}</li>
                 ))}

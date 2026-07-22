@@ -6,7 +6,7 @@ const todayIso = () => {
 };
 
 // Slim inline form (not a modal) for adding a personal agenda item -
-// anything outside a Vokazi-scheduled call. Native date/time inputs
+// anything outside a Kuzana Connect-scheduled call. Native date/time inputs
 // give a solid mobile keyboard/picker for free without a custom widget.
 export default function AddPersonalEventForm({ prefilledDate, onSubmit, onCancel }) {
   const [title, setTitle] = useState("");

@@ -84,7 +84,7 @@ function PersonalItem({ item, onDelete }) {
   );
 }
 
-// One day's worth of the unified agenda - Vokazi calls (confirmed or
+// One day's worth of the unified agenda - Kuzana Connect calls (confirmed or
 // still-proposed) interleaved with the user's own personal events,
 // chronological within the day. Personal events are the only ones with
 // a delete affordance - calls are managed from the match itself.

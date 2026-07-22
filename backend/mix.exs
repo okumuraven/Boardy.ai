@@ -52,9 +52,6 @@ defmodule Vokazi.MixProject do
       {:bandit, "~> 1.5"},
       {:pgvector, "~> 0.3.0"},
       {:req, "~> 0.5"},
-      {:ethers, "~> 0.6"},
-      {:ex_keccak, "~> 0.7"},
-      {:ex_secp256k1, "~> 0.7.6"},
       {:web_push_elixir, "~> 0.8.0"},
       {:oban, "~> 2.19"}
     ]

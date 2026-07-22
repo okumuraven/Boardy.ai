@@ -18,9 +18,9 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
         {/* Pulsing Rings when Active */}
         {callStatus === "active" && (
           <>
-            <div style={{ position: 'absolute', inset: -16, border: '2px solid #e84142', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
-            <div style={{ position: 'absolute', inset: -32, border: '1px solid #e84142', borderRadius: '50%', opacity: 0.3, animation: 'pulse 1.5s infinite 0.3s' }}></div>
-            <div style={{ position: 'absolute', inset: -48, border: '1px solid #e84142', borderRadius: '50%', opacity: 0.1, animation: 'pulse 1.5s infinite 0.6s' }}></div>
+            <div style={{ position: 'absolute', inset: -16, border: '2px solid var(--warn)', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
+            <div style={{ position: 'absolute', inset: -32, border: '1px solid var(--warn)', borderRadius: '50%', opacity: 0.3, animation: 'pulse 1.5s infinite 0.3s' }}></div>
+            <div style={{ position: 'absolute', inset: -48, border: '1px solid var(--warn)', borderRadius: '50%', opacity: 0.1, animation: 'pulse 1.5s infinite 0.6s' }}></div>
           </>
         )}
 
@@ -34,8 +34,8 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
             borderRadius: '50%',
             position: 'relative',
             zIndex: 10,
-            background: callStatus === "active" ? 'rgba(232, 65, 66, 0.1)' : undefined,
-            border: callStatus === "active" ? '2px solid #e84142' : 'none'
+            background: callStatus === "active" ? 'var(--warn-wash)' : undefined,
+            border: callStatus === "active" ? '2px solid var(--warn)' : 'none'
           }}
         >
           {callStatus === "inactive" && (
@@ -47,7 +47,7 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
           )}
           {callStatus === "connecting" && <div className="spinner" style={{ width: '28px', height: '28px' }}></div>}
           {callStatus === "active" && (
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e84142" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
             </svg>
           )}
@@ -55,24 +55,24 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
       </div>
 
       <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', margin: '0 0 0.75rem', color: 'var(--paper)' }}>
-        {callStatus === "inactive" ? "Vokazi is ready to listen." : ""}
+        {callStatus === "inactive" ? "Ready when you are." : ""}
         {callStatus === "connecting" ? "Establishing connection..." : ""}
         {callStatus === "active" ? <span className="accent-text">Listening...</span> : ""}
       </h2>
 
       <p style={{ color: 'var(--muted)', fontSize: '0.92rem', maxWidth: '520px', margin: '0 auto 1.5rem' }}>
         {callStatus === "inactive"
-          ? "Tap the microphone. Explain exactly what your startup is building, what technical challenges you face, and what resources you are offering to the ecosystem."
+          ? "Tap the microphone. Tell us exactly what your company is building, what's bottlenecking you, and what you can offer someone else."
           : callStatus === "active"
             ? "Speak naturally. When you're done, tap the button again to end the call - we'll process your profile automatically."
-            : "Speak naturally. Our AI is extracting your technical requirements and preparing them for vectorization."}
+            : "Speak naturally. Our AI is extracting your needs and offers to find your best match."}
       </p>
 
       {/* Live Transcript Box */}
       {callStatus === "active" && transcript && (
         <div className="panel animate-in" style={{ width: '100%', maxWidth: '600px', margin: '0 auto', maxHeight: '200px', overflowY: 'auto', textAlign: 'left' }}>
           <p className="panel-label">Live Transcript</p>
-          <div style={{ color: 'rgba(237,232,221,0.8)', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+          <div style={{ color: 'var(--paper)', fontSize: '0.95rem', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
             {transcript}
           </div>
         </div>

@@ -77,7 +77,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
       if (msg.type === "conversation-update" && msg.conversation) {
         const fullTranscript = msg.conversation
           .filter(c => c.role !== 'system')
-          .map(c => `${c.role === 'user' ? 'You' : 'Vokazi'}: ${c.text || c.content || ""}`)
+          .map(c => `${c.role === 'user' ? 'You' : 'Kuzana Connect'}: ${c.text || c.content || ""}`)
           .join("\n");
         setTranscript(fullTranscript);
       }

@@ -2,9 +2,9 @@ defmodule Vokazi.Scheduling do
   @moduledoc """
   The Escrow-Gated Google Calendar context.
 
-  Only reachable once `Vokazi.Matchmaking`'s Avalanche Trust-Gate has
-  already unlocked a match - this never runs ahead of that stake
-  verification. From there:
+  Only reachable once `Vokazi.Matchmaking` has already unlocked a match
+  (both sides mutually accepted) - this never runs ahead of that. From
+  there:
 
     1. Per-intro consent - each side independently decides whether to
        connect Google Calendar *for this specific introduction*

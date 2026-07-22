@@ -3,16 +3,11 @@ defmodule Vokazi.Matchmaking.Match do
   import Ecto.Changeset
 
   # pending_consent -> (either declines) -> declined
-  #                 -> (both accept)     -> pending -> staked_a/staked_b -> unlocked
-  #                                                                       (or slashed)
-  # "pending" means mutual consent is done and the Avalanche Trust-Gate
-  # `createMatch` tx has been (or is being) submitted - both sides now
-  # need to call `stake()` on-chain before this flips to "unlocked".
-  # user_a_staked/user_b_staked (each independently verified on-chain,
-  # never taken on the frontend's word) are what actually drive that
-  # transition; staked_a/staked_b in this list are kept for the mirrored
-  # on-chain enum but aren't required as a DB status stop along the way.
-  @statuses ["pending_consent", "declined", "pending", "staked_a", "staked_b", "unlocked", "slashed"]
+  #                 -> (both accept)     -> unlocked (or slashed)
+  # An on-chain Avalanche staking step used to sit between "both accept"
+  # and "unlocked" - removed per direct Kuzana feedback (see
+  # boardy_comparison.md); mutual consent now unlocks immediately.
+  @statuses ["pending_consent", "declined", "unlocked", "slashed"]
   @responses ["pending", "accepted", "declined"]
 
   schema "matches" do
@@ -39,16 +34,6 @@ defmodule Vokazi.Matchmaking.Match do
     # real rejection signal instead of guessing.
     field :decline_reason, :string
 
-    # The Avalanche Trust-Gate: each flips true only after the backend
-    # independently verifies the stake via `getMatch` on-chain.
-    field :user_a_staked, :boolean, default: false
-    field :user_b_staked, :boolean, default: false
-    # Deterministic bytes32 id this match is registered under on
-    # VokaziMatchStaking.sol (keccak256("vokazi-match-{id}")).
-    field :onchain_match_id, :string
-    field :stake_tx_hash_a, :string
-    field :stake_tx_hash_b, :string
-
     belongs_to :user_a, Vokazi.Accounts.User
     belongs_to :user_b, Vokazi.Accounts.User
 
@@ -72,12 +57,7 @@ defmodule Vokazi.Matchmaking.Match do
       :pitch_b,
       :user_a_response,
       :user_b_response,
-      :decline_reason,
-      :user_a_staked,
-      :user_b_staked,
-      :onchain_match_id,
-      :stake_tx_hash_a,
-      :stake_tx_hash_b
+      :decline_reason
     ])
     |> validate_required([:similarity_score, :status, :user_a_id, :user_b_id])
     |> validate_inclusion(:status, @statuses)

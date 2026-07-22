@@ -29,14 +29,6 @@ config :vokazi, VokaziWeb.Endpoint,
   # here since this container runs with MIX_ENV=prod.
   check_origin: false
 
-# Avalanche Fuji JSON-RPC endpoint used by Vokazi.Avalanche to submit the
-# owner-only `createMatch` tx and to independently verify stakes via
-# `getMatch` - never trust the frontend's claim that a stake succeeded.
-config :ethereumex,
-  url: System.get_env("FUJI_RPC_URL") || "https://api.avax-test.network/ext/bc/C/rpc"
-
-config :ethers, secp256k1_module: ExSecp256k1
-
 # Web Push (VAPID) - notification_system.md Phase 2. Keys are generated
 # once via `mix generate.vapid.keys`, free, no third-party account.
 config :web_push_elixir,

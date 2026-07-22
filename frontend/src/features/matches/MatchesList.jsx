@@ -15,17 +15,15 @@ const timeLabel = (iso) => {
     : date.toLocaleDateString([], { month: "short", day: "numeric" });
 };
 
+// Every match reaching this list is either still awaiting mutual review
+// or already unlocked - consent unlocks a match immediately now, no
+// intermediate status in between (see MatchesView.jsx).
 const previewFor = (match) => {
   if (match.status === "unlocked") return match.last_message?.body || "Say hello — you're connected.";
-  if (match.status === "pending_consent") return `${Math.round(match.ai_score)}% match — awaiting your review`;
-  return "Match accepted — stake to unlock chat";
+  return `${Math.round(match.ai_score)}% match — awaiting your review`;
 };
 
-const statusPillFor = (match) => {
-  if (match.status === "pending_consent") return "Pending consent";
-  if (match.status !== "unlocked") return "Awaiting stake";
-  return null;
-};
+const statusPillFor = (match) => (match.status === "pending_consent" ? "Pending consent" : null);
 
 export default function MatchesList({ matches, loading, selectedId, onSelect, hideOnMobile }) {
   return (
