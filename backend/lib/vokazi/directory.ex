@@ -88,6 +88,8 @@ defmodule Vokazi.Directory do
       name: u.full_name,
       role: u.role,
       industry: u.industry,
+      company: u.company,
+      location: u.location,
       offer_text: p.offer_text,
       looking_for_tags: p.looking_for_tags,
       can_help_tags: p.can_help_tags,

@@ -28,8 +28,6 @@ export default function CallPanel({ channel, profile, partnerName }) {
   const pendingCandidatesRef = useRef([]);
   const remoteAudioRef = useRef(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   const cleanupCall = () => {
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
@@ -61,7 +59,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
     // feedback loop (two connections both sending/receiving audio).
     if (peerConnectionRef.current) cleanupCall();
 
-    const credentials = await fetchTurnCredentials(apiUrl, profile.id);
+    const credentials = await fetchTurnCredentials();
     const stream = await getMicrophoneStream();
     localStreamRef.current = stream;
 
@@ -224,7 +222,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
 
   const declineCall = () => {
     setStatus("idle");
-    channel?.push("call_decline", { from_user_id: incomingFrom?.user_id, call_id: callIdRef.current });
+    channel?.push("call_decline", { call_id: callIdRef.current });
   };
 
   const endCall = () => {

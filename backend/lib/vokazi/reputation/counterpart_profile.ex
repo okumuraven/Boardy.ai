@@ -35,6 +35,9 @@ defmodule Vokazi.Reputation.CounterpartProfile do
     %{
       name: user && user.full_name,
       role: user && user.role,
+      company: user && user.company,
+      location: user && user.location,
+      bio: user && user.bio,
       offer_text: profile && profile.offer_text,
       need_text: profile && profile.need_text,
       github: github_view(social),

@@ -4,22 +4,22 @@ defmodule VokaziWeb.PersonalEventController do
   alias Vokazi.PersonalEvents
 
   @doc "This user's upcoming personal agenda items."
-  def index(conn, %{"user_id" => user_id}) do
-    events = PersonalEvents.list_for_user(to_int(user_id)) |> Enum.map(&to_json/1)
+  def index(conn, _params) do
+    events = PersonalEvents.list_for_user(conn.assigns.current_user_id) |> Enum.map(&to_json/1)
     json(conn, %{events: events})
   end
 
   @doc "Adds a personal agenda item - title, date, start/end time."
-  def create(conn, %{"user_id" => user_id} = params) do
-    case PersonalEvents.create(to_int(user_id), Map.take(params, ["title", "date", "start_time", "end_time"])) do
+  def create(conn, params) do
+    case PersonalEvents.create(conn.assigns.current_user_id, Map.take(params, ["title", "date", "start_time", "end_time"])) do
       {:ok, event} -> json(conn, to_json(event))
       {:error, _changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: "Couldn't save that - check the title, date, and times"})
     end
   end
 
   @doc "Removes a personal agenda item - only the owner can delete their own."
-  def delete(conn, %{"id" => id, "user_id" => user_id}) do
-    case PersonalEvents.delete(to_int(id), to_int(user_id)) do
+  def delete(conn, %{"id" => id}) do
+    case PersonalEvents.delete(to_int(id), conn.assigns.current_user_id) do
       {:ok, _event} -> json(conn, %{status: "ok"})
       {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Not found"})
     end

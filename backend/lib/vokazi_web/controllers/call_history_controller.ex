@@ -4,8 +4,8 @@ defmodule VokaziWeb.CallHistoryController do
   alias Vokazi.Calling
 
   @doc "Every call this user was either side of, most recent first - see `Vokazi.Calling.list_history/1`."
-  def index(conn, %{"user_id" => user_id}) do
-    user_id = to_int(user_id)
+  def index(conn, _params) do
+    user_id = conn.assigns.current_user_id
     calls = user_id |> Calling.list_history() |> Enum.map(&serialize(&1, user_id))
     json(conn, %{calls: calls})
   end
@@ -21,10 +21,7 @@ defmodule VokaziWeb.CallHistoryController do
       direction: if(is_caller, do: "outgoing", else: "incoming"),
       status: call_log.status,
       duration_seconds: call_log.duration_seconds,
-      inserted_at: call_log.inserted_at
+      inserted_at: Vokazi.DateTimeJSON.utc(call_log.inserted_at)
     }
   end
-
-  defp to_int(id) when is_integer(id), do: id
-  defp to_int(id) when is_binary(id), do: String.to_integer(id)
 end

@@ -4,12 +4,12 @@ defmodule VokaziWeb.InvestmentController do
   alias Vokazi.Investment
 
   @doc "This user's own funding/investment details."
-  def show(conn, %{"user_id" => user_id}) do
-    json(conn, to_json(Investment.get_for_user(to_int(user_id))))
+  def show(conn, _params) do
+    json(conn, to_json(Investment.get_for_user(conn.assigns.current_user_id)))
   end
 
   @doc "Upserts funding/investment details - founder-side or investor-side fields, whichever apply."
-  def upsert(conn, %{"user_id" => user_id} = params) do
+  def upsert(conn, params) do
     attrs =
       Map.take(params, [
         "business_stage",
@@ -20,7 +20,7 @@ defmodule VokaziWeb.InvestmentController do
         "sectors_of_interest"
       ])
 
-    case Investment.upsert(to_int(user_id), attrs) do
+    case Investment.upsert(conn.assigns.current_user_id, attrs) do
       {:ok, profile} ->
         json(conn, to_json(profile))
 
@@ -42,7 +42,4 @@ defmodule VokaziWeb.InvestmentController do
       sectors_of_interest: profile.sectors_of_interest
     }
   end
-
-  defp to_int(id) when is_integer(id), do: id
-  defp to_int(id) when is_binary(id), do: String.to_integer(id)
 end

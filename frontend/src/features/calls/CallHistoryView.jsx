@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 
 const initials = (name) =>
   (name || "?")
@@ -40,17 +41,16 @@ const isMissedForMe = (call) =>
 export default function CallHistoryView({ profile, onOpenMatch }) {
   const [calls, setCalls] = useState([]);
   const [loading, setLoading] = useState(true);
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!profile?.id) return;
     setLoading(true);
-    fetch(`${apiUrl}/api/calls/history?user_id=${profile.id}`)
+    apiFetch(`/api/calls/history`)
       .then((res) => res.json())
       .then((data) => setCalls(data.calls || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [profile?.id, apiUrl]);
+  }, [profile?.id]);
 
   return (
     <div className="call-history-view">

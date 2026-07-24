@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { apiFetch } from "../lib/api";
 
 // Shows the transparent AI breakdown for a candidate match - score,
 // reasoning, what lines up, and what doesn't - and lets each person
@@ -19,7 +20,6 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
   const onResolvedRef = useRef(onResolved);
   onResolvedRef.current = onResolved;
 
-  const apiUrl = import.meta.env.VITE_API_URL;
   const isWaiting = match.my_response === "accepted" && match.other_response !== "accepted";
 
   // Personalized, second-person pitch ("you need X because...") - falls
@@ -34,7 +34,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
 
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`${apiUrl}/api/matches/${match.match_id}/status?user_id=${profile.id}`);
+        const res = await apiFetch(`/api/matches/${match.match_id}/status`);
         if (!res.ok) {
           // The match no longer exists (or errored) - back out to the
           // matches list rather than keep polling a dead match_id or
@@ -57,15 +57,14 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
     }, 8000);
 
     return () => clearInterval(pollRef.current);
-  }, [isWaiting, match.match_id, apiUrl, profile.id]);
+  }, [isWaiting, match.match_id]);
 
   const respond = async (response, reason) => {
     setBusy(true);
     try {
-      const res = await fetch(`${apiUrl}/api/matches/${match.match_id}/respond`, {
+      const res = await apiFetch(`/api/matches/${match.match_id}/respond`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: profile.id, response, reason }),
+        body: JSON.stringify({ response, reason }),
       });
       const data = await res.json();
 

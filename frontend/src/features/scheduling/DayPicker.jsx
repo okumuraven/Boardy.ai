@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 
 const formatDayLabel = (dateStr) => {
   const date = new Date(dateStr + "T00:00:00");
@@ -54,10 +55,8 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
   const [reconnecting, setReconnecting] = useState(false);
   const [selected, setSelected] = useState({}); // date -> {start, end} (ISO)
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   useEffect(() => {
-    fetch(`${apiUrl}/api/matches/${matchId}/schedule/my_free_days?user_id=${profile.id}`)
+    apiFetch(`/api/matches/${matchId}/schedule/my_free_days`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error === "calendar_reauth_required") {
@@ -71,11 +70,11 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
       })
       .catch(() => setLoadError("Couldn't load your calendar."))
       .finally(() => setLoading(false));
-  }, [matchId, profile.id, apiUrl]);
+  }, [matchId, profile.id]);
 
   const reconnectCalendar = () => {
     setReconnecting(true);
-    fetch(`${apiUrl}/api/matches/${matchId}/schedule/connect_url?user_id=${profile.id}`)
+    apiFetch(`/api/matches/${matchId}/schedule/connect_url`)
       .then((res) => res.json())
       .then((data) => {
         if (data.connect_url) window.location.href = data.connect_url;

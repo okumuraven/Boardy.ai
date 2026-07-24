@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "../../lib/api";
 import MemberCard from "./MemberCard";
 import { INDUSTRIES } from "../../constants/industries";
 import { CONNECTION_TAGS, tagLabel } from "../../constants/connectionTags";
@@ -37,8 +38,6 @@ export default function DirectoryView({ profile, onMatchCreated }) {
   const [connectingId, setConnectingId] = useState(null);
   const [connectErrors, setConnectErrors] = useState({});
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   useEffect(() => {
     const handle = setTimeout(() => setSearch(searchInput.trim()), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(handle);
@@ -48,7 +47,7 @@ export default function DirectoryView({ profile, onMatchCreated }) {
     (targetPage) => {
       if (!profile?.id) return Promise.resolve();
 
-      const params = new URLSearchParams({ user_id: profile.id, page: targetPage });
+      const params = new URLSearchParams({ page: targetPage });
       if (search) params.set("search", search);
       if (industry) params.set("industry", industry);
       if (role) params.set("role", role);
@@ -56,7 +55,7 @@ export default function DirectoryView({ profile, onMatchCreated }) {
       if (canHelp) params.set("can_help", canHelp);
       if (fundingType) params.set("funding_type", fundingType);
 
-      return fetch(`${apiUrl}/api/directory?${params.toString()}`)
+      return apiFetch(`/api/directory?${params.toString()}`)
         .then((res) => res.json())
         .then((data) => {
           setMembers((prev) => (targetPage === 1 ? data.members || [] : [...prev, ...(data.members || [])]));
@@ -66,7 +65,7 @@ export default function DirectoryView({ profile, onMatchCreated }) {
         })
         .catch(() => {});
     },
-    [apiUrl, profile?.id, search, industry, role, lookingFor, canHelp, fundingType]
+    [profile?.id, search, industry, role, lookingFor, canHelp, fundingType]
   );
 
   useEffect(() => {
@@ -83,10 +82,9 @@ export default function DirectoryView({ profile, onMatchCreated }) {
     setConnectingId(targetUserId);
     setConnectErrors((prev) => ({ ...prev, [targetUserId]: null }));
 
-    fetch(`${apiUrl}/api/directory/connect`, {
+    apiFetch(`/api/directory/connect`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: profile.id, target_user_id: targetUserId }),
+      body: JSON.stringify({ target_user_id: targetUserId }),
     })
       .then(async (res) => {
         const data = await res.json().catch(() => ({}));

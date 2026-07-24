@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
+import { apiFetch, getToken } from "../../lib/api";
 import { enablePushNotifications } from "./pushSetup";
 
 const timeAgo = (iso) => {
@@ -31,7 +32,7 @@ export default function NotificationBell({ profile, onOpen }) {
   useEffect(() => {
     if (!profile?.id) return;
 
-    fetch(`${apiUrl}/api/notifications?user_id=${profile.id}`)
+    apiFetch(`/api/notifications`)
       .then((res) => res.json())
       .then((data) => {
         setNotifications(data.notifications || []);
@@ -40,7 +41,7 @@ export default function NotificationBell({ profile, onOpen }) {
       .catch(() => {});
 
     const socketUrl = `${apiUrl.replace(/^http/, "ws")}/socket`;
-    const socket = new Socket(socketUrl, { params: { user_id: profile.id } });
+    const socket = new Socket(socketUrl, { params: { token: getToken() } });
     socket.connect();
     socketRef.current = socket;
 
@@ -62,29 +63,21 @@ export default function NotificationBell({ profile, onOpen }) {
   }, [profile?.id, apiUrl]);
 
   const markAllRead = () => {
-    fetch(`${apiUrl}/api/notifications/mark_all_read`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: profile.id }),
-    }).catch(() => {});
+    apiFetch(`/api/notifications/mark_all_read`, { method: "POST" }).catch(() => {});
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnreadCount(0);
   };
 
   const handleEnablePush = () => {
     setPushStatus("enabling");
-    enablePushNotifications(profile, apiUrl)
+    enablePushNotifications()
       .then(() => setPushStatus("enabled"))
       .catch(() => setPushStatus("error"));
   };
 
   const handleClick = (notification) => {
     if (!notification.is_read) {
-      fetch(`${apiUrl}/api/notifications/${notification.id}/read`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: profile.id }),
-      }).catch(() => {});
+      apiFetch(`/api/notifications/${notification.id}/read`, { method: "POST" }).catch(() => {});
       setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, is_read: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
     }

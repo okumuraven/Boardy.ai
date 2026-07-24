@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { apiFetch } from "../../lib/api";
 import CalendarConsent from "./CalendarConsent";
 import AvailabilityForm from "./AvailabilityForm";
 import DayPicker from "./DayPicker";
@@ -20,8 +21,6 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
   const [oauthBanner, setOauthBanner] = useState("");
   const pollRef = useRef(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("calendar_connected") === "1") setOauthBanner("Calendar connected for this intro.");
@@ -34,7 +33,7 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
   const fetchSchedule = useCallback(
     (showSpinner = false) => {
       if (showSpinner) setLoading(true);
-      return fetch(`${apiUrl}/api/matches/${matchId}/schedule?user_id=${profile.id}`)
+      return apiFetch(`/api/matches/${matchId}/schedule`)
         .then((res) => res.json())
         .then((data) => {
           setSchedule(data);
@@ -44,7 +43,7 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
         .catch(() => setError("Couldn't load scheduling for this intro."))
         .finally(() => showSpinner && setLoading(false));
     },
-    [apiUrl, matchId, profile.id]
+    [matchId, profile.id]
   );
 
   useEffect(() => {
@@ -55,7 +54,7 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
     if (!schedule || schedule.status === "confirmed") return;
 
     pollRef.current = setInterval(() => {
-      fetch(`${apiUrl}/api/matches/${matchId}/schedule/status?user_id=${profile.id}`)
+      apiFetch(`/api/matches/${matchId}/schedule/status`)
         .then((res) => {
           if (!res.ok) throw new Error(`status ${res.status}`);
           return res.json();
@@ -70,14 +69,13 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
     }, 6000);
 
     return () => clearInterval(pollRef.current);
-  }, [schedule?.status, apiUrl, matchId, profile.id]);
+  }, [schedule?.status, matchId, profile.id]);
 
   const post = (path, body) => {
     setBusy(true);
-    return fetch(`${apiUrl}/api/matches/${matchId}${path}`, {
+    return apiFetch(`/api/matches/${matchId}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: profile.id, ...body }),
+      body: JSON.stringify(body),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -94,7 +92,7 @@ export default function SchedulingFlow({ matchId, profile, partnerName, onClose 
 
   const connectCalendar = () => {
     setBusy(true);
-    fetch(`${apiUrl}/api/matches/${matchId}/schedule/connect_url?user_id=${profile.id}`)
+    apiFetch(`/api/matches/${matchId}/schedule/connect_url`)
       .then((res) => res.json())
       .then((data) => {
         if (data.connect_url) window.location.href = data.connect_url;

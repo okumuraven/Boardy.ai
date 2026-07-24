@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "../../lib/api";
 import MiniCalendar from "./MiniCalendar";
 import AgendaDay from "./AgendaDay";
 import AddPersonalEventForm from "./AddPersonalEventForm";
@@ -52,20 +53,18 @@ export default function CalendarView({ profile, onOpenMatch }) {
   const [selectedDate, setSelectedDate] = useState(null);
   const [addingEvent, setAddingEvent] = useState(false);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   const userId = profile?.id;
 
   const refetch = useCallback(() => {
     if (!userId) return Promise.resolve();
     return Promise.all([
-      fetch(`${apiUrl}/api/schedules?user_id=${userId}`).then((res) => res.json()),
-      fetch(`${apiUrl}/api/personal_events?user_id=${userId}`).then((res) => res.json()),
+      apiFetch(`/api/schedules`).then((res) => res.json()),
+      apiFetch(`/api/personal_events`).then((res) => res.json()),
     ]).then(([schedulesData, eventsData]) => {
       setSchedules(schedulesData.schedules || []);
       setPersonalEvents(eventsData.events || []);
     });
-  }, [userId, apiUrl]);
+  }, [userId]);
 
   useEffect(() => {
     setLoading(true);
@@ -75,10 +74,9 @@ export default function CalendarView({ profile, onOpenMatch }) {
   }, [refetch]);
 
   const addPersonalEvent = (attrs) =>
-    fetch(`${apiUrl}/api/personal_events`, {
+    apiFetch(`/api/personal_events`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: profile.id, ...attrs }),
+      body: JSON.stringify(attrs),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -88,7 +86,7 @@ export default function CalendarView({ profile, onOpenMatch }) {
       });
 
   const deletePersonalEvent = (id) =>
-    fetch(`${apiUrl}/api/personal_events/${id}?user_id=${profile.id}`, { method: "DELETE" }).then(refetch);
+    apiFetch(`/api/personal_events/${id}`, { method: "DELETE" }).then(refetch);
 
   if (loading) {
     return (
@@ -130,9 +128,13 @@ export default function CalendarView({ profile, onOpenMatch }) {
         )}
 
         {isEmpty && (
-          <p className="calendar-view-empty-note">
-            Nothing to show yet - once a match unlocks, its intro call scheduling will appear here, or add something of your own above.
-          </p>
+          <div className="calendar-empty-state">
+            <div className="calendar-empty-icon">📅</div>
+            <p className="calendar-empty-title">Nothing on your agenda yet</p>
+            <p className="calendar-empty-sub">
+              Once a match unlocks, its intro call scheduling will show up here — or add something of your own above.
+            </p>
+          </div>
         )}
 
         {groupedDays.map(([date, items]) => (

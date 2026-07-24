@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
+import { apiFetch } from "../../lib/api";
 import SocialProfileSection from "./SocialProfileSection";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
@@ -22,17 +22,11 @@ const roleTitle = (role) => (role ? `${role.charAt(0).toUpperCase()}${role.slice
 // The first real place a user can see or change what Kuzana Connect has on file
 // for them - also where they see their own connections/rank (StatsCard)
 // and manage their social profile (SocialProfileSection).
-export default function ProfileView({ profile, onProfileUpdated }) {
-  const activeAccount = useActiveAccount();
-  const wallet = useActiveWallet();
-  const { disconnect } = useDisconnect();
-
+export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(null);
-
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   const startEdit = () => {
     setForm({
@@ -40,6 +34,9 @@ export default function ProfileView({ profile, onProfileUpdated }) {
       phone_number: profile?.phone_number || "",
       role: profile?.role || ROLES[0],
       industry: profile?.industry || INDUSTRIES[0],
+      company: profile?.company || "",
+      location: profile?.location || "",
+      bio: profile?.bio || "",
       contact_preference: profile?.contact_preference || "call",
     });
     setError("");
@@ -49,10 +46,9 @@ export default function ProfileView({ profile, onProfileUpdated }) {
   const save = () => {
     setSaving(true);
     setError("");
-    fetch(`${apiUrl}/api/profiles`, {
+    apiFetch("/api/profiles", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet_address: activeAccount?.address, ...form }),
+      body: JSON.stringify(form),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -120,6 +116,32 @@ export default function ProfileView({ profile, onProfileUpdated }) {
                   </select>
                 </div>
                 <div className="profile-view-row">
+                  <span className="k">Company</span>
+                  <input
+                    value={form.company}
+                    placeholder="Company or business name"
+                    onChange={(e) => setForm({ ...form, company: e.target.value })}
+                  />
+                </div>
+                <div className="profile-view-row">
+                  <span className="k">Location</span>
+                  <input
+                    value={form.location}
+                    placeholder="City, country"
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  />
+                </div>
+                <div className="profile-view-row">
+                  <span className="k">Bio</span>
+                  <textarea
+                    value={form.bio}
+                    placeholder="A short introduction - who you are, beyond your offer/need."
+                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    rows={3}
+                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.5rem 0.65rem", color: "var(--paper)", fontFamily: "inherit", resize: "vertical" }}
+                  />
+                </div>
+                <div className="profile-view-row">
                   <span className="k">Contact preference</span>
                   <select
                     value={form.contact_preference}
@@ -142,6 +164,9 @@ export default function ProfileView({ profile, onProfileUpdated }) {
                 <div className="profile-view-row"><span className="k">Phone number</span><span className="v">{profile?.phone_number || "—"}</span></div>
                 <div className="profile-view-row"><span className="k">Role</span><span className="v">{roleTitle(profile?.role)}</span></div>
                 <div className="profile-view-row"><span className="k">Industry</span><span className="v">{profile?.industry || "—"}</span></div>
+                <div className="profile-view-row"><span className="k">Company</span><span className="v">{profile?.company || "—"}</span></div>
+                <div className="profile-view-row"><span className="k">Location</span><span className="v">{profile?.location || "—"}</span></div>
+                <div className="profile-view-row"><span className="k">Bio</span><span className="v">{profile?.bio || "—"}</span></div>
                 <div className="profile-view-row">
                   <span className="k">Contact preference</span>
                   <span className="v">{CONTACT_LABEL[profile?.contact_preference] || CONTACT_LABEL.call}</span>
@@ -156,8 +181,8 @@ export default function ProfileView({ profile, onProfileUpdated }) {
             <ThemeToggle />
           </div>
 
-          <button onClick={() => wallet && disconnect(wallet)} className="btn-ghost btn-sm profile-view-disconnect">
-            Disconnect wallet
+          <button onClick={onLogout} className="btn-ghost btn-sm profile-view-disconnect">
+            Log out
           </button>
         </div>
 

@@ -3,8 +3,10 @@
 // and state; this just wraps the two things the browser itself does:
 // fetch short-lived TURN credentials, and set up an RTCPeerConnection.
 
-export async function fetchTurnCredentials(apiUrl, userId) {
-  const res = await fetch(`${apiUrl}/api/calls/turn_credentials?user_id=${userId}`);
+import { apiFetch } from "./api";
+
+export async function fetchTurnCredentials() {
+  const res = await apiFetch(`/api/calls/turn_credentials`);
   if (!res.ok) throw new Error("Couldn't fetch calling credentials.");
   return res.json();
 }

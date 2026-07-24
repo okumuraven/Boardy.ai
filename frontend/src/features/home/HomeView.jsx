@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 import Dashboard from "../../components/Dashboard";
 
 const TYPE_GLYPH = {
   chat_message: { icon: "💬", bg: "var(--ink-line)", color: "var(--muted)" },
   calendar_reminder: { icon: "🔔", bg: "var(--warn-wash)", color: "var(--warn)" },
   new_match: { icon: "✨", bg: "var(--signal-wash)", color: "var(--signal)" },
+  incoming_call: { icon: "📞", bg: "var(--brass-wash)", color: "var(--brass)" },
 };
 
 const timeAgo = (iso) => {
@@ -24,28 +26,26 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
   const [matches, setMatches] = useState([]);
   const [activity, setActivity] = useState([]);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   useEffect(() => {
     if (!profile?.id) return;
 
-    fetch(`${apiUrl}/api/matches?user_id=${profile.id}`)
+    apiFetch(`/api/matches`)
       .then((res) => res.json())
       .then((data) => setMatches(data.matches || []))
       .catch(() => {});
 
-    fetch(`${apiUrl}/api/notifications?user_id=${profile.id}`)
+    apiFetch(`/api/notifications`)
       .then((res) => res.json())
       .then((data) => setActivity((data.notifications || []).slice(0, 5)))
       .catch(() => {});
-  }, [profile?.id, apiUrl]);
+  }, [profile?.id]);
 
   const awaitingResponse = matches.filter((m) => m.status === "pending_consent" && m.my_response !== "accepted").length;
   const showInvestmentPrompt = profile?.role === "investor" || profile?.looking_for_tags?.includes("funding");
 
   return (
     <div className="home-view">
-      <div style={{ padding: "2rem 2.25rem 2.5rem" }}>
+      <div className="home-view-content">
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "1.6rem", margin: "0 0 0.25rem" }}>
           Welcome back, {profile?.name?.split(" ")[0] || "there"}.
         </h1>
@@ -66,10 +66,12 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
 
         <div className="home-stats-row">
           <div className="home-stat-tile">
+            <div className="home-stat-icon">🤝</div>
             <div className="num">{matches.length}</div>
             <div className="lbl">Active introductions</div>
           </div>
           <div className="home-stat-tile">
+            <div className="home-stat-icon">⏳</div>
             <div className="num">{awaitingResponse}</div>
             <div className="lbl">Awaiting your response</div>
           </div>

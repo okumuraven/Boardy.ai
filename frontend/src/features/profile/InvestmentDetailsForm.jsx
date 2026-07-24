@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 import { BUSINESS_STAGES } from "../../constants/businessStages";
 import { FUNDING_TYPES, fundingTypeLabel } from "../../constants/fundingTypes";
 import { INDUSTRIES } from "../../constants/industries";
@@ -27,26 +28,24 @@ export default function InvestmentDetailsForm({ profile }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
-  const apiUrl = import.meta.env.VITE_API_URL;
   const isInvestor = profile?.role === "investor";
 
   useEffect(() => {
     if (!profile?.id) return;
-    fetch(`${apiUrl}/api/profiles/${profile.id}/investment`)
+    apiFetch(`/api/profiles/investment`)
       .then((res) => res.json())
       .then((data) => setForm({ ...EMPTY, ...data }))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [profile?.id, apiUrl]);
+  }, [profile?.id]);
 
   const save = () => {
     setSaving(true);
     setError("");
     setSaved(false);
 
-    fetch(`${apiUrl}/api/profiles/${profile.id}/investment`, {
+    apiFetch(`/api/profiles/investment`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     })
       .then(async (res) => {

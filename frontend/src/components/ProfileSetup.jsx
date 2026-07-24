@@ -1,54 +1,35 @@
-import { useState, useEffect } from 'react';
-import { useActiveAccount } from "thirdweb/react";
-import { getUserEmail } from "thirdweb/wallets/in-app";
-import { client } from "../config/thirdweb";
-import KuzanaMark from "./KuzanaMark";
+import { useState } from 'react';
+import { apiFetch } from '../lib/api';
+import KuzanaMark from './KuzanaMark';
 import { INDUSTRIES } from "../constants/industries";
 
-export default function ProfileSetup({ onComplete, phone }) {
+export default function ProfileSetup({ onComplete }) {
   const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState(phone || '');
+  const [company, setCompany] = useState('');
+  const [location, setLocation] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [role, setRole] = useState('founder');
   const [industry, setIndustry] = useState(INDUSTRIES[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const activeAccount = useActiveAccount();
-
-  useEffect(() => {
-    if (phone && !phoneNumber) {
-      setPhoneNumber(phone);
-    }
-  }, [phone]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (name.length < 2) return alert("Please enter your name");
-    if (phoneNumber.length < 9) return alert("Please enter a valid phone number");
-    
+
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-
-      // Best-effort - the in-app wallet's Google email, so this account
-      // has a real address on file for calendar invites later even if
-      // the user later declines linking Calendar for a specific intro.
-      const email = await getUserEmail({ client }).catch(() => undefined);
-
-      const response = await fetch(`${apiUrl}/api/profiles`, {
+      const response = await apiFetch('/api/profiles', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Tunnel-Skip-AntiPhishing-Page': 'true'
-        },
         body: JSON.stringify({
-          wallet_address: activeAccount?.address,
           full_name: name,
           phone_number: phoneNumber,
           role: role,
           industry: industry,
-          email: email
+          company: company,
+          location: location,
         }),
       });
 
@@ -57,13 +38,15 @@ export default function ProfileSetup({ onComplete, phone }) {
         throw new Error(errData.error || "Failed to save profile on backend.");
       }
       const data = await response.json();
-      onComplete({ name, phoneNumber, role, industry, id: data.id });
+      onComplete({ name, phoneNumber, role, industry, company, location, id: data.id });
 
     } catch (error) {
       // Never silently proceed on failure - a fake local profile means the
       // interview that follows has nowhere real to be saved.
       console.error("Profile creation failed:", error);
-      setSubmitError("Couldn't reach the server to save your profile. Check your connection and try again.");
+      setSubmitError(error.message === "Failed to save profile on backend."
+        ? "Couldn't reach the server to save your profile. Check your connection and try again."
+        : error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +62,7 @@ export default function ProfileSetup({ onComplete, phone }) {
         </div>
         <div style={{ color: 'var(--signal)', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span className="dot online"></span>
-          Connected
+          Signed in
         </div>
       </nav>
 
@@ -95,20 +78,6 @@ export default function ProfileSetup({ onComplete, phone }) {
 
           <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', animationDelay: '0.4s' }}>
 
-            {/* Verified Phone Field */}
-            <div className="field" style={{ padding: '1rem 1.5rem', justifyContent: 'space-between' }}>
-              <div>
-                <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--muted)', marginBottom: '4px', textAlign: 'left', fontWeight: 500 }}>Verified contact</span>
-                <span style={{ color: 'var(--paper)', fontWeight: 600, fontSize: '1.1rem' }}>+254 {phoneNumber}</span>
-              </div>
-              <div style={{ color: 'var(--signal)' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-            </div>
-
             {/* Name Field */}
             <div className="field">
               <input
@@ -119,6 +88,44 @@ export default function ProfileSetup({ onComplete, phone }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+              />
+            </div>
+
+            {/* Phone Field - an honest, unverified contact field, not a
+                security gate. No checkmark/"verified" copy here: we never
+                confirm this number belongs to whoever typed it. */}
+            <div className="field">
+              <input
+                type="tel"
+                placeholder="Phone number (optional)"
+                className="premium-input"
+                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+              />
+            </div>
+
+            {/* Company Field */}
+            <div className="field">
+              <input
+                type="text"
+                placeholder="Company or business name (optional)"
+                className="premium-input"
+                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+              />
+            </div>
+
+            {/* Location Field */}
+            <div className="field">
+              <input
+                type="text"
+                placeholder="Location (optional)"
+                className="premium-input"
+                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
               />
             </div>
 

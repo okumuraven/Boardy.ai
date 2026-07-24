@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
+import { getToken } from "../../lib/api";
 
 // Makes an incoming call visible from anywhere in the app - not just
 // when the specific match's chat happens to be open (see CallPanel.jsx,
@@ -19,7 +20,7 @@ export default function IncomingCallBanner({ profile, onAnswer }) {
 
     const apiUrl = import.meta.env.VITE_API_URL;
     const socketUrl = `${apiUrl.replace(/^http/, "ws")}/socket`;
-    const socket = new Socket(socketUrl, { params: { user_id: profile.id } });
+    const socket = new Socket(socketUrl, { params: { token: getToken() } });
     socket.connect();
 
     const channel = socket.channel(`user:${profile.id}`, {});

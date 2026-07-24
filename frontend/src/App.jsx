@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useActiveAccount } from "thirdweb/react";
+import { apiFetch, getToken, onUnauthorized, clearToken } from './lib/api';
 import LandingPage from './components/LandingPage';
 import Whitepaper from './components/Whitepaper';
 import Login from './components/Login';
@@ -7,48 +7,45 @@ import ProfileSetup from './components/ProfileSetup';
 import AppShell from './features/shell/AppShell';
 
 export default function App() {
-  const activeAccount = useActiveAccount();
+  const [isAuthenticated, setIsAuthenticated] = useState(!!getToken());
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileFetchError, setProfileFetchError] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showWhitepaper, setShowWhitepaper] = useState(false);
-  const [collectedPhone, setCollectedPhone] = useState('');
   const [pendingMatchOpen, setPendingMatchOpen] = useState(null);
 
-  // Fetches the profile tied to the connected wallet. Reused both on wallet
-  // connect (to restore a returning user without re-asking their details)
-  // and after a "Redo Interview" call ends (to pull the freshly-updated
-  // offer/need text once the webhook has finished processing it).
+  // Fetches the signed-in user's own profile - identity always comes
+  // from the verified session token, never a client-supplied id.
+  // Reused both on sign-in (to restore a returning user without
+  // re-asking their details) and after a "Redo Interview" call ends (to
+  // pull the freshly-updated offer/need text once the webhook has
+  // finished processing it).
   //
-  // Distinguishes "this wallet genuinely has no profile" (a real 404)
-  // from any other failure (network blip, wrong API URL, backend down) -
+  // Distinguishes "this account hasn't finished onboarding yet" from
+  // any other failure (network blip, wrong API URL, backend down) -
   // conflating the two used to silently bounce a returning user into
-  // ProfileSetup and ask them to re-type their phone number from
-  // scratch on any transient hiccup, risking a mismatched number
-  // overwriting the real one already on file.
+  // ProfileSetup and ask them to re-enter their details on any
+  // transient hiccup.
   const fetchProfile = (showSpinner = true) => {
-    if (!activeAccount?.address) return Promise.resolve(null);
+    if (!getToken()) return Promise.resolve(null);
     if (showSpinner) setIsLoading(true);
-    const apiUrl = import.meta.env.VITE_API_URL;
 
-    return fetch(`${apiUrl}/api/profiles/${activeAccount.address}`, {
-      headers: {
-        'X-Tunnel-Skip-AntiPhishing-Page': 'true'
-      }
-    })
+    return apiFetch('/api/profiles/me')
       .then(res => {
-        if (res.status === 404) return { notFound: true };
         if (!res.ok) throw new Error(`profile fetch failed with status ${res.status}`);
         return res.json();
       })
       .then(data => {
         setProfileFetchError(false);
-        if (data && !data.notFound && data.onboarding_completed) {
+        if (data && data.onboarding_completed) {
           setProfile({
             name: data.full_name,
             role: data.role,
             industry: data.industry,
+            location: data.location,
+            company: data.company,
+            bio: data.bio,
             id: data.id,
             offer_text: data.offer_text,
             need_text: data.need_text,
@@ -68,26 +65,47 @@ export default function App() {
       .finally(() => { if (showSpinner) setIsLoading(false); });
   };
 
-  // Auto-fetch profile to prevent the "refresh resets account" bug
+  // Bootstraps from a token already in localStorage (e.g. after a page
+  // reload) - a real backend-issued session survives a reload far more
+  // reliably than Thirdweb's own client-side connection persistence did.
   useEffect(() => {
-    if (activeAccount?.address) {
+    if (isAuthenticated) {
       fetchProfile();
     } else {
       setProfile(null);
       setProfileFetchError(false);
     }
-  }, [activeAccount]);
+  }, [isAuthenticated]);
+
+  // A token that's expired, or was signed before a server restart
+  // rotated the signing secret, is functionally logged-out - drop back
+  // to the login screen instead of leaving the user stuck on a screen
+  // that can never successfully load data again.
+  useEffect(() => {
+    return onUnauthorized(() => {
+      setIsAuthenticated(false);
+      setProfile(null);
+      setProfileFetchError(false);
+    });
+  }, []);
+
+  const handleSignedIn = (user) => {
+    setIsAuthenticated(true);
+    setShowLogin(false);
+    if (user.onboarding_completed) fetchProfile();
+  };
+
+  const handleLogout = () => {
+    clearToken();
+    setIsAuthenticated(false);
+    setProfile(null);
+  };
 
   // Passed to Home's "Find a Match" action - on a fresh match, jumps the
   // shell straight to it instead of leaving the user to notice it later.
   const findMatch = () => {
     if (!profile?.id) return Promise.resolve({ status: "queued" });
-    const apiUrl = import.meta.env.VITE_API_URL;
-    return fetch(`${apiUrl}/api/matchmaking/find_match`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: profile.id }),
-    })
+    return apiFetch('/api/matchmaking/find_match', { method: "POST" })
       .then(res => res.json())
       .then(data => {
         if (data.status === "matched" && data.match_id) {
@@ -144,11 +162,11 @@ export default function App() {
       );
     }
 
-    // A returning, already-onboarded wallet whose profile fetch failed
+    // A returning, already-signed-in user whose profile fetch failed
     // (not a clean 404) - never fall through to ProfileSetup here, since
-    // that would ask them to re-enter their phone number and risk a
-    // mismatched number silently overwriting the real one on file.
-    if (activeAccount && profileFetchError) {
+    // that would ask them to re-enter their details and risk
+    // overwriting the real ones already on file.
+    if (isAuthenticated && profileFetchError) {
       return (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', maxWidth: '360px', margin: '0 auto' }}>
           <p style={{ marginBottom: '1.25rem' }}>Couldn't reach Kuzana Connect to load your account. Your details are safe - this is just a connection hiccup.</p>
@@ -157,17 +175,17 @@ export default function App() {
       );
     }
 
-    if (!activeAccount) {
+    if (!isAuthenticated) {
       if (showWhitepaper) return <Whitepaper onBack={() => setShowWhitepaper(false)} />;
-      if (showLogin) return <Login onBack={() => setShowLogin(false)} collectedPhone={collectedPhone} />;
+      if (showLogin) return <Login onBack={() => setShowLogin(false)} onSignedIn={handleSignedIn} />;
       return <LandingPage
-                onJoinClick={(phone) => { setCollectedPhone(phone); setShowLogin(true); }}
+                onJoinClick={() => setShowLogin(true)}
                 onWhitepaperClick={() => setShowWhitepaper(true)}
              />;
     }
 
-    if (activeAccount && !profile) {
-      return <ProfileSetup onComplete={setProfile} phone={collectedPhone} />;
+    if (isAuthenticated && !profile) {
+      return <ProfileSetup onComplete={setProfile} />;
     }
 
     return (
@@ -176,6 +194,7 @@ export default function App() {
         onInterviewComplete={() => fetchProfile(false)}
         onFindMatch={findMatch}
         onProfileUpdated={() => fetchProfile(false)}
+        onLogout={handleLogout}
         pendingMatchOpen={pendingMatchOpen}
         onConsumePendingMatchOpen={() => setPendingMatchOpen(null)}
       />
@@ -183,7 +202,7 @@ export default function App() {
   };
 
   return (
-    <div className={`app-container ${(!activeAccount && !showLogin) ? 'no-padding' : ''}`}>
+    <div className={`app-container ${(!isAuthenticated && !showLogin) ? 'no-padding' : ''}`}>
       {renderScreen()}
     </div>
   );

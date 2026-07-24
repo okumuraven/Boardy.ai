@@ -11,16 +11,16 @@ defmodule VokaziWeb.MatchController do
   the source for the Matches list UI, distinct from `pending_for_user/2`
   which only ever returns the single next thing to resolve.
   """
-  def index(conn, %{"user_id" => user_id}) do
-    json(conn, %{matches: Matchmaking.list_for_user(to_int(user_id))})
+  def index(conn, _params) do
+    json(conn, %{matches: Matchmaking.list_for_user(conn.assigns.current_user_id)})
   end
 
   @doc """
   On-demand "Find a Match" button - runs the pgvector + AI pipeline right
   now instead of waiting for the next interview/vector update.
   """
-  def find_match(conn, %{"user_id" => user_id}) do
-    user_id = to_int(user_id)
+  def find_match(conn, _params) do
+    user_id = conn.assigns.current_user_id
 
     case Matchmaking.find_match!(user_id) do
       {:matched, match} ->
@@ -49,8 +49,8 @@ defmodule VokaziWeb.MatchController do
   if there's nothing active (declined/slashed matches don't count; the
   user is free to be matched again).
   """
-  def pending_for_user(conn, %{"user_id" => user_id}) do
-    user_id = to_int(user_id)
+  def pending_for_user(conn, _params) do
+    user_id = conn.assigns.current_user_id
 
     match =
       Repo.one(
@@ -87,8 +87,8 @@ defmodule VokaziWeb.MatchController do
   regardless of status, so the waiting side can tell what happened -
   the other person accepted (unlocked, with a room to join) or declined.
   """
-  def status(conn, %{"id" => match_id, "user_id" => user_id}) do
-    user_id = to_int(user_id)
+  def status(conn, %{"id" => match_id}) do
+    user_id = conn.assigns.current_user_id
     match = Matchmaking.get_match!(to_int(match_id))
 
     chat_room_id =
@@ -107,9 +107,9 @@ defmodule VokaziWeb.MatchController do
   requires a short `reason` - kept so future matching can be tuned on
   real rejection signal instead of guessing.
   """
-  def respond(conn, %{"id" => match_id, "user_id" => user_id, "response" => response} = params) do
+  def respond(conn, %{"id" => match_id, "response" => response} = params) do
     match_id = to_int(match_id)
-    user_id = to_int(user_id)
+    user_id = conn.assigns.current_user_id
     reason = Map.get(params, "reason")
 
     case Matchmaking.respond_to_match(match_id, user_id, response, reason) do

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 
 const rankLabel = (rank, role) => {
   if (!rank) return "Not yet ranked - complete your first intro call";
@@ -13,16 +14,15 @@ const rankLabel = (rank, role) => {
 // of this same data is what a matched counterpart sees (MatchProfilePanel).
 export default function StatsCard({ profile }) {
   const [data, setData] = useState(null);
-  const apiUrl = import.meta.env.VITE_API_URL;
   const userId = profile?.id;
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`${apiUrl}/api/profiles/${userId}/stats`)
+    apiFetch(`/api/profiles/stats`)
       .then((res) => res.json())
       .then(setData)
       .catch(() => {});
-  }, [userId, apiUrl]);
+  }, [userId]);
 
   if (!data) return null;
 
@@ -30,11 +30,13 @@ export default function StatsCard({ profile }) {
     <div className="panel stats-card">
       <div className="stats-card-numbers">
         <div>
+          <span className="stats-card-icon">🔓</span>
           <p className="stats-card-value">{data.stats.matches_unlocked}</p>
           <p className="stats-card-label">Matches unlocked</p>
         </div>
         <div className="stats-card-divider" />
         <div>
+          <span className="stats-card-icon">📞</span>
           <p className="stats-card-value">{data.stats.calls_completed}</p>
           <p className="stats-card-label">Calls completed</p>
         </div>

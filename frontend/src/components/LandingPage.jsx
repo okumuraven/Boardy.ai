@@ -1,20 +1,6 @@
-import { useState } from 'react';
 import KuzanaMark from './KuzanaMark';
 
 export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
-  const [phone, setPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (phone.length < 9) return;
-    setIsSubmitting(true);
-
-    setTimeout(() => {
-      onJoinClick(phone);
-    }, 600);
-  };
-
   return (
     <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
 
@@ -38,40 +24,16 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
           </h1>
 
           <p className="ai-subtext">
-            Drop your number below. We'll start a real voice interview right in your browser to understand your goals and match you with the right person.
+            Sign in with Google to start a real voice interview right in your browser - we'll understand your goals and match you with the right person.
           </p>
 
-          <form onSubmit={handleSubmit} className="command-center">
-            <div className="country-pill">
-              <span>🇰🇪</span>
-              <span>+254</span>
-            </div>
-
-            <input
-              type="tel"
-              placeholder="7XX XXX XXX"
-              className="premium-input"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))}
-              autoFocus
-              disabled={isSubmitting}
-            />
-
-            <button
-              type="submit"
-              className={`action-btn ${phone.length >= 9 ? 'ready' : ''}`}
-              disabled={phone.length < 9 || isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="spinner" style={{ width: '20px', height: '20px', borderWidth: '2px' }}></div>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              )}
-            </button>
-          </form>
+          <button onClick={onJoinClick} className="action-btn ready" style={{ padding: '0 2rem', height: '56px' }}>
+            Get started
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </button>
         </div>
 
         <div className="onboarding-visual">

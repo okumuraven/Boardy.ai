@@ -929,8 +929,10 @@ body {
 /* ---- Home ---- */
 
 .home-view { flex: 1; overflow-y: auto; }
+.home-view-content { padding: 2rem 2.25rem 2.5rem; }
 .home-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.9rem; margin: 0 0 1.75rem; max-width: 500px; }
 .home-stat-tile { background: var(--ink); border: 1px solid var(--ink-line-strong); border-radius: 7px; padding: 1.1rem 1.2rem; }
+.home-stat-icon { font-size: 1.1rem; opacity: 0.8; margin-bottom: 0.35rem; }
 .home-stat-tile .num { font-family: var(--font-mono); font-size: 1.7rem; color: var(--brass); font-variant-numeric: tabular-nums; }
 .home-stat-tile .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
 
@@ -966,6 +968,7 @@ body {
 
 .stats-card { display: flex; flex-direction: column; gap: 1rem; }
 .stats-card-numbers { display: flex; align-items: baseline; gap: 2rem; }
+.stats-card-icon { display: block; font-size: 1rem; opacity: 0.75; margin-bottom: 0.3rem; }
 .stats-card-value { font-family: var(--font-mono); font-size: 2rem; color: var(--paper); line-height: 1; }
 .stats-card-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.35rem; }
 .stats-card-divider { width: 1px; align-self: stretch; background: var(--ink-line); }
@@ -1018,7 +1021,18 @@ body {
 .calendar-view { flex: 1; overflow-y: auto; padding: 2rem 2.25rem; display: flex; gap: 2.5rem; align-items: flex-start; }
 .calendar-list { flex: 1; min-width: 0; }
 .calendar-list-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
-.calendar-view-empty-note { color: var(--muted); font-size: 0.9rem; }
+/* Matches the app's other empty states (e.g. .match-empty) in tone -
+   muted, centered - but as its own contained block rather than a bare
+   line of text, since this one sits inside a list that can also hold
+   real content above/below it (header, add-event form). */
+.calendar-empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 3rem 1.5rem; color: var(--muted);
+  background: var(--ink-raised); border: 1px dashed var(--ink-line-strong); border-radius: 8px;
+}
+.calendar-empty-icon { font-size: 1.8rem; margin-bottom: 0.75rem; opacity: 0.7; }
+.calendar-empty-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--paper); margin: 0 0 0.35rem; }
+.calendar-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 380px; margin: 0; }
 
 .agenda-clear-filter {
   display: block; background: none; border: none; cursor: pointer; padding: 0;
@@ -1087,7 +1101,11 @@ body {
   .calendar-card-briefing p, .calendar-card-briefing ul { font-size: 0.78rem; }
 }
 
-.mini-cal { width: 250px; flex-shrink: 0; }
+.mini-cal {
+  width: 250px; flex-shrink: 0;
+  background: var(--ink-raised); border: 1px solid var(--ink-line);
+  border-radius: 8px; padding: 1.1rem;
+}
 .mini-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
 .mini-cal-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0; color: var(--paper); }
 .mini-cal-nav { display: flex; gap: 0.25rem; }
@@ -1099,7 +1117,7 @@ body {
 }
 .mini-cal-nav button:hover { border-color: var(--brass-dim); color: var(--paper); }
 .mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
-.mini-cal-grid .dow { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); text-align: center; padding-bottom: 0.4rem; }
+.mini-cal-grid .dow { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.03em; color: var(--muted); text-align: center; padding-bottom: 0.5rem; }
 .mini-cal-grid .day {
   position: relative;
   aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
@@ -1110,7 +1128,10 @@ body {
 .mini-cal-grid .day:hover:not(:disabled) { border-color: var(--ink-line-strong); }
 .mini-cal-grid .day:disabled { cursor: default; }
 .mini-cal-grid .day.faded { color: var(--faded); }
-.mini-cal-grid .day.today { border-color: var(--ink-line-strong); }
+/* Distinct from a plain hover ring - today should read at a glance,
+   the same brass accent used for has-event so the two combine cleanly
+   when today happens to also have something scheduled on it. */
+.mini-cal-grid .day.today { border-color: var(--brass); color: var(--brass); font-weight: 700; }
 .mini-cal-grid .day.has-event { background: var(--brass-dim); color: var(--brass); font-weight: 700; border-color: var(--brass); }
 .mini-cal-grid .day.has-event::after {
   content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
@@ -1255,4 +1276,17 @@ body {
   .chat-column { padding: 0.85rem; }
   .chat-messages { gap: 0.5rem; padding: 0.75rem; }
   .msg-bubble { padding: 0.6rem 0.8rem; font-size: 0.92rem; }
+
+  /* Home / Directory / Call History all used the same fixed desktop
+     padding (2rem 2.25rem) with no mobile override - on a phone that's
+     a lot of wasted edge space around content that's already narrow. */
+  .home-view-content { padding: 1.25rem 1.25rem 2rem; }
+  .directory-view { padding: 1.25rem 1.25rem 2rem; }
+  .call-history-view { padding: 1.25rem 1.25rem 2rem; }
+
+  .home-stats-row { max-width: none; }
+  .home-activity-text { word-break: break-word; }
+
+  .call-row { gap: 0.5rem; }
+  .call-name { display: inline-block; max-width: 55vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 }

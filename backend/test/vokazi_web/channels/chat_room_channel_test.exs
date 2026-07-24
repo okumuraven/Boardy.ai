@@ -6,20 +6,9 @@ defmodule VokaziWeb.ChatRoomChannelTest do
   alias Vokazi.Notifications.Notification
 
   setup do
-    {:ok, user_a} =
-      %User{}
-      |> User.changeset(%{wallet_address: "0xaaa", full_name: "Alice", role: "founder", onboarding_completed: true})
-      |> Repo.insert()
-
-    {:ok, user_b} =
-      %User{}
-      |> User.changeset(%{wallet_address: "0xbbb", full_name: "Bob", role: "founder", onboarding_completed: true})
-      |> Repo.insert()
-
-    {:ok, outsider} =
-      %User{}
-      |> User.changeset(%{wallet_address: "0xccc", full_name: "Eve", role: "founder", onboarding_completed: true})
-      |> Repo.insert()
+    user_a = create_user!("google-sub-aaa", "Alice")
+    user_b = create_user!("google-sub-bbb", "Bob")
+    outsider = create_user!("google-sub-ccc", "Eve")
 
     {:ok, match} =
       %Match{}
@@ -39,8 +28,28 @@ defmodule VokaziWeb.ChatRoomChannelTest do
     %{user_a: user_a, user_b: user_b, outsider: outsider, room: room}
   end
 
+  # Mirrors the real sign-in flow: identity comes from a verified Google
+  # ID token (`google_signin_changeset/2`), profile completion is a
+  # separate, later step (`changeset/2`) - matching how
+  # `Vokazi.Auth.GoogleSignIn`/`ProfileController.update/2` actually
+  # populate a user in production, rather than a single shortcut cast.
+  defp create_user!(google_sub, full_name) do
+    {:ok, user} =
+      %User{}
+      |> User.google_signin_changeset(%{google_sub: google_sub, full_name: full_name})
+      |> Repo.insert()
+
+    {:ok, user} =
+      user
+      |> User.changeset(%{full_name: full_name, role: "founder", onboarding_completed: true})
+      |> Repo.update()
+
+    user
+  end
+
   defp connect_socket(user_id) do
-    Phoenix.ChannelTest.connect(VokaziWeb.UserSocket, %{"user_id" => to_string(user_id)})
+    token = Vokazi.Auth.Session.issue_token(user_id)
+    Phoenix.ChannelTest.connect(VokaziWeb.UserSocket, %{"token" => token})
   end
 
   test "a participant can join their chat room", %{user_a: user_a, room: room} do
@@ -151,9 +160,14 @@ defmodule VokaziWeb.ChatRoomChannelTest do
       assert_reply(ref, :ok, %{call_id: call_id})
       assert_broadcast("call_ring", %{})
 
-      ref2 = Phoenix.ChannelTest.push(socket_b, "call_decline", %{"from_user_id" => user_a.id, "call_id" => call_id})
+      ref2 = Phoenix.ChannelTest.push(socket_b, "call_decline", %{"call_id" => call_id})
       assert_reply(ref2, :ok)
       assert_broadcast("call_declined", %{})
+      # The "Missed call" message is attributed to the CallLog's real
+      # caller_id, never a client-supplied payload field - guards against
+      # the spoofing bug this handler used to have.
+      assert_broadcast("new_msg", %{sender_id: sender_id})
+      assert sender_id == user_a.id
 
       assert Repo.get!(CallLog, call_id).status == "declined"
     end

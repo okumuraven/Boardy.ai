@@ -165,12 +165,15 @@ defmodule VokaziWeb.ChatRoomChannel do
   end
 
   @impl true
-  def handle_in("call_decline", %{"from_user_id" => caller_id, "call_id" => call_id}, socket) do
+  def handle_in("call_decline", %{"call_id" => call_id}, socket) do
     with {:ok, call_log} <- Calling.mark_declined(call_id) do
       notify_call_resolved(call_log.callee_id, call_id, "call_declined")
+      # The authoritative caller_id from the CallLog row itself, never a
+      # client-supplied payload field - a payload claim would let anyone
+      # attribute the "Missed call" message to whichever user_id they liked.
+      create_call_message(socket, call_log.caller_id, "📞 Missed call")
     end
 
-    create_call_message(socket, caller_id, "📞 Missed call")
     broadcast!(socket, "call_declined", %{})
     {:reply, :ok, socket}
   end
@@ -304,7 +307,7 @@ defmodule VokaziWeb.ChatRoomChannel do
       content: message.content,
       sender_id: message.sender_id,
       sender_name: message.sender && message.sender.full_name,
-      inserted_at: message.inserted_at
+      inserted_at: Vokazi.DateTimeJSON.utc(message.inserted_at)
     }
   end
 

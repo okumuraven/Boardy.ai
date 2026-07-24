@@ -51,7 +51,7 @@ defmodule Vokazi.Accounts.Profile do
     |> validate_tags(:looking_for_tags)
     |> validate_tags(:can_help_tags)
     |> unique_constraint(:user_id)
-    |> unique_constraint(:phone_number)
+    |> unique_constraint(:phone_number, message: "is already registered to another account")
   end
 
   defp validate_tags(changeset, field) do

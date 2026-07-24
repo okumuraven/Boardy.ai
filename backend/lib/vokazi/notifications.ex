@@ -49,10 +49,14 @@ defmodule Vokazi.Notifications do
     )
   end
 
-  @doc "Removes a subscription - called when a browser reports permission was revoked."
-  def remove_push_subscription(endpoint) do
+  @doc """
+  Removes a subscription - called when a browser reports permission was
+  revoked. Scoped to `user_id` so one signed-in user can never delete
+  another's subscription by guessing/observing an endpoint string.
+  """
+  def remove_push_subscription(user_id, endpoint) do
     PushSubscription
-    |> where([s], s.endpoint == ^endpoint)
+    |> where([s], s.endpoint == ^endpoint and s.user_id == ^user_id)
     |> Repo.delete_all()
 
     :ok
@@ -114,7 +118,7 @@ defmodule Vokazi.Notifications do
       body: notification.body,
       link: notification.link,
       is_read: notification.is_read,
-      inserted_at: notification.inserted_at
+      inserted_at: Vokazi.DateTimeJSON.utc(notification.inserted_at)
     }
   end
 end

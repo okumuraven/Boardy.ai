@@ -67,7 +67,9 @@ export default function MemberCard({ member, connecting, connectError, onConnect
           </div>
           <div className="directory-card-meta">
             {roleTitle(member.role)}
+            {member.company ? ` at ${member.company}` : ""}
             {member.industry ? ` · ${member.industry}` : ""}
+            {member.location ? ` · ${member.location}` : ""}
           </div>
         </div>
       </div>

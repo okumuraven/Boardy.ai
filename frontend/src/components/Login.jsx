@@ -1,9 +1,38 @@
-import { ConnectButton } from "thirdweb/react";
-import { client, activeChain } from "../config/thirdweb";
-import { inAppWallet } from "thirdweb/wallets";
-import KuzanaMark from "./KuzanaMark";
+import { useState } from 'react';
+import { GoogleLogin } from '@react-oauth/google';
+import { apiFetch, setToken } from '../lib/api';
+import KuzanaMark from './KuzanaMark';
 
-export default function Login({ onBack, collectedPhone }) {
+export default function Login({ onBack, onSignedIn }) {
+  const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setIsVerifying(true);
+    setError('');
+
+    try {
+      const response = await apiFetch('/api/auth/google/signin', {
+        method: 'POST',
+        body: JSON.stringify({ id_token: credentialResponse.credential }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Could not verify Google sign-in.');
+      }
+
+      const data = await response.json();
+      setToken(data.token);
+      onSignedIn(data.user);
+    } catch (err) {
+      console.error('Google sign-in failed:', err);
+      setError("Couldn't sign you in with Google. Please try again.");
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   return (
     <div style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
@@ -13,27 +42,14 @@ export default function Login({ onBack, collectedPhone }) {
           <span className="brand-text">Kuzana Connect</span>
         </div>
         <button onClick={onBack} className="nav-link">
-          ← Change Number
+          ← Back
         </button>
       </nav>
 
       <main className="onboarding-container" style={{ animation: 'fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
         <div className="onboarding-content">
-          {/* Verification Checkmark */}
-          <div style={{
-            width: '60px', height: '60px', borderRadius: '3px',
-            border: '1.5px solid var(--brass)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem',
-            color: 'var(--brass)'
-          }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-              <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-          </div>
-
           <h1 className="ai-greeting" style={{ fontSize: '2.3rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
-            Number secured: <span className="accent-text">+254 {collectedPhone}</span>
+            Sign in with <span className="accent-text">Google</span>
           </h1>
 
           <p className="ai-subtext" style={{ maxWidth: '500px', animationDelay: '0.2s', marginBottom: '3rem' }}>
@@ -41,18 +57,21 @@ export default function Login({ onBack, collectedPhone }) {
           </p>
 
           <div style={{ opacity: 0, animation: 'fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', animationDelay: '0.4s' }}>
-            <ConnectButton
-              client={client}
-              chain={activeChain}
-              wallets={[
-                inAppWallet({
-                  auth: { options: ["google"] }, // Enforcing Google Auth for Calendar/Identity logic
-                }),
-              ]}
-              theme="light"
-              connectModal={{ size: "wide", title: "Join Kuzana Connect" }}
-            />
+            {isVerifying ? (
+              <div className="spinner" style={{ width: '32px', height: '32px' }}></div>
+            ) : (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("Couldn't sign you in with Google. Please try again.")}
+                theme="outline"
+                size="large"
+                text="continue_with"
+              />
+            )}
           </div>
+          {error && (
+            <p style={{ color: 'var(--warn)', fontSize: '0.9rem', marginTop: '1rem' }}>{error}</p>
+          )}
         </div>
 
         <div className="onboarding-visual">

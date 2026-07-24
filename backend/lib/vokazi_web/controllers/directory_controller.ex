@@ -4,10 +4,10 @@ defmodule VokaziWeb.DirectoryController do
   alias Vokazi.{Directory, Matchmaking}
 
   @doc "Searchable/filterable member listing - see `Vokazi.Directory`."
-  def index(conn, %{"user_id" => user_id} = params) do
+  def index(conn, params) do
     result =
       Directory.list_members(%{
-        user_id: to_int(user_id),
+        user_id: conn.assigns.current_user_id,
         search: Map.get(params, "search"),
         industry: Map.get(params, "industry"),
         role: Map.get(params, "role"),
@@ -25,8 +25,8 @@ defmodule VokaziWeb.DirectoryController do
   reasoning as an automatic match, then behaves exactly like the
   suggested-match queue from here on (mutual consent, unlock, chat).
   """
-  def connect(conn, %{"user_id" => user_id, "target_user_id" => target_user_id}) do
-    case Matchmaking.request_match(to_int(user_id), to_int(target_user_id)) do
+  def connect(conn, %{"target_user_id" => target_user_id}) do
+    case Matchmaking.request_match(conn.assigns.current_user_id, to_int(target_user_id)) do
       {:ok, :requested, match} ->
         json(conn, %{status: "requested", match_id: match.id})
 

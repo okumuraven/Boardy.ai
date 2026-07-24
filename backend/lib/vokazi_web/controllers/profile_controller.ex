@@ -3,18 +3,21 @@ defmodule VokaziWeb.ProfileController do
 
   alias Vokazi.Accounts.{User, Profile}
 
-  def show(conn, %{"id" => wallet_address}) do
-    case Vokazi.Repo.get_by(User, wallet_address: wallet_address) |> Vokazi.Repo.preload(:profile) do
+  @doc "The signed-in user's own full profile - identity always comes from the verified session, never a URL param."
+  def show(conn, _params) do
+    case Vokazi.Repo.get(User, conn.assigns.current_user_id) |> Vokazi.Repo.preload(:profile) do
       nil ->
         conn |> put_status(404) |> json(%{error: "Not found"})
+
       user ->
-        # Just return the basics needed by the frontend App.jsx
         json(conn, %{
           id: user.id,
-          wallet_address: user.wallet_address,
           full_name: user.full_name,
           role: user.role,
           industry: user.industry,
+          location: user.location,
+          company: user.company,
+          bio: user.bio,
           onboarding_completed: user.onboarding_completed,
           offer_text: if(user.profile, do: user.profile.offer_text, else: nil),
           need_text: if(user.profile, do: user.profile.need_text, else: nil),
@@ -26,26 +29,32 @@ defmodule VokaziWeb.ProfileController do
     end
   end
 
-  def create(conn, params) do
-    wallet_address = params["wallet_address"]
-    
-    # 1. Try to find the user by wallet address or create an empty struct
-    user = Vokazi.Repo.get_by(User, wallet_address: wallet_address) || %User{}
-    
-    # 2. Update user basic info
-    user_changeset = User.changeset(user, %{
-      wallet_address: wallet_address,
-      full_name: params["full_name"],
-      role: params["role"],
-      industry: params["industry"],
-      email: params["email"],
-      onboarding_completed: true
-    })
+  @doc """
+  Completes/edits the signed-in user's own profile details (name, role,
+  industry, company, location, bio, phone, contact preference). Never
+  creates a *new* account - that only ever happens via
+  `VokaziWeb.AuthController.google_signin/2` - this always operates on
+  `conn.assigns.current_user_id`, the account the verified session
+  belongs to.
+  """
+  def update(conn, params) do
+    user_id = conn.assigns.current_user_id
+    user = Vokazi.Repo.get!(User, user_id)
+
+    user_changeset =
+      User.changeset(user, %{
+        full_name: params["full_name"],
+        role: params["role"],
+        industry: params["industry"],
+        location: params["location"],
+        company: params["company"],
+        bio: params["bio"],
+        onboarding_completed: true
+      })
 
     Vokazi.Repo.transaction(fn ->
-      case Vokazi.Repo.insert_or_update(user_changeset) do
+      case Vokazi.Repo.update(user_changeset) do
         {:ok, updated_user} ->
-          # 3. Create or update profile with the phone number
           profile = Vokazi.Repo.get_by(Profile, user_id: updated_user.id) || %Profile{user_id: updated_user.id}
 
           # contact_preference is only ever set here when the caller (the
@@ -54,18 +63,20 @@ defmodule VokaziWeb.ProfileController do
           # just because an older caller (initial onboarding) doesn't know
           # about this field.
           profile_attrs = %{phone_number: params["phone_number"], user_id: updated_user.id}
+
           profile_attrs =
             if params["contact_preference"],
               do: Map.put(profile_attrs, :contact_preference, params["contact_preference"]),
               else: profile_attrs
 
           profile_changeset = Profile.changeset(profile, profile_attrs)
-          
+
           case Vokazi.Repo.insert_or_update(profile_changeset) do
             {:ok, _} -> updated_user
             {:error, reason} -> Vokazi.Repo.rollback(reason)
           end
-        {:error, reason} -> 
+
+        {:error, reason} ->
           Vokazi.Repo.rollback(reason)
       end
     end)
@@ -73,39 +84,43 @@ defmodule VokaziWeb.ProfileController do
       {:ok, user} ->
         json(conn, %{
           id: user.id,
-          wallet_address: user.wallet_address,
           full_name: user.full_name,
           role: user.role,
           onboarding_completed: user.onboarding_completed
         })
+
       {:error, %Ecto.Changeset{} = changeset} ->
-        # Extract the first error message to send to the frontend
-        error_msg = Enum.reduce(changeset.errors, "Validation failed", fn {field, {msg, _}}, _acc -> 
-          "#{field} #{msg}"
-        end)
+        error_msg =
+          Enum.reduce(changeset.errors, "Validation failed", fn {field, {msg, _}}, _acc ->
+            "#{field} #{msg}"
+          end)
+
         conn |> put_status(400) |> json(%{error: error_msg})
+
       {:error, reason} ->
         IO.inspect(reason, label: "DB_ERROR")
         conn |> put_status(500) |> json(%{error: "Database error", details: inspect(reason)})
     end
   end
 
-  # Local dev bypass to simulate Vapi Webhook + OpenAI Embeddings
-  def sync_mock(conn, %{"id" => user_id}) do
-    profile = Vokazi.Repo.get_by(Profile, user_id: user_id)
-    
+  # Local dev bypass to simulate Vapi Webhook + OpenAI Embeddings - always
+  # targets the signed-in user's own profile now, same as every other
+  # authenticated route (previously took an arbitrary `:id` param).
+  def sync_mock(conn, _params) do
+    profile = Vokazi.Repo.get_by(Profile, user_id: conn.assigns.current_user_id)
+
     if profile do
-      # Generate a mock 1536-dimensional vector for pgvector
       mock_vector = Pgvector.new(for _ <- 1..1536, do: :rand.uniform() |> Float.round(4))
-      
-      changeset = Profile.changeset(profile, %{
-        offer_text: "AI: I am an expert Web3 and React developer looking for a fast-paced team.",
-        need_text: "Need: Looking for a blockchain startup with a solid product roadmap.",
-        contact_preference: "call",
-        offer_vector: mock_vector,
-        need_vector: mock_vector
-      })
-      
+
+      changeset =
+        Profile.changeset(profile, %{
+          offer_text: "AI: I am an expert Web3 and React developer looking for a fast-paced team.",
+          need_text: "Need: Looking for a blockchain startup with a solid product roadmap.",
+          contact_preference: "call",
+          offer_vector: mock_vector,
+          need_vector: mock_vector
+        })
+
       Vokazi.Repo.update!(changeset)
       json(conn, %{success: true})
     else
@@ -113,41 +128,44 @@ defmodule VokaziWeb.ProfileController do
     end
   end
 
-  # Real data pipeline bypassing Vapi webhooks
-  def sync_real_transcript(conn, %{"id" => user_id, "transcript" => transcript}) do
+  # Real data pipeline bypassing Vapi webhooks - same self-only scoping as sync_mock/2 above.
+  def sync_real_transcript(conn, %{"transcript" => transcript}) do
+    user_id = conn.assigns.current_user_id
     profile = Vokazi.Repo.get_by(Profile, user_id: user_id)
-    
-    if profile do
-      # Extract intelligent summary via Gemini Flash
-      {offer, need, contact_preference} = case Vokazi.AI.extract_summary(transcript) do
-        {:ok, o, n, pref} -> {o, n, pref}
-        _ -> {"Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "...", "call"}
-      end
 
-      # 1. Save the raw transcript AND the extracted summaries
-      changeset = Profile.changeset(profile, %{
-        raw_transcript: transcript,
-        offer_text: offer,
-        need_text: need,
-        contact_preference: contact_preference
-      })
+    if profile do
+      {offer, need, contact_preference} =
+        case Vokazi.AI.extract_summary(transcript) do
+          {:ok, o, n, pref} ->
+            {o, n, pref}
+
+          _ ->
+            fallback = "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "..."
+            {fallback, fallback, "call"}
+        end
+
+      changeset =
+        Profile.changeset(profile, %{
+          raw_transcript: transcript,
+          offer_text: offer,
+          need_text: need,
+          contact_preference: contact_preference
+        })
+
       updated_profile = Vokazi.Repo.update!(changeset)
-      
-      # 2. Use Gemini to generate REAL pgvector embeddings from the REAL transcript
+
       Task.start(fn ->
         case Vokazi.AI.generate_embedding(transcript) do
           {:ok, vector} ->
-            vector_changeset = Profile.changeset(updated_profile, %{
-              offer_vector: vector,
-              need_vector: vector
-            })
+            vector_changeset = Profile.changeset(updated_profile, %{offer_vector: vector, need_vector: vector})
             Vokazi.Repo.update!(vector_changeset)
             IO.puts("Successfully generated REAL Gemini vector for user #{user_id}")
+
           _ ->
             IO.puts("Failed to generate Gemini vector")
         end
       end)
-      
+
       json(conn, %{success: true})
     else
       conn |> put_status(404) |> json(%{error: "Profile not found"})

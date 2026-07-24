@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 
 const rankLabel = (rank, role) => {
   if (!rank) return null;
@@ -16,10 +17,8 @@ export default function MatchProfilePanel({ matchId, profile, partnerName, onClo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   useEffect(() => {
-    fetch(`${apiUrl}/api/matches/${matchId}/counterpart_profile?user_id=${profile.id}`)
+    apiFetch(`/api/matches/${matchId}/counterpart_profile`)
       .then((res) => res.json())
       .then((json) => {
         if (json.error) setError(json.error);
@@ -27,7 +26,7 @@ export default function MatchProfilePanel({ matchId, profile, partnerName, onClo
       })
       .catch(() => setError("Couldn't load this profile."))
       .finally(() => setLoading(false));
-  }, [matchId, profile.id, apiUrl]);
+  }, [matchId, profile.id]);
 
   if (loading) {
     return (
@@ -55,6 +54,11 @@ export default function MatchProfilePanel({ matchId, profile, partnerName, onClo
           {data.name || partnerName}
         </h3>
         {data.role && <span className="social-chip" style={{ marginTop: "0.4rem", display: "inline-block" }}>{data.role}</span>}
+        {(data.company || data.location) && (
+          <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: "0.4rem 0 0" }}>
+            {[data.company, data.location].filter(Boolean).join(" · ")}
+          </p>
+        )}
       </div>
 
       <div className="panel" style={{ display: "flex", gap: "1.25rem" }}>
@@ -71,6 +75,13 @@ export default function MatchProfilePanel({ matchId, profile, partnerName, onClo
       {rank && (
         <div className="panel" style={{ textAlign: "center", padding: "0.9rem" }}>
           <span style={{ color: "var(--brass)", fontFamily: "var(--font-mono)", fontSize: "0.85rem" }}>🏅 {rank}</span>
+        </div>
+      )}
+
+      {data.bio && (
+        <div>
+          <p className="panel-label">About</p>
+          <div className="profile-view-copy">{data.bio}</div>
         </div>
       )}
 

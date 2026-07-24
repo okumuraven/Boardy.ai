@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../../lib/api";
 
 const FIELDS = [
   { key: "linkedin_url", label: "LinkedIn", placeholder: "https://linkedin.com/in/you" },
@@ -21,7 +22,6 @@ export default function SocialProfileSection({ profile }) {
   const [banner, setBanner] = useState("");
   const [connecting, setConnecting] = useState(false);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
   const userId = profile?.id;
 
   useEffect(() => {
@@ -35,16 +35,16 @@ export default function SocialProfileSection({ profile }) {
 
   useEffect(() => {
     if (!userId) return;
-    fetch(`${apiUrl}/api/profiles/${userId}/social`)
+    apiFetch(`/api/profiles/social`)
       .then((res) => res.json())
       .then(setSocial)
       .catch(() => setError("Couldn't load your social profile."))
       .finally(() => setLoading(false));
-  }, [userId, apiUrl]);
+  }, [userId]);
 
   const connectGithub = () => {
     setConnecting(true);
-    fetch(`${apiUrl}/api/profiles/${userId}/social/github/connect_url`)
+    apiFetch(`/api/profiles/social/github/connect_url`)
       .then((res) => res.json())
       .then((data) => {
         if (data.connect_url) window.location.href = data.connect_url;
@@ -55,7 +55,7 @@ export default function SocialProfileSection({ profile }) {
   };
 
   const disconnectGithub = () => {
-    fetch(`${apiUrl}/api/profiles/${userId}/social/github`, { method: "DELETE" })
+    apiFetch(`/api/profiles/social/github`, { method: "DELETE" })
       .then((res) => res.json())
       .then(setSocial)
       .catch(() => setError("Couldn't disconnect GitHub."));
@@ -70,9 +70,8 @@ export default function SocialProfileSection({ profile }) {
   const saveField = (key) => {
     setSaving(true);
     setError("");
-    fetch(`${apiUrl}/api/profiles/${userId}/social/links`, {
+    apiFetch(`/api/profiles/social/links`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ [key]: fieldValue }),
     })
       .then((res) => res.json())

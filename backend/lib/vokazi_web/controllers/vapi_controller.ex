@@ -4,30 +4,49 @@ defmodule VokaziWeb.VapiController do
   alias Vokazi.Accounts.Profile
   alias Vokazi.Repo
 
+  # This is a server-to-server webhook from Vapi's own servers, not a
+  # user session - it never goes through VokaziWeb.AuthPlug (there's no
+  # user Authorization header to check). Instead it verifies a shared
+  # secret Vapi is configured to send on every request, so a request
+  # claiming to be a completed call can't just be forged by anyone who
+  # knows this endpoint's URL - which, before this check existed, was
+  # true of literally anyone.
   def webhook(conn, %{"message" => message}) do
-    case message["type"] do
-      "end-of-call-report" ->
-        # ⚡ Pillar 4: Asynchronous Processing
-        Task.start(fn ->
-          try do
-            handle_end_of_call(message)
-          rescue
-            e -> Logger.error("Vapi webhook: CRITICAL TASK ERROR: #{inspect(e)}")
-          end
-        end)
-        json(conn, %{status: "received"})
+    if authorized?(conn) do
+      case message["type"] do
+        "end-of-call-report" ->
+          # ⚡ Pillar 4: Asynchronous Processing
+          Task.start(fn ->
+            try do
+              handle_end_of_call(message)
+            rescue
+              e -> Logger.error("Vapi webhook: CRITICAL TASK ERROR: #{inspect(e)}")
+            end
+          end)
+          json(conn, %{status: "received"})
 
-      "assistant-request" ->
-        # Handshake for custom assistants
-        json(conn, %{})
+        "assistant-request" ->
+          # Handshake for custom assistants
+          json(conn, %{})
 
-      _ ->
-        json(conn, %{status: "ignored"})
+        _ ->
+          json(conn, %{status: "ignored"})
+      end
+    else
+      Logger.error("Vapi webhook: rejected request with missing/invalid X-Vapi-Secret header")
+      conn |> put_status(401) |> json(%{error: "Unauthorized"})
     end
   end
-  
+
   def webhook(conn, _params) do
-    json(conn, %{status: "ok"})
+    if authorized?(conn), do: json(conn, %{status: "ok"}), else: conn |> put_status(401) |> json(%{error: "Unauthorized"})
+  end
+
+  defp authorized?(conn) do
+    case get_req_header(conn, "x-vapi-secret") do
+      [secret] -> Plug.Crypto.secure_compare(secret, System.fetch_env!("VAPI_WEBHOOK_SECRET"))
+      _ -> false
+    end
   end
 
   defp handle_end_of_call(message) do

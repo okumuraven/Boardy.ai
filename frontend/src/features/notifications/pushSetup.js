@@ -1,3 +1,5 @@
+import { apiFetch } from "../../lib/api";
+
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -10,7 +12,7 @@ const urlBase64ToUint8Array = (base64String) => {
 // ever called from a user-initiated click (NotificationBell's "Enable
 // push alerts" link) - never fired automatically on page load, so the
 // native browser permission prompt never surprises anyone.
-export async function enablePushNotifications(profile, apiUrl) {
+export async function enablePushNotifications() {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     throw new Error("Push notifications aren't supported in this browser.");
   }
@@ -30,10 +32,9 @@ export async function enablePushNotifications(profile, apiUrl) {
   });
 
   const raw = subscription.toJSON();
-  await fetch(`${apiUrl}/api/push_subscriptions`, {
+  await apiFetch("/api/push_subscriptions", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: profile.id, endpoint: raw.endpoint, keys: raw.keys }),
+    body: JSON.stringify({ endpoint: raw.endpoint, keys: raw.keys }),
   });
 
   return subscription;

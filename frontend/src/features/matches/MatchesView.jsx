@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "../../lib/api";
 import ChatRoomView from "../../components/ChatSystem";
 import MatchReview from "../../components/MatchReview";
 import MatchesList from "./MatchesList";
@@ -18,8 +19,6 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [startInScheduling, setStartInScheduling] = useState(false);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   // Lets AppShell hide the mobile tab bar while a conversation is open,
   // the same way WhatsApp/Telegram give the whole screen to a chat
   // instead of keeping the app's main nav visible underneath it.
@@ -29,11 +28,11 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
 
   const fetchList = useCallback(() => {
     if (!profile?.id) return Promise.resolve();
-    return fetch(`${apiUrl}/api/matches?user_id=${profile.id}`)
+    return apiFetch(`/api/matches`)
       .then((res) => res.json())
       .then((data) => setMatches(data.matches || []))
       .catch(() => {});
-  }, [apiUrl, profile?.id]);
+  }, [profile?.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -49,7 +48,7 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
   const fetchDetail = useCallback(
     (matchId) => {
       if (!profile?.id) return Promise.resolve(null);
-      return fetch(`${apiUrl}/api/matches/${matchId}/status?user_id=${profile.id}`)
+      return apiFetch(`/api/matches/${matchId}/status`)
         .then(async (res) => {
           if (!res.ok) {
             // The match no longer exists (or errored) - never render an
@@ -68,7 +67,7 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
           return null;
         });
     },
-    [apiUrl, profile?.id]
+    [profile?.id]
   );
 
   const selectMatch = (matchId, options = {}) => {

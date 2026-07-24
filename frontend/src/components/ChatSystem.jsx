@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
+import { getToken } from "../lib/api";
 import SchedulingFlow from "../features/scheduling";
 import MatchProfilePanel from "../features/matches/MatchProfilePanel";
 import CallPanel from "./CallPanel";
@@ -52,7 +53,7 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL;
     const socketUrl = `${apiUrl.replace(/^http/, "ws")}/socket`;
-    const socket = new Socket(socketUrl, { params: { user_id: profile.id } });
+    const socket = new Socket(socketUrl, { params: { token: getToken() } });
     socket.connect();
     socketRef.current = socket;
 

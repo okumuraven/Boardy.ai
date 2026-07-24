@@ -5,32 +5,17 @@ defmodule VokaziWeb.UserSocket do
   channel "chat_room:*", VokaziWeb.ChatRoomChannel
   channel "user:*", VokaziWeb.NotificationChannel
 
-  # Socket params are passed from the client and can
-  # be used to verify and authenticate a user. After
-  # verification, you can put default assigns into
-  # the socket that will be set for all channels, ie
-  #
-  #     {:ok, assign(socket, :user_id, verified_user_id)}
-  #
-  # To deny connection, return `:error` or `{:error, term}`. To control the
-  # response the client receives in that case, [define a `handle_failed_socket/2`
-  # callback](https://hexdocs.pm/phoenix/Phoenix.Socket.html#c:handle_failed_socket/2).
-  #
-  # See `Phoenix.Token` documentation for examples in
-  # performing token verification on connect.
-  # Connect params always arrive as strings (they travel as a query
-  # string on the websocket upgrade request, same as every other param
-  # in this app) - assigning the raw string here would silently break
-  # every integer comparison against user_a_id/user_b_id downstream.
+  # `user_id` used to be trusted directly off the client's connect
+  # params - meaning any client could open a chat/notification socket
+  # claiming to be anyone at all. Now the client sends the same signed
+  # session `token` every authenticated HTTP request uses
+  # (`Vokazi.Auth.Session`); the real `user_id` only ever comes from
+  # verifying that token, never from a client-asserted value.
   @impl true
-  def connect(%{"user_id" => user_id}, socket, _connect_info) when is_integer(user_id) do
-    {:ok, assign(socket, :user_id, user_id)}
-  end
-
-  def connect(%{"user_id" => user_id}, socket, _connect_info) when is_binary(user_id) do
-    case Integer.parse(user_id) do
-      {id, ""} -> {:ok, assign(socket, :user_id, id)}
-      _ -> :error
+  def connect(%{"token" => token}, socket, _connect_info) do
+    case Vokazi.Auth.Session.verify_token(token) do
+      {:ok, user_id} -> {:ok, assign(socket, :user_id, user_id)}
+      {:error, _reason} -> :error
     end
   end
 

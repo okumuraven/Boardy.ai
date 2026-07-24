@@ -44,7 +44,7 @@ const initialTabFromUrl = () => {
   return "home";
 };
 
-export default function AppShell({ profile, onInterviewComplete, onFindMatch, onProfileUpdated, pendingMatchOpen, onConsumePendingMatchOpen }) {
+export default function AppShell({ profile, onInterviewComplete, onFindMatch, onProfileUpdated, onLogout, pendingMatchOpen, onConsumePendingMatchOpen }) {
   const [activeTab, setActiveTab] = useState(initialTabFromUrl);
   const [openRequest, setOpenRequest] = useState(null);
   // Every tab stays mounted (see below), so MatchesView's own one-time
@@ -150,7 +150,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
           <CalendarView profile={profile} onOpenMatch={openMatchScheduling} />
         </div>
         <div className={`shell-view ${activeTab === "profile" ? "active" : ""}`}>
-          <ProfileView profile={profile} onProfileUpdated={onProfileUpdated} />
+          <ProfileView profile={profile} onProfileUpdated={onProfileUpdated} onLogout={onLogout} />
         </div>
       </div>
 
