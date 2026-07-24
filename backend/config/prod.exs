@@ -8,7 +8,12 @@ config :vokazi, VokaziWeb.Endpoint,
     rewrite_on: [:x_forwarded_proto],
     exclude: [
       # paths: ["/health"],
-      hosts: ["localhost", "127.0.0.1"]
+      # Local-only test access (LAN IP + this machine's Tailscale IP) -
+      # there's no TLS listener in this docker-compose setup, so forcing
+      # SSL here just breaks every non-localhost request with a redirect
+      # to the unconfigured PHX_HOST placeholder. A real deployment uses
+      # a real public domain and isn't in this list.
+      hosts: ["localhost", "127.0.0.1", "192.168.88.52", "100.82.22.60"]
     ]
   ]
 

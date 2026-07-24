@@ -20,7 +20,7 @@ const timeAgo = (iso) => {
 // Real stats (no invented numbers) plus the existing voice-interview /
 // profile-summary management panel underneath, now living inside the
 // shell's content area instead of being the entire screen.
-export default function HomeView({ profile, onInterviewComplete, onFindMatch }) {
+export default function HomeView({ profile, onInterviewComplete, onFindMatch, onOpenProfile }) {
   const [matches, setMatches] = useState([]);
   const [activity, setActivity] = useState([]);
 
@@ -41,6 +41,7 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch }) 
   }, [profile?.id, apiUrl]);
 
   const awaitingResponse = matches.filter((m) => m.status === "pending_consent" && m.my_response !== "accepted").length;
+  const showInvestmentPrompt = profile?.role === "investor" || profile?.looking_for_tags?.includes("funding");
 
   return (
     <div className="home-view">
@@ -51,6 +52,17 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch }) 
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "0 0 1.75rem" }}>
           Here's what's moving across your introductions.
         </p>
+
+        {showInvestmentPrompt && (
+          <div className="home-investment-prompt">
+            <p>
+              {profile?.role === "investor"
+                ? "Add your investment criteria so founders know what you're looking for."
+                : "Add your funding details so investors can find you in the Directory."}
+            </p>
+            <button className="btn-ghost btn-sm" onClick={onOpenProfile}>Go to Profile</button>
+          </div>
+        )}
 
         <div className="home-stats-row">
           <div className="home-stat-tile">

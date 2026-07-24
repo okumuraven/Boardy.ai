@@ -3,11 +3,13 @@ import { useActiveAccount } from "thirdweb/react";
 import { getUserEmail } from "thirdweb/wallets/in-app";
 import { client } from "../config/thirdweb";
 import KuzanaMark from "./KuzanaMark";
+import { INDUSTRIES } from "../constants/industries";
 
 export default function ProfileSetup({ onComplete, phone }) {
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState(phone || '');
   const [role, setRole] = useState('founder');
+  const [industry, setIndustry] = useState(INDUSTRIES[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const activeAccount = useActiveAccount();
@@ -45,6 +47,7 @@ export default function ProfileSetup({ onComplete, phone }) {
           full_name: name,
           phone_number: phoneNumber,
           role: role,
+          industry: industry,
           email: email
         }),
       });
@@ -54,7 +57,7 @@ export default function ProfileSetup({ onComplete, phone }) {
         throw new Error(errData.error || "Failed to save profile on backend.");
       }
       const data = await response.json();
-      onComplete({ name, phoneNumber, role, id: data.id });
+      onComplete({ name, phoneNumber, role, industry, id: data.id });
 
     } catch (error) {
       // Never silently proceed on failure - a fake local profile means the
@@ -131,6 +134,20 @@ export default function ProfileSetup({ onComplete, phone }) {
                 <option value="developer" style={{ background: 'var(--ink)' }}>Lead Developer</option>
                 <option value="designer" style={{ background: 'var(--ink)' }}>Product Designer</option>
                 <option value="investor" style={{ background: 'var(--ink)' }}>Angel Investor</option>
+              </select>
+            </div>
+
+            {/* Industry Dropdown */}
+            <div className="field">
+              <select
+                className="premium-input"
+                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%235a6172%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8rem' }}
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+              >
+                {INDUSTRIES.map((i) => (
+                  <option key={i} value={i} style={{ background: 'var(--ink)' }}>{i}</option>
+                ))}
               </select>
             </div>
 

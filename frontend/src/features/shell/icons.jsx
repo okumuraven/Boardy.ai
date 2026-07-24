@@ -42,3 +42,22 @@ export function ProfileIcon() {
     </svg>
   );
 }
+
+export function CallHistoryIcon() {
+  return (
+    <svg {...base}>
+      <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+export function DirectoryIcon() {
+  return (
+    <svg {...base}>
+      <circle cx="9.5" cy="8" r="2.4" />
+      <path d="M4.5 19c0-2.8 2.2-4.8 5-4.8s5 2 5 4.8" />
+      <circle cx="17" cy="7.5" r="1.8" />
+      <path d="M14.8 12.6c1-.6 2.1-.9 3.2-.6 1.7.4 2.9 2 2.9 4" />
+    </svg>
+  );
+}

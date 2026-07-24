@@ -16,6 +16,13 @@ defmodule Vokazi.Matchmaking do
        further gate after that (an on-chain staking step used to sit here;
        removed per direct Kuzana feedback that it was the single biggest
        source of friction in the whole funnel - see `boardy_comparison.md`).
+
+  `request_match/2` is the Directory's alternate entry point: a member
+  browsing `Vokazi.Directory` picks someone themselves instead of waiting
+  for the pipeline above to suggest them. It still runs the same Gemini
+  judgment call for an honest reasoning/strengths/gaps breakdown, but
+  deliberately skips the `@ai_score_floor` gate - the requester already
+  chose this person, so the point is transparency, not filtering.
   """
 
   import Ecto.Query, warn: false
@@ -196,6 +203,104 @@ defmodule Vokazi.Matchmaking do
 
   defp response_field(match, user_id) do
     if match.user_a_id == user_id, do: :user_a_response, else: :user_b_response
+  end
+
+  @doc """
+  User-initiated connect from the Directory. Returns `{:ok, :existing, match}`
+  if this pair already has a match (in either order - the requester doesn't
+  get a second attempt just because they weren't the one who created it
+  first), `{:ok, :requested, match}` on a freshly created one, or
+  `{:error, :cannot_match_self}` / `{:error, :profile_incomplete}` /
+  whatever `Vokazi.AI.validate_match/2` itself can fail with.
+  """
+  def request_match(requester_id, target_id) do
+    cond do
+      requester_id == target_id ->
+        {:error, :cannot_match_self}
+
+      match = find_existing_match(requester_id, target_id) ->
+        {:ok, :existing, match}
+
+      true ->
+        with {:ok, requester_profile} <- fetch_complete_profile(requester_id),
+             {:ok, target_profile} <- fetch_complete_profile(target_id) do
+          requester_user = Repo.get(User, requester_id)
+          target_user = Repo.get(User, target_id)
+
+          user_a = %{
+            name: requester_user && requester_user.full_name,
+            offer_text: requester_profile.offer_text,
+            need_text: requester_profile.need_text,
+            role: requester_user && requester_user.role
+          }
+
+          user_b = %{
+            name: target_user && target_user.full_name,
+            offer_text: target_profile.offer_text,
+            need_text: target_profile.need_text,
+            role: target_user && target_user.role
+          }
+
+          case Vokazi.AI.validate_match(user_a, user_b) do
+            {:ok, ai_result} -> create_requested_match(requester_id, target_id, ai_result)
+            {:error, reason} -> {:error, reason}
+          end
+        end
+    end
+  end
+
+  defp find_existing_match(id_a, id_b) do
+    Repo.one(
+      from(m in Match,
+        where:
+          (m.user_a_id == ^id_a and m.user_b_id == ^id_b) or
+            (m.user_a_id == ^id_b and m.user_b_id == ^id_a),
+        limit: 1
+      )
+    )
+  end
+
+  defp fetch_complete_profile(user_id) do
+    case Repo.get_by(Profile, user_id: user_id) do
+      nil -> {:error, :profile_incomplete}
+      %Profile{offer_text: nil} -> {:error, :profile_incomplete}
+      %Profile{need_text: nil} -> {:error, :profile_incomplete}
+      profile -> {:ok, profile}
+    end
+  end
+
+  defp create_requested_match(requester_id, target_id, ai_result) do
+    %Match{}
+    |> Match.changeset(%{
+      # Not a pgvector-discovered pair, so there's no similarity_score
+      # worth recording - 0.0 is a placeholder, not a ranking. ai_score
+      # below is the one the frontend actually shows.
+      similarity_score: 0.0,
+      status: "pending_consent",
+      user_a_id: requester_id,
+      user_b_id: target_id,
+      user_a_response: "accepted",
+      ai_score: ai_result.score,
+      ai_reasoning: ai_result.reasoning,
+      ai_strengths: ai_result.strengths,
+      ai_gaps: ai_result.gaps,
+      intro_message: ai_result.intro_message,
+      pitch_a: ai_result.pitch_a,
+      pitch_b: ai_result.pitch_b
+    })
+    |> Repo.insert()
+    |> case do
+      {:ok, match} ->
+        Logger.info(
+          "Matchmaking: directory-requested match created, users #{requester_id} -> #{target_id}, ai_score=#{match.ai_score}"
+        )
+
+        {:ok, :requested, match}
+
+      {:error, changeset} ->
+        Logger.error("Matchmaking: failed to create directory-requested match: #{inspect(changeset.errors)}")
+        {:error, changeset}
+    end
   end
 
   # Shared core: find candidates, validate with AI best-first, and hand the

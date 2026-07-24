@@ -1,5 +1,21 @@
 # Hosting Architecture Comparison: Single VPS vs. Split Managed Services
 
+> **Update, 2026-07-24:** confirmed with the team — there is still no production deployment; the
+> app runs purely via local `docker compose` today. This doc's core recommendation (frontend +
+> backend + database as one co-located unit, for the reasons in §4) still stands and now also
+> covers the planned in-app calling feature's `coturn` (TURN relay) service — but `coturn` should
+> run as its **own separate, standalone service**, not co-located with the app. It has no tight
+> coupling to Postgres, needs a wide open UDP port range and real bandwidth for relayed call media,
+> and mixing that workload onto the same small box as the latency-sensitive Phoenix/DB app risks a
+> call surge competing with webhook/WebSocket traffic that has to stay responsive. This holds
+> regardless of which provider ends up hosting the main app - see `call_feature.md` §4 and
+> `ROADMAP.md` Phase 6.
+>
+> **Open, not yet decided:** this doc recommends AWS EC2 specifically (compared only against
+> Vercel+Render+Neon); the root `CLAUDE.md` states Fly.io as the standard platform default. These
+> were never reconciled against each other, and since nothing is deployed yet, that choice should
+> be made deliberately when it's actually time to deploy, not assumed from either document.
+
 When launching an MVP for users to test, deciding between a single Virtual Private Server (AWS EC2) and a split "managed" stack (Vercel + Render + Neon) is one of the most critical decisions. 
 
 We must evaluate this specifically against **Vokazi's unique requirements:** Elixir/Phoenix, real-time WebSockets (Chat), `pgvector` database queries, and instant Voice AI webhooks.

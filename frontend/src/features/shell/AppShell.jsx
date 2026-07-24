@@ -1,16 +1,21 @@
 import { useState, useEffect } from "react";
 import NotificationBell from "../notifications";
+import IncomingCallBanner from "./IncomingCallBanner";
 import HomeView from "../home/HomeView";
+import DirectoryView from "../directory";
 import MatchesView from "../matches/MatchesView";
+import CallHistoryView from "../calls";
 import CalendarView from "../calendar/CalendarView";
 import ProfileView from "../profile/ProfileView";
 import ThemeToggle from "./ThemeToggle";
 import KuzanaMark from "../../components/KuzanaMark";
-import { HomeIcon, MatchesIcon, CalendarIcon, ProfileIcon } from "./icons";
+import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, ProfileIcon } from "./icons";
 
 const TABS = [
   { key: "home", label: "Home", Icon: HomeIcon },
+  { key: "directory", label: "Directory", Icon: DirectoryIcon },
   { key: "matches", label: "Matches", Icon: MatchesIcon },
+  { key: "calls", label: "Calls", Icon: CallHistoryIcon },
   { key: "calendar", label: "Calendar", Icon: CalendarIcon },
   { key: "profile", label: "Profile", Icon: ProfileIcon },
 ];
@@ -42,6 +47,14 @@ const initialTabFromUrl = () => {
 export default function AppShell({ profile, onInterviewComplete, onFindMatch, onProfileUpdated, pendingMatchOpen, onConsumePendingMatchOpen }) {
   const [activeTab, setActiveTab] = useState(initialTabFromUrl);
   const [openRequest, setOpenRequest] = useState(null);
+  // Every tab stays mounted (see below), so MatchesView's own one-time
+  // fetch-on-mount never learns about a match created from the Directory
+  // tab. Bumping this forces a refetch without tearing MatchesView down.
+  const [matchesRefreshKey, setMatchesRefreshKey] = useState(0);
+  // Mobile only (see the CSS): a match/chat open on the Matches tab hides
+  // the bottom tab bar entirely, the same way WhatsApp/Telegram give a
+  // conversation the whole screen instead of the app's main nav.
+  const [matchChatOpen, setMatchChatOpen] = useState(false);
 
   useEffect(() => {
     if (pendingMatchOpen) {
@@ -69,6 +82,16 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     setOpenRequest({ matchId, openScheduling: true });
   };
 
+  // Shared by the global incoming-call banner and tapping a Call
+  // History row - same navigation as a notification click, just without
+  // an `open_scheduling` flag. Landing on the chat is enough: if a call
+  // is still ringing, the backend re-pushes it the moment that
+  // chat_room channel (re)joins, surfacing the real Accept/Decline UI.
+  const openMatchChat = (matchId) => {
+    setActiveTab("matches");
+    setOpenRequest({ matchId, openScheduling: false });
+  };
+
   const navButtons = (className, activeClassName) =>
     TABS.map(({ key, label, Icon }) => (
       <button
@@ -84,7 +107,9 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     ));
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${activeTab === "matches" && matchChatOpen ? "chat-open" : ""}`}>
+      <IncomingCallBanner profile={profile} onAnswer={openMatchChat} />
+
       <nav className="shell-rail">
         <div className="rail-brand"><KuzanaMark /></div>
         <div className="rail-nav">{navButtons("rail-btn", "active")}</div>
@@ -99,10 +124,27 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
 
       <div className="shell-content">
         <div className={`shell-view ${activeTab === "home" ? "active" : ""}`}>
-          <HomeView profile={profile} onInterviewComplete={onInterviewComplete} onFindMatch={onFindMatch} />
+          <HomeView
+            profile={profile}
+            onInterviewComplete={onInterviewComplete}
+            onFindMatch={onFindMatch}
+            onOpenProfile={() => setActiveTab("profile")}
+          />
+        </div>
+        <div className={`shell-view ${activeTab === "directory" ? "active" : ""}`}>
+          <DirectoryView profile={profile} onMatchCreated={() => setMatchesRefreshKey((k) => k + 1)} />
         </div>
         <div className={`shell-view ${activeTab === "matches" ? "active" : ""}`}>
-          <MatchesView profile={profile} openRequest={openRequest} onConsumeOpenRequest={() => setOpenRequest(null)} />
+          <MatchesView
+            profile={profile}
+            openRequest={openRequest}
+            onConsumeOpenRequest={() => setOpenRequest(null)}
+            refreshKey={matchesRefreshKey}
+            onChatOpenChange={setMatchChatOpen}
+          />
+        </div>
+        <div className={`shell-view ${activeTab === "calls" ? "active" : ""}`}>
+          <CallHistoryView profile={profile} onOpenMatch={openMatchChat} />
         </div>
         <div className={`shell-view ${activeTab === "calendar" ? "active" : ""}`}>
           <CalendarView profile={profile} onOpenMatch={openMatchScheduling} />

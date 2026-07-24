@@ -98,6 +98,85 @@ defmodule Vokazi.AI do
   defp parse_contact_preference(_), do: "call"
 
   @doc """
+  Classifies an already-saved offer_text/need_text pair into the fixed
+  connection-tag vocabulary (`Vokazi.Accounts.Profile.connection_tags/0`) -
+  deliberately separate from `extract_summary/1` so it can run against
+  existing profiles (the one-off `mix backfill_tags` for anyone who
+  completed their interview before these fields existed) without
+  re-deriving or risking overwriting offer_text/need_text itself.
+
+  Returns `{:ok, %{looking_for_tags: [...], can_help_tags: [...]}}` - both
+  lists are sanitized against the allowed vocabulary regardless of what
+  Gemini returns, since this is untrusted model output feeding a validated
+  field. Empty lists are a valid, expected result when nothing genuinely
+  fits - the prompt is explicit that tags shouldn't be forced.
+  """
+  def extract_tags(offer_text, need_text) do
+    api_key = System.get_env("GEMINI_API_KEY")
+
+    if is_nil(api_key) or api_key == "" do
+      {:error, :missing_api_key}
+    else
+      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
+      allowed_tags = Vokazi.Accounts.Profile.connection_tags()
+      tags_csv = Enum.join(allowed_tags, ", ")
+
+      prompt = """
+      You are classifying a professional's stated Offer and Need into a fixed set of
+      connection-intent tags, used to filter a member directory. The ONLY allowed
+      tags are: #{tags_csv}.
+
+      Offer: #{offer_text}
+      Need: #{need_text}
+
+      Return ONLY a valid JSON object with two keys:
+      - "looking_for_tags": a list of 0-3 tags from the allowed set that best describe
+        what this person is looking FOR, based on their Need. Only include a tag if
+        it's genuinely supported by the text - do not force a match just to fill the list.
+      - "can_help_tags": a list of 0-3 tags from the allowed set that best describe
+        what this person can OFFER others, based on their Offer. Same rule - only
+        include a tag if it's genuinely supported.
+
+      Use only tags from the allowed set above, spelled exactly as given. Return an
+      empty array for either key if nothing in the allowed set genuinely applies.
+      """
+
+      body = %{
+        contents: [%{parts: [%{text: prompt}]}],
+        generationConfig: %{responseMimeType: "application/json"}
+      }
+
+      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
+        {:ok, %Req.Response{status: 200, body: data}} ->
+          try do
+            text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+            parsed = Jason.decode!(extract_json_object(text_response))
+
+            {:ok,
+             %{
+               looking_for_tags: sanitize_tags(parsed["looking_for_tags"], allowed_tags),
+               can_help_tags: sanitize_tags(parsed["can_help_tags"], allowed_tags)
+             }}
+          rescue
+            e ->
+              Logger.error("Vokazi.AI: failed to parse extract_tags JSON: #{inspect(e)}")
+              {:error, "Failed to parse JSON"}
+          end
+
+        error ->
+          Logger.error("Vokazi.AI: Gemini tag extraction failed: #{inspect(error)}")
+          {:error, "Failed to call Gemini"}
+      end
+    end
+  end
+
+  defp sanitize_tags(tags, allowed) when is_list(tags) do
+    tags |> Enum.filter(&(&1 in allowed)) |> Enum.uniq()
+  end
+
+  defp sanitize_tags(_not_a_list, _allowed), do: []
+
+  @doc """
   Asks Gemini to make the final call on whether a pgvector-shortlisted
   candidate pair is a *genuinely* complementary match, not just a lexically
   similar one. pgvector narrows the field; this is the judgment layer on

@@ -1,23 +1,42 @@
-# In-App Video Calling Feature Research & Strategy
+# In-App Video Calling — Feature Research & Direction
+
+> **Update, 2026-07-24:** renamed throughout from "Vokazi" to Kuzana Connect. The recommendation in
+> §2 changed alongside `call_feature.md`'s — self-hosted WebRTC (Approach A there), not LiveKit —
+> see that doc's §5 for the full reasoning. The UX/product content below (§3 onward) is unaffected
+> by that change and still reflects the intended build.
 
 ## 1. Executive Summary
-Following the audio-only calling research, adding a seamless **Video Calling** feature provides users with a face-to-face deal-making environment directly within Vokazi. This keeps users on the platform rather than forcing them to share Zoom or Google Meet links, increasing engagement, trust, and platform retention.
+Following the audio-only calling research (`call_feature.md`), adding a **Video Calling** feature
+gives matched members a face-to-face environment directly within Kuzana Connect — closing the same
+scheduling dead-end `call_feature.md` §0 documents, not just a nice-to-have layered on a working
+feature.
 
-Since Vokazi's stack uses **React** on the frontend and **Elixir/Phoenix** on the backend, we can implement high-definition, low-latency video calling using the same foundational WebRTC technology as voice calling, but with additional considerations for UI layout, camera management, and bandwidth.
+Since Kuzana Connect's stack uses **React** on the frontend and **Elixir/Phoenix** on the backend,
+we can implement video calling using the same foundational WebRTC technology as voice calling, with
+additional considerations for UI layout, camera management, and bandwidth.
 
 ---
 
 ## 2. Technical Architecture
 
-Just like voice calling, **WebRTC** is the underlying engine. 
+Just like voice calling, **WebRTC** is the underlying engine, and the same decision applies:
+**self-hosted (Phoenix Channels + `coturn`), not a managed platform** — see `call_feature.md` §2/§5
+for the full reasoning. The point below explains specifically why that reasoning holds for video
+too, not just audio.
 
-### Why LiveKit is Even More Critical for Video
-While basic peer-to-peer (P2P) WebRTC works okay for audio, **video data is massive**. Relying on raw P2P WebRTC for video often leads to frozen frames and dropped calls if one user has a weaker connection.
+### Why a managed SFU (e.g. LiveKit) isn't needed here, video included
+Raw peer-to-peer WebRTC video without any relay can struggle when one side has a weak connection —
+that's real. What a managed SFU (Selective Forwarding Unit) actually buys you is **adaptive
+bitrate/simulcast and clean scaling to group calls (3+ participants)**. Kuzana Connect's calls are
+always exactly two people — every call is 1:1, by construction (a match is always exactly two
+matched members). The group-scaling problem an SFU solves doesn't exist here, so paying for one
+(in money or in self-hosted operational complexity) solves a problem we don't have. `coturn`
+(already planned for audio) covers the actual real-world failure mode for 1:1 video too — direct
+P2P failing due to NAT/firewall — by relaying the call rather than redistributing it to multiple
+recipients.
 
-By using **LiveKit** as our WebRTC engine (SFU - Selective Forwarding Unit):
-*   **Adaptive Bitrate (Simulcast):** LiveKit automatically detects if a user has a bad internet connection and lowers their video quality (e.g., from 720p to 360p) without dropping the call.
-*   **Performance:** It routes traffic through a central server, ensuring low latency globally.
-*   **Future-Proofing:** Easily scales if we ever want to do group calls or webinars (3+ participants).
+If group video calls (webinars, panel-style sessions) ever become a real, validated product need —
+distinct from 1:1 intro calls — that would be the point to revisit an SFU. Not before.
 
 ---
 
@@ -50,15 +69,15 @@ Video calls require a much more deliberate user interface than audio. The transi
 *   **Device Management:** Complex logic to handle multiple cameras or microphones (e.g., user switching from laptop webcam to an external monitor webcam).
 *   **Permissions Handling:** React must elegantly handle scenarios where the user clicks "Block" on the browser camera permission prompt (showing a helpful "How to enable camera" guide).
 *   **Video Elements:** Rendering `<video autoplay playsinline>` elements correctly across different browsers (especially Safari/iOS).
-*   **UI Components:** `@livekit/components-react` provides pre-built responsive video grids and participant tiles which will save weeks of UI development.
+*   **UI Components:** since there's no SDK in this direction (see §2), the picture-in-picture layout and control bar are custom React/CSS - a real, but bounded, piece of frontend work, not a config option.
 
 ### Backend (Elixir/Phoenix)
-*   **Signaling:** Exact same logic as voice calls. Phoenix Channels broadcast the ring/accept/decline states.
-*   **Token Provisioning:** Elixir generates a JWT granting the user access to the LiveKit video room. We can attach metadata to this token (e.g., user's display name, avatar URL) so it renders instantly on the frontend.
+*   **Signaling:** exact same Channel events as voice calls (`call_feature.md` §4) carry a second video track alongside the audio one - no separate signaling path needed.
+*   **TURN credentials:** the same `coturn` HMAC-based ephemeral credentials voice calls use cover video too - a call is a call, video is just another media track on the same peer connection.
 
 ### Infrastructure & Bandwidth
-*   **Bandwidth Costs:** Video uses significantly more data than audio. LiveKit Cloud offers a generous free tier, but bandwidth usage will need to be monitored as Vokazi scales.
-*   **Mobile Responsiveness:** Ensure the video grid CSS automatically stacks vertically when viewed on mobile browsers.
+*   **Bandwidth Costs:** video uses meaningfully more data than audio when a call actually falls back to the `coturn` relay (the ~15-30% of calls direct peer-to-peer can't establish) - this is the one real, usage-scaling cost line, covered in `ROADMAP.md` Phase 6's cost model alongside voice. At Kuzana's actual current scale, still realistically a small number, not a budget concern.
+*   **Mobile Responsiveness:** ensure the video grid CSS automatically stacks vertically when viewed on mobile browsers.
 
 ---
 
@@ -70,8 +89,11 @@ Video calls require a much more deliberate user interface than audio. The transi
     *   Build a "Lobby" React component where a user can see their own camera and test their mic *before* joining the actual call.
     *   Handle browser permission states robustly.
 3.  **Phase 3: The Video "Deal Room"**
-    *   Integrate LiveKit's video tracks.
+    *   Add a video track to the existing `RTCPeerConnection` from the audio build - same peer
+        connection, same signaling, no new transport.
     *   Build the Picture-in-Picture layout and the control bar (Mute, Camera toggle, Hang up).
-4.  **Phase 4: Advanced Features (Optional but High-Value)**
-    *   **Screen Sharing:** Crucial for B2B matchmaking.
-    *   **Background Blur:** Adds a massive professional polish to the platform. LiveKit supports client-side background blur via WebAssembly.
+4.  **Phase 4: Advanced Features (Optional, revisit after the core loop is live)**
+    *   **Screen Sharing:** genuinely valuable for B2B matchmaking - `getDisplayMedia()` is a
+        standard browser API, addable as another track on the same connection.
+    *   **Background Blur:** a nice-to-have polish item; client-side (e.g. via a WebAssembly
+        segmentation model) rather than dependent on any specific vendor's SDK.

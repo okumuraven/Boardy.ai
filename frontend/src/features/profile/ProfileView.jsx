@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import SocialProfileSection from "./SocialProfileSection";
 import StatsCard from "./StatsCard";
+import InvestmentDetailsForm from "./InvestmentDetailsForm";
 import ThemeToggle from "../shell/ThemeToggle";
+import { INDUSTRIES } from "../../constants/industries";
 
 const initials = (name) =>
   (name || "?")
@@ -37,6 +39,7 @@ export default function ProfileView({ profile, onProfileUpdated }) {
       full_name: profile?.name || "",
       phone_number: profile?.phone_number || "",
       role: profile?.role || ROLES[0],
+      industry: profile?.industry || INDUSTRIES[0],
       contact_preference: profile?.contact_preference || "call",
     });
     setError("");
@@ -105,6 +108,18 @@ export default function ProfileView({ profile, onProfileUpdated }) {
                   </select>
                 </div>
                 <div className="profile-view-row">
+                  <span className="k">Industry</span>
+                  <select
+                    value={form.industry}
+                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.45rem 0.65rem", color: "var(--paper)" }}
+                  >
+                    {INDUSTRIES.map((industry) => (
+                      <option key={industry} value={industry}>{industry}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="profile-view-row">
                   <span className="k">Contact preference</span>
                   <select
                     value={form.contact_preference}
@@ -126,6 +141,7 @@ export default function ProfileView({ profile, onProfileUpdated }) {
                 <div className="profile-view-row"><span className="k">Full name</span><span className="v">{profile?.name || "—"}</span></div>
                 <div className="profile-view-row"><span className="k">Phone number</span><span className="v">{profile?.phone_number || "—"}</span></div>
                 <div className="profile-view-row"><span className="k">Role</span><span className="v">{roleTitle(profile?.role)}</span></div>
+                <div className="profile-view-row"><span className="k">Industry</span><span className="v">{profile?.industry || "—"}</span></div>
                 <div className="profile-view-row">
                   <span className="k">Contact preference</span>
                   <span className="v">{CONTACT_LABEL[profile?.contact_preference] || CONTACT_LABEL.call}</span>
@@ -161,6 +177,10 @@ export default function ProfileView({ profile, onProfileUpdated }) {
           <div className="panel">
             <SocialProfileSection profile={profile} />
           </div>
+
+          {(profile?.role === "investor" || profile?.looking_for_tags?.includes("funding")) && (
+            <InvestmentDetailsForm profile={profile} />
+          )}
         </div>
       </div>
     </div>

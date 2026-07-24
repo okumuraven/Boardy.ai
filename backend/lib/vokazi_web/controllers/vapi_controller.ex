@@ -58,7 +58,28 @@ defmodule VokaziWeb.VapiController do
         updated_profile = Repo.update!(changeset)
         Logger.info("Vapi webhook: saved transcript + structured data for user_id=#{profile.user_id} call_id=#{call_id}")
 
-        generate_vectors(updated_profile)
+        updated_profile
+        |> save_tags()
+        |> generate_vectors()
+    end
+  end
+
+  # Separate Gemini call from resolve_offer_and_need/3 above - classifies
+  # the offer/need text that's already been saved, regardless of whether
+  # it came from Vapi's own structured extraction or our Gemini fallback,
+  # so this one step covers both paths uniformly. Never blocks profile
+  # save on failure - a bad/slow classification call shouldn't cost
+  # someone their interview.
+  defp save_tags(profile) do
+    case Vokazi.AI.extract_tags(profile.offer_text, profile.need_text) do
+      {:ok, %{looking_for_tags: looking_for, can_help_tags: can_help}} ->
+        profile
+        |> Profile.changeset(%{looking_for_tags: looking_for, can_help_tags: can_help})
+        |> Repo.update!()
+
+      {:error, reason} ->
+        Logger.error("Vapi webhook: tag extraction failed for user_id=#{profile.user_id}: #{inspect(reason)}")
+        profile
     end
   end
 

@@ -177,3 +177,31 @@ cells — instead a day cell shows a dot when something's scheduled, and clickin
 agenda below to that date (the same interaction Google Calendar/Fantastical use for their own mini
 pickers). Adding a personal event is a slim inline form (`AddPersonalEventForm.jsx`, native
 date/time inputs), not a modal.
+
+## 7. Known gap, not yet fixed — a confirmed call can have nowhere to actually happen
+
+Found 2026-07-24 by reading `Vokazi.Scheduling.EventFinalizer` directly, not assumed. A real Google
+Calendar event (with its auto-generated Google Meet link) only ever gets created if **at least one
+side connected their personal Google Calendar** — `first_available_token/1`
+(`scheduling/event_finalizer.ex`) looks up an OAuth token for side A, then B, and uses whichever
+exists. If **both** sides declined Calendar and only submitted manual availability (a fully
+supported path — see §4 above), `first_available_token` returns `:none`, `run/2` just logs an
+error, and the `IntroSchedule` never gets `status: "confirmed"`, `confirmed_start/end`, or
+`google_meet_link` set. From the user's side, the UI shows a picked time with **no way to actually
+join it** — no Meet link, and no phone number (never exposed to the matched counterpart, by
+design, anywhere in `match_detail/2`, `Scheduling.view/3`, or `CalendarOverview.summarize/2`).
+
+Compounding this: `contact_preference` ("call"/"video"/"chat", stored on `Profile`, AI-inferred
+from the voice interview) is purely decorative — surfaced as a label on the briefing card
+(`BriefingCard.jsx`) but never read by `EventFinalizer`, `GoogleCalendarClient`, or `SlotProposal`
+to change what gets created. Someone who explicitly said they prefer a plain phone call is, if
+anything, more likely to decline connecting a personal Google Calendar in the first place (they
+never wanted a video meeting), meaning the people most likely to hit this dead end are exactly the
+"call"-preference members.
+
+**The planned fix is an in-app call system** (self-hosted WebRTC — Phoenix Channels signaling +
+`coturn` for NAT traversal/relay, no managed third party), which removes the dependency on either
+side's personal Google account entirely and finally gives `contact_preference` real behavior
+("call" joins audio-only, "video" prompts for camera). See `call_feature.md` and
+`video_call_feature.md` for the full design, and `ROADMAP.md` Phase 6 for status (discussed, not
+yet built).

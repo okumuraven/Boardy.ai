@@ -48,11 +48,14 @@ export default function App() {
           setProfile({
             name: data.full_name,
             role: data.role,
+            industry: data.industry,
             id: data.id,
             offer_text: data.offer_text,
             need_text: data.need_text,
             phone_number: data.phone_number,
-            contact_preference: data.contact_preference
+            contact_preference: data.contact_preference,
+            looking_for_tags: data.looking_for_tags || [],
+            can_help_tags: data.can_help_tags || []
           });
         }
         return data;

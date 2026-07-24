@@ -2,7 +2,7 @@ defmodule Vokazi.Notifications.Notification do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @types ["chat_message", "calendar_reminder", "new_match", "consent_needed", "calendar_slot"]
+  @types ["chat_message", "calendar_reminder", "new_match", "consent_needed", "calendar_slot", "incoming_call"]
 
   schema "notifications" do
     field :type, :string

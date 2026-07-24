@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
 import SchedulingFlow from "../features/scheduling";
 import MatchProfilePanel from "../features/matches/MatchProfilePanel";
+import CallPanel from "./CallPanel";
 
 const HISTORY_PAGE_SIZE = 50;
 
@@ -25,6 +26,10 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
   const [otherOnline, setOtherOnline] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  // Mirrors channelRef.current for CallPanel's prop - reading a ref's
+  // .current during render isn't allowed, so this is set alongside the
+  // ref right when the channel is actually created.
+  const [channelForCall, setChannelForCall] = useState(null);
 
   const socketRef = useRef(null);
   const channelRef = useRef(null);
@@ -76,7 +81,10 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
 
     channel
       .join()
-      .receive("ok", () => setConnectionState("joined"))
+      .receive("ok", () => {
+        setConnectionState("joined");
+        setChannelForCall(channel);
+      })
       .receive("error", ({ reason }) => {
         setConnectionState("error");
         setJoinError(
@@ -89,6 +97,7 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
     return () => {
       channel.leave();
       socket.disconnect();
+      setChannelForCall(null);
     };
   }, [roomId, profile.id, updatePresence]);
 
@@ -129,9 +138,9 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
       <div className="chat-column">
 
         {/* Header */}
-        <div className="chat-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <button onClick={onBack} className="nav-link" style={{ fontSize: '1.2rem', marginRight: '1rem' }}>
+        <div className="chat-header">
+          <div className="chat-header-identity">
+            <button onClick={onBack} className="nav-link chat-header-back">
               ←
             </button>
             <div>
@@ -143,20 +152,23 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
             </div>
           </div>
           {matchId && (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div className="chat-header-actions">
+              <CallPanel channel={channelForCall} profile={profile} partnerName={partnerName} />
               <button
                 onClick={() => setPanelView((v) => (v === "profile" ? null : "profile"))}
-                className={panelView === "profile" ? "btn-primary" : "btn-ghost"}
-                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                className={`chat-action-btn ${panelView === "profile" ? "btn-primary" : "btn-ghost"}`}
+                title={panelView === "profile" ? "Hide profile" : `View ${partnerName || "profile"}`}
               >
-                {panelView === "profile" ? "Hide Profile" : `View ${partnerName || "Profile"}`}
+                <span className="btn-icon">👤</span>
+                <span className="btn-label">{panelView === "profile" ? "Hide Profile" : `View ${partnerName || "Profile"}`}</span>
               </button>
               <button
                 onClick={() => setPanelView((v) => (v === "schedule" ? null : "schedule"))}
-                className={panelView === "schedule" ? "btn-primary" : "btn-ghost"}
-                style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                className={`chat-action-btn ${panelView === "schedule" ? "btn-primary" : "btn-ghost"}`}
+                title={panelView === "schedule" ? "Hide schedule" : "Schedule intro call"}
               >
-                📅 {panelView === "schedule" ? "Hide Schedule" : "Schedule Intro Call"}
+                <span className="btn-icon">📅</span>
+                <span className="btn-label">{panelView === "schedule" ? "Hide Schedule" : "Schedule Intro Call"}</span>
               </button>
             </div>
           )}
@@ -181,15 +193,21 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
                 </button>
               )}
               {messages.map((msg) => {
+                const time = new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                // Ring/end/miss events are app-level, not chat content -
+                // rendered as a compact centered pill, not a full bubble.
+                if (msg.content?.startsWith("📞")) {
+                  return (
+                    <div key={msg.id} className="msg-system">
+                      {msg.content} · {time}
+                    </div>
+                  );
+                }
                 const isMe = msg.sender_id === profile.id;
                 return (
-                  <div key={msg.id} style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '75%' }}>
-                    <div className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
-                      {msg.content}
-                    </div>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--muted)', marginTop: '0.25rem', textAlign: isMe ? 'right' : 'left' }}>
-                      {new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
+                  <div key={msg.id} className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
+                    <span className="msg-text">{msg.content}</span>
+                    <span className="msg-time">{time}</span>
                   </div>
                 );
               })}
@@ -199,7 +217,7 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
         </div>
 
         {/* Input Area */}
-        <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        <form onSubmit={handleSendMessage} className="chat-input-row">
           <input
             type="text"
             value={newMessage}
@@ -208,8 +226,16 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
             disabled={connectionState !== "joined"}
             className="chat-input"
           />
-          <button type="submit" className="btn-primary" style={{ padding: '0 1.5rem', height: '100%' }} disabled={!newMessage.trim() || connectionState !== "joined"}>
-            Send
+          <button
+            type="submit"
+            className="chat-send-btn"
+            disabled={!newMessage.trim() || connectionState !== "joined"}
+            title="Send"
+            aria-label="Send"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 20L21 12L3 4L3 10.5L16 12L3 13.5L3 20Z" fill="currentColor" />
+            </svg>
           </button>
         </form>
       </div>

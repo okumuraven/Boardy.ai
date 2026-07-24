@@ -25,6 +25,10 @@ defmodule VokaziWeb.Router do
     get "/matches/:id/status", MatchController, :status
     post "/matchmaking/find_match", MatchController, :find_match
 
+    # Searchable/filterable member directory (Phase 4)
+    get "/directory", DirectoryController, :index
+    post "/directory/connect", DirectoryController, :connect
+
     # Escrow-Gated Google Calendar
     get "/schedules", SchedulingController, :calendar
     get "/matches/:id/schedule", SchedulingController, :show
@@ -60,6 +64,16 @@ defmodule VokaziWeb.Router do
     # Reputation - connections/rank, and the redacted match-counterpart reveal
     get "/profiles/:user_id/stats", ReputationController, :own_stats
     get "/matches/:id/counterpart_profile", ReputationController, :counterpart_profile
+
+    # Investor & Lender View - optional structured funding/investment layer (Phase 4)
+    get "/profiles/:user_id/investment", InvestmentController, :show
+    post "/profiles/:user_id/investment", InvestmentController, :upsert
+
+    # In-App Calling - self-hosted STUN/TURN credentials (Phase 1, call_feature.md)
+    get "/calls/turn_credentials", TurnCredentialsController, :show
+
+    # In-App Calling - dedicated call history view (Phase 3 polish)
+    get "/calls/history", CallHistoryController, :index
   end
 
   scope "/api/auth/google/calendar", VokaziWeb do

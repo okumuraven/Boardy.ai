@@ -14,11 +14,14 @@ defmodule VokaziWeb.ProfileController do
           wallet_address: user.wallet_address,
           full_name: user.full_name,
           role: user.role,
+          industry: user.industry,
           onboarding_completed: user.onboarding_completed,
           offer_text: if(user.profile, do: user.profile.offer_text, else: nil),
           need_text: if(user.profile, do: user.profile.need_text, else: nil),
           phone_number: if(user.profile, do: user.profile.phone_number, else: nil),
-          contact_preference: if(user.profile, do: user.profile.contact_preference, else: "call")
+          contact_preference: if(user.profile, do: user.profile.contact_preference, else: "call"),
+          looking_for_tags: if(user.profile, do: user.profile.looking_for_tags, else: []),
+          can_help_tags: if(user.profile, do: user.profile.can_help_tags, else: [])
         })
     end
   end
@@ -34,6 +37,7 @@ defmodule VokaziWeb.ProfileController do
       wallet_address: wallet_address,
       full_name: params["full_name"],
       role: params["role"],
+      industry: params["industry"],
       email: params["email"],
       onboarding_completed: true
     })

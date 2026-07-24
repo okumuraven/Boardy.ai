@@ -114,33 +114,30 @@ community's own members told Kuzana they wanted.
 
 ---
 
-## 🧭 Phase 4: Kuzana MVP Parity (Next Up)
+## 🧭 Phase 4: Kuzana MVP Parity — Done
 *Objective: Close the gap between what we've built and what Kuzana's own members explicitly asked
 for in the July 2026 Discovery Report (`kuzana_connect_discovery.md`). These are day-one asks from
 real interviews, not speculative features. Design discussion held 2026-07-23 - decisions below are
-the outcome of that discussion, kept here so the build can be followed step by step.*
+the outcome of that discussion. Built across three rounds (Stage A, Stage B, Investor & Lender
+View), each verified end-to-end against real data before moving to the next.*
 
 ### Discovery & Directory
-- [ ] **Searchable, filterable member directory** — a new tab in the app (alongside Home/Matches/
-  Calendar/Profile), independent of the AI-suggested match queue. This was the single
-  most-requested item across the 15 interviews and is explicitly called out as a "day one" feature
-  in Kuzana's own MVP recommendation. Additive to AI matching, not a replacement for it. UX: a
-  search box plus tappable filter chips (industry, "looking for") — the same interaction pattern
-  as filtering products on any shopping app, not an advanced-search form. Each result renders as a
-  compact card: name, role, industry, a one-line offer snippet, and tags for what they need/offer.
-- [ ] **Industry/sector taxonomy**, split out as its own filterable field from `role` — real
-  members are agribusiness, logistics, finance, real estate, branding, sustainability, consulting,
-  not "founder/developer/designer/investor." Raised independently by multiple interviewees. UX: a
-  short, fixed list (10–15 options, drawn from Kuzana's actual member industries) as a single
-  dropdown during setup — not an open-ended taxonomy someone has to self-categorize into.
-- [ ] **Structured "looking for" / "can help with" tags** on top of the existing voice-derived
-  `offer_text`/`need_text` — funding, customers, partners, mentors, hiring — so the directory can
-  be filtered, not just semantically matched. UX decision: **do not add a new manual tagging
-  form.** Gemini auto-extracts these tags from the same interview transcript it already processes
-  (same pattern as the existing offer/need extraction), and the member just confirms/edits the
-  suggested chips afterward. Zero new steps added to onboarding — this stays a byproduct of the
-  interview they already did, not a second form to fill in.
-- [ ] **Portfolio/website link field** on profiles — a single optional text field, no real UX risk.
+- [x] **Searchable, filterable member directory** — new "Directory" tab (`Vokazi.Directory`,
+  `DirectoryController`, `frontend/src/features/directory/`), independent of the AI-suggested match
+  queue. Search box + tappable filter chips (industry, role, "looking for"/"can help", funding
+  type), the same interaction pattern as filtering products on any shopping app. Each result is a
+  compact card: name, role, industry, one-line offer snippet, tags, verified badge, portfolio link.
+- [x] **Industry/sector taxonomy**, its own filterable field on `Vokazi.Accounts.User` - a fixed
+  13-option list (Agribusiness, Logistics, Finance, Sustainability, Branding & Marketing,
+  Consulting, Accounting, Real Estate, Technology, Investment, Retail & Consumer Goods, Hospitality,
+  Other) drawn from Kuzana's actual member industries, picked via dropdown in Profile Setup/Edit.
+- [x] **Structured "looking for" / "can help with" tags** — `Vokazi.AI.extract_tags/2`, a dedicated
+  Gemini call (deliberately separate from `extract_summary/1`) classifying existing offer/need text
+  into a fixed 5-tag vocabulary (funding, customers, partners, mentors, hiring). Runs automatically
+  after every interview; zero new onboarding steps. `mix backfill_tags` covers profiles that
+  predate the field.
+- [x] **Portfolio/website link field** — reused the pre-existing `SocialProfiles.portfolio_url`
+  rather than adding a duplicate field; now surfaced on directory cards.
 
 ### Directory Contact Model — decided (2026-07-23)
 The open question was: once someone finds a person in the directory, what happens next? Resolved
@@ -161,34 +158,28 @@ as a combination of both options originally on the table, explicitly **without**
   mechanic, but building that gate is not in scope today.
 
 ### Investor & Lender View
-- [ ] **A distinct investor/lender profile type**, not a shared shape with founder profiles:
-  condensed business summary, funding stage, amount sought, key financials/traction. Directly
-  requested by the NAIBAN member and by Korir (Vula East Africa) — both explicitly framed Connect
-  as a deal-flow/sourcing tool, not a peer-networking tool, from their side of the table. UX
-  decision: keep the warm voice interview as the front door for everyone (it's what gives every
-  profile personality/context) - but for anyone selecting "seeking investment," add a short,
-  explicitly-labeled structured form afterward for the numeric fields (funding stage, amount
-  sought, monthly revenue/turnover). Numbers should never come from a spoken transcript alone -
-  mishearing "500 thousand" as "5 million" would be a real, embarrassing bug, and is exactly the
-  kind of mistake the Discovery Report's own "Note to Kyle" flagged as a real member complaint
-  (financials misread during a funding review). Investors/lenders get the mirror image: a short
-  structured form for check size and sectors of interest, no voice interview needed since they're
-  not the ones being pitched.
-- [ ] **Funding-type segmentation** — equity, loans, grants, working capital treated as distinct
-  filterable categories rather than one "seeking investment" bucket, per Korir's specific
-  suggestion.
+- [x] **A distinct investor/lender profile type** — new `Vokazi.Investment.InvestmentProfile`
+  (own table, not bolted onto `Profile`), condensed business summary/funding stage/amount
+  sought/key financials for founders, check size/sectors of interest for investors and lenders.
+  Directly answers the NAIBAN member and Korir (Vula East Africa), who both framed Connect as a
+  deal-flow/sourcing tool from their side of the table. The voice interview stays the front door for
+  everyone; the structured form (`InvestmentDetailsForm.jsx`) only appears - via a Home banner - to
+  whoever it applies to (anyone with "funding" in their looking-for tags, or role "investor"), and
+  its "Key financials" field is explicitly labeled ("be specific - turnover, profit, or growth,
+  your choice, just say which") to directly prevent the exact ambiguity the Discovery Report's
+  "Note to Kyle" flagged as a real member's complaint (financials misread during a funding review).
+- [x] **Funding-type segmentation** — equity/loan/grant/working-capital as a shared fixed vocabulary
+  (`InvestmentProfile.funding_types/0`), filterable in the Directory, doubling as "what a founder
+  wants" and "what an investor/lender provides" depending on which side fills it in.
 
 ### Trust & Presentation
-- [ ] **Neutral business-stage field** — a plain descriptor ("Idea stage" / "Early revenue" /
-  "Scaling"), rendered as a plain grey label - not a tier badge, not gold/colored styling that
-  implies ranking. Directly responds to a named risk in the Discovery Report: one interviewee said
-  Kuzana already feels like "a place for big businesses," which made her feel inferior as an
-  earlier-stage founder. Worth a pass on `StatsCard.jsx`'s activity-based rank language too, to
-  make sure it doesn't compound the same feeling for a less-active or earlier-stage member.
-- [ ] **Surface existing GitHub verification more prominently** in the directory context — this
-  already exists (`SocialProfiles`) and reasonably covers the "member verification/authenticity"
-  ask, it just isn't visible where members are actually browsing yet. UX: a small verified-checkmark
-  next to the name on directory cards and the profile itself.
+- [x] **Neutral business-stage field** — `InvestmentProfile.business_stage` (Idea stage / Early
+  revenue / Growing / Established), rendered as plain text everywhere, never a colored/tiered
+  badge - directly answers the Discovery Report finding that Kuzana already "feels like a place for
+  big businesses" to an earlier-stage founder. (`StatsCard.jsx`'s activity-rank language is still
+  worth a separate look, but is a different mechanic from business stage.)
+- [x] **Surface existing GitHub verification more prominently** — a small verified-checkmark next
+  to the name on every directory card (`SocialProfiles.github_username`), shipped as part of Stage A.
 
 ---
 
@@ -223,6 +214,150 @@ removed from the product, and was never validated against a real Kuzana use case
 above is. It's dropped, not rebuilt — Kuzana's own Discovery Report gives us a monetization
 direction with actual member demand behind it instead.
 </details>
+
+---
+
+## 📞 Phase 6: In-App Calling
+*Objective: close a real, silent dead-end discovered in the scheduling flow, and give matched
+members a way to actually connect for their intro call that doesn't depend on either side's
+personal Google account. Design discussion held 2026-07-24.*
+
+### Phase 1: Signaling + coturn — Done
+- [x] **Self-hosted `coturn`** running in `docker-compose.yml` (`network_mode: host`,
+  `--use-auth-secret`), verified for real - not just started - by generating live credentials via
+  `Vokazi.Calling.TurnCredentials` and confirming an actual TURN allocation succeeds against them
+  using `turnutils_uclient`.
+- [x] **`Vokazi.Calling.TurnCredentials`** + `GET /api/calls/turn_credentials` - short-lived
+  HMAC-signed credentials, ready for Phase 2 to hand straight to `RTCPeerConnection`.
+- [x] **Call signaling on the existing `ChatRoomChannel`** - `call_ring`/`call_accept`/
+  `call_decline`/`call_cancel`/`call_end`, reusing the same join/authorization chat already has.
+  Verified with two real concurrent Phoenix Channel clients (not mocked) exercising all three
+  paths - ring→accept→end, ring→decline, ring→cancel - plus a live browser check of the actual
+  `CallPanel.jsx` UI (Calling/incoming/in-call states, live timer, correct system messages in chat).
+  One real bug caught and fixed in the process: call-outcome system messages were being persisted
+  but never broadcast to an already-open chat window, so they only appeared after a reload -
+  `create_call_message/3` now broadcasts `new_msg` the same way the real send path already does.
+### Phase 2: Real media — Done
+- [x] **`RTCPeerConnection`/`getUserMedia` wired to the Phase 1 signaling events** - only the
+  caller ever creates an SDP offer (no glare/renegotiation to handle, since a call here only ever
+  negotiates once); the callee preps its own mic + peer connection the instant it clicks Accept so
+  it's ready when the offer arrives. New pure-relay backend handlers (`webrtc_offer`/
+  `webrtc_answer`/`webrtc_ice_candidate`) never interpret SDP/ICE content, just forward it -
+  verified with two real concurrent Channel clients confirming correct relay (including a
+  malformed-payload case rejected cleanly instead of crashing).
+- [x] **ICE candidate queueing** - candidates arriving before the remote description is set are
+  buffered and flushed after, a real WebRTC signaling detail, not an edge case skipped.
+- [x] **Mic permission handling, mute toggle, and full cleanup** (peer connection closed, mic
+  released) on end/cancel/decline/unmount - `frontend/src/lib/webrtc.js` (pure helpers, no React)
+  + `CallPanel.jsx`/`CallOverlay.jsx` (split to stay under the 250-line file cap).
+- [x] **Verified with real browser WebRTC, not simulated**: triggered a real `getUserMedia` +
+  `RTCPeerConnection.createOffer()` from an actual Chrome tab, confirmed a genuine SDP offer
+  (real ICE ufrag/pwd, DTLS fingerprint, opus codec) was generated and correctly relayed to the
+  other side, and confirmed the "Connecting audio..." UI state renders correctly while awaiting
+  the answer. Two-way audio actually connecting (both real sides, live) still needs a real
+  two-person test - not something provable solo in this environment.
+### Phase 3: Polish — Done
+*Scope decided 2026-07-24: video mode (`contact_preference` finally driving call vs. video) is
+split off into its own follow-up phase rather than bundled in here - a real feature (camera capture,
+renegotiating the WebRTC track), not polish. Call history is a dedicated view, not just the existing
+in-chat call log.*
+- [x] **Call session foundation (`call_id` + `Vokazi.Calling.CallLog`)** - every `call_ring` now
+  creates a `call_logs` row (`match_id`, `caller_id`, `callee_id`, `status`, `duration_seconds`),
+  and its id is round-tripped through accept/decline/cancel/end. This is what makes ring-timeout and
+  call history possible at all: the caller's and callee's channel handlers each run on a different
+  socket process with no other shared state, so without a row both sides can agree on by id, neither
+  feature is buildable.
+- [x] **Ring-timeout for an unanswered call** - `ChatRoomChannel` schedules a server-side
+  `Process.send_after` (not a client-side timer, so it still fires if the caller's own tab closes)
+  on every ring; if nothing resolves it within 45s, the call is marked missed and both sides get a
+  `call_timeout` event clearing their UI. Race-guarded with an atomic `UPDATE ... WHERE status =
+  'ringing'` so a timeout that fires just after a real accept/decline/cancel is a correct no-op, not
+  a duplicate/incorrect transition. Verified with 6 new real Phoenix Channel tests (ring→accept→end
+  completes with duration persisted; decline/cancel/timeout each land in the right terminal status;
+  the no-op race case explicitly covered) plus a live browser + real Postgres check of the
+  ring→cancel path end-to-end.
+- [x] **Ringtones** - `frontend/src/lib/ringtone.js` synthesizes two audibly distinct Web Audio tones
+  (440+480Hz ringback for outgoing, 425Hz for incoming) rather than shipping an audio file asset; a
+  `status`-driven effect in `CallPanel.jsx` starts/stops the right one and cleans up on any
+  transition away from `calling`/`incoming`.
+- [x] **Web Push for the tab-closed case** - reuses the existing Oban + web-push-elixir pipeline
+  as-is (new `"incoming_call"` notification type added to the allowlist); `call_ring` fires a push
+  only if Presence shows the callee isn't connected to this room at all, mirroring the exact
+  "absent" check `Chat.notify_recipient_if_absent/2` already uses for messages. The subtler half of
+  this: the original `call_ring` broadcast only reaches sockets already subscribed at that instant,
+  so opening the app from the notification wouldn't otherwise show anything - `Calling.
+  active_ring_for_room/2` + a check in `handle_info(:after_join, ...)` re-surfaces a still-ringing
+  call the moment the callee's channel (re)joins, pushed to just that one socket. Verified with 3 new
+  real Phoenix Channel tests (notifies when absent, doesn't when present, a late-joining socket gets
+  the ring re-pushed) plus a live browser + real Postgres check confirming the actual `notifications`
+  row (correct body/link shape) and correctly *no* Oban push job for a test account with zero
+  registered subscriptions.
+- [x] **In-app incoming call visible from anywhere, not just the open chat** (2026-07-24, user
+  feedback: "make it like WhatsApp/Telegram, visible anywhere as long as logged in") - `CallPanel`
+  used to live only inside a specific match's chat screen, so a ring was invisible on every other
+  tab. Fixed by also broadcasting `call_ring` on the callee's own always-connected personal channel
+  (`user:{id}`, the same one `NotificationBell` already keeps open across every tab switch) and
+  adding `IncomingCallBanner.jsx`, a small global banner mounted once at `AppShell` level. Tapping it
+  reuses the exact same navigation as a notification click (no duplicate WebRTC/channel logic in the
+  banner itself) - landing on the chat re-surfaces the real Accept/Decline UI via the after-join
+  re-push above. `call_accepted`/`call_declined`/`call_cancelled`/`call_timeout` are also broadcast
+  on the personal channel so the banner dismisses itself the instant the call resolves any way other
+  than tapping it. Verified live end-to-end: a real call placed from a second real WebSocket client
+  (not simulated) while the browser sat on the Home tab - the banner appeared, tapping it navigated
+  to Matches and correctly re-surfaced the incoming-call UI there.
+- [x] **Dedicated call history view** - new "Calls" nav rail/tab-bar icon, `GET /api/calls/history`
+  (`CallHistoryController` + `Calling.list_history/1`) listing every call across all matches, not
+  just what's visible per-chat. Direction- and viewer-aware labeling mirrors how a real phone
+  distinguishes the two sides of an unanswered call: "Missed call" only for a ring *you* didn't
+  answer, "No answer" for one *you* placed that nobody picked up, "Declined"/"Cancelled" for the
+  rest - the same status is worded differently depending on whether you were the caller or callee.
+  Tapping a row reuses the same `openMatchChat` navigation as the incoming-call banner. Verified with
+  a real curl against the live endpoint (correct JSON shape, direction, other-party name) and live in
+  the browser against real historical data from this session's own testing.
+
+### Phase 3 - fully complete
+All five items above (call session foundation, ring-timeout, ringtones, Web Push, in-app visibility,
+and call history) are done and verified. Video mode (`contact_preference` driving call vs. video) is
+the next, separately-scoped phase - see the split-off note above.
+
+### The bug this is actually fixing
+Found by reading the live scheduling code, not assumed: `Vokazi.Scheduling.EventFinalizer` only
+creates a real Google Calendar event (with its auto-generated Meet link) if **at least one side
+connected their personal Google Calendar**. If both sides decline Calendar and only submit manual
+availability, the schedule silently gets stuck at "confirmed" from the user's perspective with
+**no event, no Meet link, no phone number** (never exposed to the other side, by design) — nothing
+to actually join. `contact_preference` ("call"/"video"/"chat") is purely decorative today; nothing
+anywhere branches on its value. See `calendar.md` §7 for the full write-up of this gap.
+
+### Direction decided
+- **Self-hosted WebRTC, not a managed third-party platform** (not LiveKit/Twilio/Agora). Every call
+  Kuzana Connect will ever host is 1:1 (matched pairs only) — the SFU/group-call-scaling benefits a
+  managed platform sells don't apply here, so paying for one is unnecessary overhead.
+- **Architecture:** Phoenix Channels (already running, used for chat) for signaling; self-hosted
+  `coturn` (mature open source) for STUN/TURN NAT traversal and relay fallback; native browser
+  WebRTC APIs (`RTCPeerConnection`/`getUserMedia`) on the frontend — no SDK, no vendor in the media
+  path.
+- This finally makes `contact_preference` do something real: "call" joins audio-only, "video"
+  prompts for camera — instead of a decorative label with no execution path.
+
+### Cost model
+Everything rides on infrastructure that already exists or is free by design (browser WebRTC,
+Phoenix Channels, STUN, Let's Encrypt for TLS, Web Push already built) except one real line item:
+hosting `coturn` itself — a small always-on machine, relay bandwidth for the ~15–30% of calls
+direct peer-to-peer can't establish, and possibly a couple dollars/month for a static IP. At
+Kuzana's actual current scale (low hundreds of members, per `kuzana_playbook.md`), this is
+realistically a few dollars a month, not a budget line — and it stays flat regardless of call
+volume in a way per-minute-billed platforms don't.
+
+### Honest limitation
+Being a web app (not a native mobile app), we cannot make a phone physically ring from a
+fully-closed app the way WhatsApp's OS-level VoIP integration does. Mitigation: fire a Web Push
+notification the moment a call starts, so the recipient is alerted even with the tab closed;
+tapping it opens/focuses the app to join. Real and useful, but "notification → tap → connect," not
+"phone rings in your pocket" — a ceiling of being a web app, not something more engineering effort
+removes.
+
+See `call_feature.md` (audio) and `video_call_feature.md` (video) for the full technical write-ups.
 
 ---
 

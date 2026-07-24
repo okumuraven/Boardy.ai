@@ -30,6 +30,22 @@ services:
       db:
         condition: service_healthy
 
+  # In-App Calling (Phase 1, call_feature.md) - self-hosted STUN/TURN, no
+  # managed third party. `network_mode: host` (matching `backend` below)
+  # so coturn's wide relay port range is exposed directly rather than
+  # fighting Docker's bridge-network NAT, a common coturn-in-Docker
+  # gotcha. `--min-port`/`--max-port` is narrowed for local dev; a real
+  # deployment would want a wider range.
+  coturn:
+    image: coturn/coturn:latest
+    network_mode: "host"
+    env_file:
+      - ./backend/.env
+    command: >
+      sh -c "turnserver -n --listening-port=3478 --min-port=49152 --max-port=49200
+      --use-auth-secret --static-auth-secret=$$TURN_SECRET --realm=kuzanaconnect.local
+      --no-tls --no-dtls --log-file=stdout"
+
   frontend:
     build:
       context: ./frontend

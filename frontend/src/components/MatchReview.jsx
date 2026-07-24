@@ -35,6 +35,14 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
     pollRef.current = setInterval(async () => {
       try {
         const res = await fetch(`${apiUrl}/api/matches/${match.match_id}/status?user_id=${profile.id}`);
+        if (!res.ok) {
+          // The match no longer exists (or errored) - back out to the
+          // matches list rather than keep polling a dead match_id or
+          // rendering a broken card off an error body.
+          clearInterval(pollRef.current);
+          onResolvedRef.current({ declined: true });
+          return;
+        }
         const data = await res.json();
         if (data.status === "unlocked") {
           clearInterval(pollRef.current);
@@ -92,6 +100,23 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
     setDeclineError("");
     respond("declined", declineReason.trim());
   };
+
+  // Belt-and-suspenders: if `match` ever turns out not to be a real
+  // match_detail payload (every field's fallback firing at once -
+  // "Someone · unspecified role", "NaN% match" - was the visible symptom
+  // of this), show a plain error instead of that broken render. The
+  // actual root causes (stale error bodies, missing remount on match
+  // switch) are fixed at the call sites; this keeps the component itself
+  // safe regardless of what it's handed. Placed after every hook above
+  // so this conditional return never changes the hook count between
+  // renders.
+  if (!match?.other_user || typeof match.ai_score !== "number") {
+    return (
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "var(--muted)", fontSize: "0.9rem" }}>Couldn't load this match. Try selecting it again.</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", height: "100%", overflowY: "auto", display: "flex", flexDirection: "column" }}>

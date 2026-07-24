@@ -11,7 +11,7 @@ import MatchesList from "./MatchesList";
 // between - removed per direct Kuzana feedback, see boardy_comparison.md),
 // so the only two statuses ever reaching this component are
 // "pending_consent" and "unlocked".
-export default function MatchesView({ profile, openRequest, onConsumeOpenRequest }) {
+export default function MatchesView({ profile, openRequest, onConsumeOpenRequest, refreshKey, onChatOpenChange }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState(null);
@@ -19,6 +19,13 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
   const [startInScheduling, setStartInScheduling] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_URL;
+
+  // Lets AppShell hide the mobile tab bar while a conversation is open,
+  // the same way WhatsApp/Telegram give the whole screen to a chat
+  // instead of keeping the app's main nav visible underneath it.
+  useEffect(() => {
+    onChatOpenChange?.(!!selectedId);
+  }, [selectedId]);
 
   const fetchList = useCallback(() => {
     if (!profile?.id) return Promise.resolve();
@@ -31,18 +38,35 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
   useEffect(() => {
     setLoading(true);
     fetchList().finally(() => setLoading(false));
-  }, [fetchList]);
+  }, [fetchList, refreshKey]);
+
+  const clearSelection = () => {
+    setSelectedId(null);
+    setSelectedDetail(null);
+    setStartInScheduling(false);
+  };
 
   const fetchDetail = useCallback(
     (matchId) => {
       if (!profile?.id) return Promise.resolve(null);
       return fetch(`${apiUrl}/api/matches/${matchId}/status?user_id=${profile.id}`)
-        .then((res) => res.json())
-        .then((data) => {
+        .then(async (res) => {
+          if (!res.ok) {
+            // The match no longer exists (or errored) - never render an
+            // error body as if it were match data (that's what produced
+            // "Someone · unspecified role" / "NaN% match"). Fall back to
+            // the empty state instead of a broken card.
+            clearSelection();
+            return null;
+          }
+          const data = await res.json();
           setSelectedDetail(data);
           return data;
         })
-        .catch(() => null);
+        .catch(() => {
+          clearSelection();
+          return null;
+        });
     },
     [apiUrl, profile?.id]
   );
@@ -59,12 +83,6 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
       onConsumeOpenRequest?.();
     }
   }, [openRequest]);
-
-  const clearSelection = () => {
-    setSelectedId(null);
-    setSelectedDetail(null);
-    setStartInScheduling(false);
-  };
 
   const handleResolved = (result) => {
     if (result.declined) {
@@ -106,7 +124,12 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
             >
               ← Back to matches
             </button>
-            <MatchReview profile={profile} initialMatch={selectedDetail} onResolved={handleResolved} />
+            <MatchReview
+              key={selectedDetail.match_id}
+              profile={profile}
+              initialMatch={selectedDetail}
+              onResolved={handleResolved}
+            />
           </>
         )}
       </div>
