@@ -30,8 +30,16 @@ defmodule Vokazi.Accounts.User do
 
   # Closed set, not free text - Vokazi.Reputation ranks users within
   # their role category, so a stray value here would either fragment
-  # into its own lonely category or crash that grouping outright.
-  @roles ["founder", "developer", "designer", "investor"]
+  # into its own lonely category or crash that grouping outright. Drawn
+  # from the real member types in kuzana_connect_discovery.md's 15
+  # interviews (founders, investors, lenders, consultants/advisors,
+  # service providers) - not a generic tech-startup taxonomy. Investors
+  # and lenders are deliberately distinct values (not one "capital-side"
+  # role): the report's own finding (§4) is that lenders like Korir/Vula
+  # look for a different qualifying signal (revenue threshold) than
+  # equity investors like the NAIBAN member, even though both share the
+  # same "capital-side" structured-profile UI (see Vokazi.Investment).
+  @roles ["founder", "investor", "lender", "consultant", "service_provider"]
 
   # Closed set, not free text - drives the Directory's filter chips
   # (Vokazi.Directory). Drawn from the real industries Kuzana's own

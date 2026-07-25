@@ -5,6 +5,7 @@ import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
 import ThemeToggle from "../shell/ThemeToggle";
 import { INDUSTRIES } from "../../constants/industries";
+import { ROLES, roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
 
 const initials = (name) =>
   (name || "?")
@@ -16,8 +17,7 @@ const initials = (name) =>
 
 const CONTACT_MODES = ["call", "video", "chat"];
 const CONTACT_LABEL = { call: "📞 Call", video: "🎥 Video", chat: "💬 Chat" };
-const ROLES = ["founder", "developer", "designer", "investor"];
-const roleTitle = (role) => (role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Member");
+const roleTitle = (role) => (role ? roleLabel(role) : "Member");
 
 // The first real place a user can see or change what Kuzana Connect has on file
 // for them - also where they see their own connections/rank (StatsCard)
@@ -203,7 +203,7 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <SocialProfileSection profile={profile} />
           </div>
 
-          {(profile?.role === "investor" || profile?.looking_for_tags?.includes("funding")) && (
+          {(isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding")) && (
             <InvestmentDetailsForm profile={profile} />
           )}
         </div>

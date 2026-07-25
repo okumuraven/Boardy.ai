@@ -1,5 +1,6 @@
 import { tagLabel } from "../../constants/connectionTags";
 import { fundingTypeLabel } from "../../constants/fundingTypes";
+import { roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
 
 const initials = (name) =>
   (name || "?")
@@ -9,7 +10,7 @@ const initials = (name) =>
     .join("")
     .toUpperCase();
 
-const roleTitle = (role) => (role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}` : "Member");
+const roleTitle = (role) => (role ? roleLabel(role) : "Member");
 
 // What shows in place of a "Connect" button once some match already
 // exists with this person - never a raw error, always a plain status so
@@ -49,7 +50,7 @@ const investmentLine = (investment, isInvestorCard) => {
 
 export default function MemberCard({ member, connecting, connectError, onConnect }) {
   const pill = statusPill(member.match);
-  const isInvestorCard = member.role === "investor";
+  const isInvestorCard = isCapitalSideRole(member.role);
   const summary = investmentLine(member.investment, isInvestorCard);
 
   return (

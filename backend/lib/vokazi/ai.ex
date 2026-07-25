@@ -50,13 +50,20 @@ defmodule Vokazi.AI do
 
       prompt = """
       You are an expert B2B matchmaker and executive summary writer. Read the conversation below and extract the user's Offer, Need, and contact preference.
-      1. "offer": What is the user's core skill, product, or value proposition? (1-2 sentences). Make it sound incredibly strong, professional, and confident. Use high-impact action verbs.
-      2. "need": What is the user's biggest bottleneck or requirement? (1-2 sentences). Frame this professionally as a strategic requirement or investment opportunity.
+
+      Write "offer" and "need" in the FIRST PERSON, as if the user themselves is speaking directly
+      ("I'm a fintech founder with two years of traction..." / "I'm looking for a technical
+      co-founder who..."). NEVER write in the third person ("The user is..." / "They are looking
+      for...") - that reads like a case file, not a direct personal statement, and this text is
+      shown back to the user as their own profile ("Your Offer"/"Your Need").
+
+      1. "offer": What is their core skill, product, or value proposition? (1-2 sentences, first person). Make it sound incredibly strong, professional, and confident. Use high-impact action verbs.
+      2. "need": What is their biggest bottleneck or requirement? (1-2 sentences, first person). Frame this professionally as a strategic requirement or investment opportunity.
       3. "contact_preference": how they'd rather connect with a future intro - exactly one of "call", "video", or "chat". Infer this from anything they said about preferring to talk, hop on video, or message first. Default to "call" if nothing indicates a preference.
 
       Rules:
       - Return ONLY a valid JSON object with keys "offer", "need", and "contact_preference".
-      - DO NOT quote the raw conversation. Synthesize it into a highly polished, professional executive summary.
+      - DO NOT quote the raw conversation. Synthesize it into a highly polished, professional executive summary, written in the first person as described above.
       - Ensure the tone is persuasive, strong, and business-focused.
       - If the conversation is cut off or missing details, make your best professional inference or write "Not explicitly stated".
 

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import { rolePlural, roleTitle } from "../../constants/roles";
 
 const rankLabel = (rank, role) => {
   if (!rank) return null;
-  const roleLabel = role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}s` : "peers";
-  return `Ranked #${rank.rank} of ${rank.total_in_category} ${roleLabel}`;
+  return `Ranked #${rank.rank} of ${rank.total_in_category} ${rolePlural(role)}`;
 };
 
 // The redacted view of a matched counterpart - Vokazi.Reputation.CounterpartProfile.
@@ -53,7 +53,7 @@ export default function MatchProfilePanel({ matchId, profile, partnerName, onClo
         <h3 style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "1.3rem", margin: 0, color: "var(--paper)" }}>
           {data.name || partnerName}
         </h3>
-        {data.role && <span className="social-chip" style={{ marginTop: "0.4rem", display: "inline-block" }}>{data.role}</span>}
+        {data.role && <span className="social-chip" style={{ marginTop: "0.4rem", display: "inline-block" }}>{roleTitle(data.role)}</span>}
         {(data.company || data.location) && (
           <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: "0.4rem 0 0" }}>
             {[data.company, data.location].filter(Boolean).join(" · ")}

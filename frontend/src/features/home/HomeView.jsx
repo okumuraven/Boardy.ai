@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import { isCapitalSideRole } from "../../constants/roles";
 import Dashboard from "../../components/Dashboard";
 
 const TYPE_GLYPH = {
@@ -41,7 +42,7 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
   }, [profile?.id]);
 
   const awaitingResponse = matches.filter((m) => m.status === "pending_consent" && m.my_response !== "accepted").length;
-  const showInvestmentPrompt = profile?.role === "investor" || profile?.looking_for_tags?.includes("funding");
+  const showInvestmentPrompt = isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding");
 
   return (
     <div className="home-view">
@@ -56,9 +57,9 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
         {showInvestmentPrompt && (
           <div className="home-investment-prompt">
             <p>
-              {profile?.role === "investor"
+              {isCapitalSideRole(profile?.role)
                 ? "Add your investment criteria so founders know what you're looking for."
-                : "Add your funding details so investors can find you in the Directory."}
+                : "Add your funding details so investors and lenders can find you in the Directory."}
             </p>
             <button className="btn-ghost btn-sm" onClick={onOpenProfile}>Go to Profile</button>
           </div>

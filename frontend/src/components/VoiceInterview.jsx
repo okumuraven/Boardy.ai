@@ -13,9 +13,17 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
         </div>
       )}
 
-      <div style={{ position: 'relative', width: '160px', height: '160px', margin: '1rem auto 2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="mic-orb-wrap">
+        {/* A slow, ambient pulse at rest invites the tap - only shown
+            when nothing's happening yet, distinct from the more urgent
+            warn-colored rings once a call is actually live. */}
+        {callStatus === "inactive" && (
+          <>
+            <div className="mic-orb-idle-ring"></div>
+            <div className="mic-orb-idle-ring"></div>
+          </>
+        )}
 
-        {/* Pulsing Rings when Active */}
         {callStatus === "active" && (
           <>
             <div style={{ position: 'absolute', inset: -16, border: '2px solid var(--warn)', borderRadius: '50%', opacity: 0.5, animation: 'pulse 1.5s infinite' }}></div>
@@ -27,16 +35,17 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
         {/* Main Button */}
         <button
           onClick={onCallClick}
-          className={`action-btn ${callStatus === "inactive" ? 'ready' : ''}`}
+          className={`action-btn mic-orb-button ${callStatus === "inactive" ? 'ready' : ''}`}
           style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
-            position: 'relative',
-            zIndex: 10,
             background: callStatus === "active" ? 'var(--warn-wash)' : undefined,
-            border: callStatus === "active" ? '2px solid var(--warn)' : 'none'
+            border: callStatus === "active" ? '2px solid var(--warn)' : 'none',
+            boxShadow: callStatus === "active" ? 'none' : undefined,
           }}
+          aria-label={
+            callStatus === "inactive" ? "Start voice interview"
+              : callStatus === "active" ? "End call"
+                : "Connecting"
+          }
         >
           {callStatus === "inactive" && (
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,17 +65,27 @@ export default function VoiceInterview({ profile, callStatus, transcript, onCall
 
       <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.6rem', margin: '0 0 0.75rem', color: 'var(--paper)' }}>
         {callStatus === "inactive" ? "Ready when you are." : ""}
-        {callStatus === "connecting" ? "Establishing connection..." : ""}
+        {callStatus === "connecting" ? "One moment - connecting you now." : ""}
         {callStatus === "active" ? <span className="accent-text">Listening...</span> : ""}
       </h2>
 
-      <p style={{ color: 'var(--muted)', fontSize: '0.92rem', maxWidth: '520px', margin: '0 auto 1.5rem' }}>
+      <p style={{ color: 'var(--muted)', fontSize: '0.92rem', maxWidth: '520px', margin: '0 auto 1rem' }}>
         {callStatus === "inactive"
-          ? "Tap the microphone. Tell us exactly what your company is building, what's bottlenecking you, and what you can offer someone else."
+          ? "Tap the mic and walk me through what you do, what you're hoping to find, and what you bring to the table."
           : callStatus === "active"
-            ? "Speak naturally. When you're done, tap the button again to end the call - we'll process your profile automatically."
-            : "Speak naturally. Our AI is extracting your needs and offers to find your best match."}
+            ? "Speak naturally, like you're talking to someone who might already know your next connection. Tap the button again whenever you're ready to wrap up."
+            : "Speak naturally - I'm listening closely to find your best match."}
       </p>
+
+      {callStatus === "inactive" && (
+        <p style={{ color: 'var(--muted)', fontSize: '0.8rem', margin: '0 auto 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Takes about 3-5 minutes - private until you both agree to connect
+        </p>
+      )}
 
       {/* Live Transcript Box */}
       {callStatus === "active" && transcript && (

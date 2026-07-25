@@ -24,12 +24,12 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
           </h1>
 
           <p className="ai-subtext">
-            Sign in with Google to start a real voice interview right in your browser - we'll understand your goals and match you with the right person.
+            One real conversation is all it takes. Sign in with Google and let's find your next connection.
           </p>
 
-          <button onClick={onJoinClick} className="action-btn ready" style={{ padding: '0 2rem', height: '56px' }}>
+          <button onClick={onJoinClick} className="action-btn ready landing-cta" style={{ padding: '0 2rem', height: '56px' }}>
             Get started
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
+            <svg className="landing-cta-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
               <line x1="5" y1="12" x2="19" y2="12"></line>
               <polyline points="12 5 19 12 12 19"></polyline>
             </svg>

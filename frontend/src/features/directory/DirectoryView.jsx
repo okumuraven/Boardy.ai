@@ -4,9 +4,7 @@ import MemberCard from "./MemberCard";
 import { INDUSTRIES } from "../../constants/industries";
 import { CONNECTION_TAGS, tagLabel } from "../../constants/connectionTags";
 import { FUNDING_TYPES, fundingTypeLabel } from "../../constants/fundingTypes";
-
-const ROLES = ["founder", "developer", "designer", "investor"];
-const roleTitle = (role) => `${role.charAt(0).toUpperCase()}${role.slice(1)}`;
+import { ROLES, roleTitle } from "../../constants/roles";
 
 // Search-as-you-type is debounced so we're not firing a request per
 // keystroke - 350ms is long enough to skip mid-word requests, short

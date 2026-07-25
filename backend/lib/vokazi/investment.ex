@@ -5,8 +5,8 @@ defmodule Vokazi.Investment do
   sought/financials, or an investor/lender's check size and sectors of
   interest. Surfaced only to whoever it applies to: anyone whose
   `looking_for_tags` includes "funding" (`Vokazi.Accounts.Profile`), or
-  anyone with role "investor" - the frontend decides when to show the
-  prompt, this context just stores whatever's filled in.
+  anyone with role "investor" or "lender" - the frontend decides when to
+  show the prompt, this context just stores whatever's filled in.
   """
 
   alias Vokazi.Repo

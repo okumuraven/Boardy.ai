@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import { rolePlural } from "../../constants/roles";
 
 const rankLabel = (rank, role) => {
   if (!rank) return "Not yet ranked - complete your first intro call";
-  const roleLabel = role ? `${role.charAt(0).toUpperCase()}${role.slice(1)}s` : "peers";
-  return `Ranked #${rank.rank} of ${rank.total_in_category} ${roleLabel}`;
+  return `Ranked #${rank.rank} of ${rank.total_in_category} ${rolePlural(role)}`;
 };
 
 // Kuzana Connect's own version of a "connections" count - two honest, separately

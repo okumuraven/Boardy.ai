@@ -127,7 +127,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         className="centered-stage"
         style={{ animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
       >
-        <h1 className="ai-greeting" style={{ fontSize: "2.4rem", marginBottom: "0.25rem" }}>
+        <h1 className="ai-greeting ai-greeting-compact" style={{ marginBottom: "0.25rem" }}>
           Match Found
         </h1>
         <p className="ai-subtext" style={{ marginBottom: "0.5rem" }}>

@@ -27,7 +27,7 @@ export default function Login({ onBack, onSignedIn }) {
       onSignedIn(data.user);
     } catch (err) {
       console.error('Google sign-in failed:', err);
-      setError("Couldn't sign you in with Google. Please try again.");
+      setError("That didn't go through - mind trying again?");
     } finally {
       setIsVerifying(false);
     }
@@ -48,12 +48,12 @@ export default function Login({ onBack, onSignedIn }) {
 
       <main className="onboarding-container" style={{ animation: 'fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
         <div className="onboarding-content">
-          <h1 className="ai-greeting" style={{ fontSize: '2.3rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
-            Sign in with <span className="accent-text">Google</span>
+          <h1 className="ai-greeting ai-greeting-compact" style={{ marginBottom: '1rem', animationDelay: '0.1s' }}>
+            Just <span className="accent-text">one quick step</span>
           </h1>
 
           <p className="ai-subtext" style={{ maxWidth: '500px', animationDelay: '0.2s', marginBottom: '3rem' }}>
-            To start your voice interview, verify your identity with Google. It only takes a moment.
+            Sign in with Google so I know who to introduce you to. No forms, no passwords - just one tap.
           </p>
 
           <div style={{ opacity: 0, animation: 'fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', animationDelay: '0.4s' }}>
@@ -62,7 +62,7 @@ export default function Login({ onBack, onSignedIn }) {
             ) : (
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => setError("Couldn't sign you in with Google. Please try again.")}
+                onError={() => setError("That didn't go through - mind trying again?")}
                 theme="outline"
                 size="large"
                 text="continue_with"

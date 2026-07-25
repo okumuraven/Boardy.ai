@@ -32,7 +32,7 @@ export default function InterviewProcessing() {
         Processing your interview...
       </h2>
       <p style={{ color: "var(--muted)", fontSize: "0.92rem", maxWidth: "520px", margin: "0 auto 2rem" }}>
-        This usually takes under a minute. We'll take you to your profile automatically the moment it's ready.
+        This usually takes under a minute. I'll take you to your profile automatically the moment it's ready.
       </p>
 
       <div style={{ width: "100%", maxWidth: "440px", margin: "0 auto" }}>

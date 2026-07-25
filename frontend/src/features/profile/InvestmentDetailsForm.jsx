@@ -3,6 +3,7 @@ import { apiFetch } from "../../lib/api";
 import { BUSINESS_STAGES } from "../../constants/businessStages";
 import { FUNDING_TYPES, fundingTypeLabel } from "../../constants/fundingTypes";
 import { INDUSTRIES } from "../../constants/industries";
+import { isCapitalSideRole } from "../../constants/roles";
 
 const EMPTY = {
   business_stage: "",
@@ -18,8 +19,8 @@ const toggle = (list, value) => (list.includes(value) ? list.filter((v) => v !==
 // The optional structured "funding/investment" layer (Phase 4, Investor &
 // Lender View) - shown on Profile only to whoever it applies to: anyone
 // seeking funding (looking_for_tags includes "funding") gets the
-// founder-side fields, anyone with role "investor" gets the mirror
-// investor/lender fields. Both halves share funding_types (what a
+// founder-side fields, anyone with role "investor" or "lender" gets the
+// mirror investor/lender fields. Both halves share funding_types (what a
 // founder wants vs. what an investor/lender provides).
 export default function InvestmentDetailsForm({ profile }) {
   const [form, setForm] = useState(EMPTY);
@@ -28,7 +29,7 @@ export default function InvestmentDetailsForm({ profile }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
-  const isInvestor = profile?.role === "investor";
+  const isInvestor = isCapitalSideRole(profile?.role);
 
   useEffect(() => {
     if (!profile?.id) return;

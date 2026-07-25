@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import KuzanaMark from './KuzanaMark';
 import { INDUSTRIES } from "../constants/industries";
+import { ROLES, roleTitle } from "../constants/roles";
 
 export default function ProfileSetup({ onComplete }) {
   const [name, setName] = useState('');
@@ -37,8 +38,15 @@ export default function ProfileSetup({ onComplete }) {
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.error || "Failed to save profile on backend.");
       }
-      const data = await response.json();
-      onComplete({ name, phoneNumber, role, industry, company, location, id: data.id });
+      // Re-fetch the real, complete profile from the server rather than
+      // hand-building a local object here - a hand-built object drifted
+      // out of sync with the API's actual field names (phoneNumber vs.
+      // phone_number) and was missing fields entirely (bio,
+      // contact_preference, tags), so the phone number silently didn't
+      // show up until the next edit-and-save round-tripped through the
+      // server. This is the same refetch-after-write pattern
+      // ProfileView's edit form already uses (onProfileUpdated).
+      await onComplete();
 
     } catch (error) {
       // Never silently proceed on failure - a fake local profile means the
@@ -68,100 +76,105 @@ export default function ProfileSetup({ onComplete }) {
 
       <main className="onboarding-container" style={{ animation: 'fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}>
         <div className="onboarding-content">
-          <h1 className="ai-greeting" style={{ fontSize: '2.7rem', marginBottom: '1rem', animationDelay: '0.1s' }}>
+          <h1 className="ai-greeting ai-greeting-compact" style={{ marginBottom: '1rem', animationDelay: '0.1s' }}>
             Who am I <span className="accent-text">speaking to?</span>
           </h1>
 
-          <p className="ai-subtext" style={{ maxWidth: '500px', animationDelay: '0.2s', marginBottom: '3rem' }}>
+          <p className="ai-subtext" style={{ maxWidth: '500px', animationDelay: '0.2s', marginBottom: '2.5rem' }}>
             You're all set up. A couple of details before we start the voice interview.
           </p>
 
-          <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1.5rem', animation: 'fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', animationDelay: '0.4s' }}>
+          <form onSubmit={handleSubmit} style={{ width: '100%', maxWidth: '440px', display: 'flex', flexDirection: 'column', gap: '1.25rem', animation: 'fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards', animationDelay: '0.4s' }}>
 
             {/* Name Field */}
-            <div className="field">
-              <input
-                type="text"
-                placeholder="Your full name"
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">Full name</span>
+              <div className="setup-field-control">
+                <input
+                  type="text"
+                  placeholder="e.g. Jane Wanjiru"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            </label>
 
             {/* Phone Field - an honest, unverified contact field, not a
                 security gate. No checkmark/"verified" copy here: we never
                 confirm this number belongs to whoever typed it. */}
-            <div className="field">
-              <input
-                type="tel"
-                placeholder="Phone number (optional)"
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">Phone (optional)</span>
+              <div className="setup-field-control">
+                <input
+                  type="tel"
+                  placeholder="e.g. 07XX XXX XXX"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+              </div>
+            </label>
 
             {/* Company Field */}
-            <div className="field">
-              <input
-                type="text"
-                placeholder="Company or business name (optional)"
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-              />
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">Company (optional)</span>
+              <div className="setup-field-control">
+                <input
+                  type="text"
+                  placeholder="Your company or business name"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
+              </div>
+            </label>
 
             {/* Location Field */}
-            <div className="field">
-              <input
-                type="text"
-                placeholder="Location (optional)"
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem' }}
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">Location (optional)</span>
+              <div className="setup-field-control">
+                <input
+                  type="text"
+                  placeholder="City, country"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+            </label>
 
             {/* Role Dropdown */}
-            <div className="field">
-              <select
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%235a6172%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8rem' }}
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="founder" style={{ background: 'var(--ink)' }}>Founder / CEO</option>
-                <option value="developer" style={{ background: 'var(--ink)' }}>Lead Developer</option>
-                <option value="designer" style={{ background: 'var(--ink)' }}>Product Designer</option>
-                <option value="investor" style={{ background: 'var(--ink)' }}>Angel Investor</option>
-              </select>
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">I'm here as a...</span>
+              <div className="setup-field-control">
+                <select value={role} onChange={(e) => setRole(e.target.value)}>
+                  {ROLES.map((r) => (
+                    <option key={r} value={r}>{roleTitle(r)}</option>
+                  ))}
+                </select>
+                <svg className="setup-field-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </label>
 
             {/* Industry Dropdown */}
-            <div className="field">
-              <select
-                className="premium-input"
-                style={{ width: '100%', textAlign: 'left', padding: '0.75rem 0.5rem', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%235a6172%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.5rem center', backgroundSize: '0.8rem' }}
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value)}
-              >
-                {INDUSTRIES.map((i) => (
-                  <option key={i} value={i} style={{ background: 'var(--ink)' }}>{i}</option>
-                ))}
-              </select>
-            </div>
+            <label className="setup-field">
+              <span className="setup-field-label">Industry</span>
+              <div className="setup-field-control">
+                <select value={industry} onChange={(e) => setIndustry(e.target.value)}>
+                  {INDUSTRIES.map((i) => (
+                    <option key={i} value={i}>{i}</option>
+                  ))}
+                </select>
+                <svg className="setup-field-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </label>
 
             <button
               type="submit"
-              className="action-btn ready"
-              style={{ width: '100%', height: '56px', borderRadius: '4px', marginTop: '1rem', fontSize: '1.1rem', fontWeight: 600 }}
+              className="action-btn ready landing-cta"
+              style={{ width: '100%', height: '56px', borderRadius: '6px', marginTop: '0.5rem', fontSize: '1.05rem', fontWeight: 700 }}
               disabled={isSubmitting || name.length < 2}
             >
               {isSubmitting ? (

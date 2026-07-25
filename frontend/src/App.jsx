@@ -185,7 +185,7 @@ export default function App() {
     }
 
     if (isAuthenticated && !profile) {
-      return <ProfileSetup onComplete={setProfile} />;
+      return <ProfileSetup onComplete={() => fetchProfile()} />;
     }
 
     return (
