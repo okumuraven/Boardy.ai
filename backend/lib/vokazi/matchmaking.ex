@@ -33,6 +33,7 @@ defmodule Vokazi.Matchmaking do
   alias Vokazi.Accounts.{Profile, User}
   alias Vokazi.Matchmaking.Match
   alias Vokazi.Chat
+  alias Vokazi.Notifications
 
   # Candidates below this bidirectional similarity aren't worth an AI call.
   @similarity_floor 0.75
@@ -64,11 +65,11 @@ defmodule Vokazi.Matchmaking do
   end
 
   defp match_summary(match, user_id) do
-    {other_user_id, my_response} =
+    {other_user_id, my_response, other_response} =
       if match.user_a_id == user_id do
-        {match.user_b_id, match.user_a_response}
+        {match.user_b_id, match.user_a_response, match.user_b_response}
       else
-        {match.user_a_id, match.user_b_response}
+        {match.user_a_id, match.user_b_response, match.user_a_response}
       end
 
     other_user = Repo.get(User, other_user_id)
@@ -80,6 +81,7 @@ defmodule Vokazi.Matchmaking do
       status: match.status,
       ai_score: match.ai_score,
       my_response: my_response,
+      other_response: other_response,
       chat_room_id: chat_room && chat_room.id,
       other_user: %{name: other_user && other_user.full_name},
       last_message: last_message && %{body: last_message.content, inserted_at: Vokazi.DateTimeJSON.utc(last_message.inserted_at)},
@@ -187,8 +189,15 @@ defmodule Vokazi.Matchmaking do
         {updated, room}
       end)
       |> case do
-        {:ok, {updated, room}} -> {:ok, :unlocked, updated, room}
-        {:error, reason} -> {:error, reason}
+        {:ok, {updated, room}} ->
+          # Best-effort, fired after the transaction commits - same
+          # pattern Chat.notify_recipient_if_absent/2 already uses,
+          # never part of the DB transaction's own atomicity.
+          notify_match_unlocked(updated)
+          {:ok, :unlocked, updated, room}
+
+        {:error, reason} ->
+          {:error, reason}
       end
     else
       match
@@ -295,6 +304,7 @@ defmodule Vokazi.Matchmaking do
           "Matchmaking: directory-requested match created, users #{requester_id} -> #{target_id}, ai_score=#{match.ai_score}"
         )
 
+        notify_requested_match(match, requester_id, target_id)
         {:ok, :requested, match}
 
       {:error, changeset} ->
@@ -449,6 +459,7 @@ defmodule Vokazi.Matchmaking do
             "similarity=#{Float.round(match.similarity_score * 100, 2)}%, ai_score=#{match.ai_score}"
         )
 
+        notify_new_match(match)
         {:ok, match}
 
       {:error, changeset} ->
@@ -456,4 +467,44 @@ defmodule Vokazi.Matchmaking do
         {:error, changeset}
     end
   end
+
+  # A pipeline-discovered match starts with both sides "pending" - neither
+  # has any way to know it exists otherwise, since nothing else surfaces
+  # it until they happen to open the Matches tab themselves.
+  defp notify_new_match(match) do
+    user_a = Repo.get(User, match.user_a_id)
+    user_b = Repo.get(User, match.user_b_id)
+    link = Jason.encode!(%{match_id: match.id})
+
+    Notifications.notify(match.user_a_id, "new_match", "✨ You've been matched with #{other_name(user_b)} - take a look", link)
+    Notifications.notify(match.user_b_id, "new_match", "✨ You've been matched with #{other_name(user_a)} - take a look", link)
+  end
+
+  # A directory-requested match starts with the requester already
+  # "accepted" (they chose this person themselves) - only the target
+  # side needs telling, since the requester already knows they just sent it.
+  defp notify_requested_match(match, requester_id, target_id) do
+    requester = Repo.get(User, requester_id)
+    link = Jason.encode!(%{match_id: match.id})
+
+    Notifications.notify(target_id, "new_match", "✨ #{other_name(requester)} wants to connect with you", link)
+  end
+
+  # The moment both sides accept and the chat room is created - the one
+  # notification that actually matters most: neither side has any other
+  # way to learn the other one just said yes.
+  defp notify_match_unlocked(match) do
+    user_a = Repo.get(User, match.user_a_id)
+    user_b = Repo.get(User, match.user_b_id)
+    link = Jason.encode!(%{match_id: match.id})
+
+    Notifications.notify(match.user_a_id, "new_match", "🎉 You and #{other_name(user_b)} are connected - start chatting", link)
+    Notifications.notify(match.user_b_id, "new_match", "🎉 You and #{other_name(user_a)} are connected - start chatting", link)
+  end
+
+  # Capitalized like a proper name so it reads naturally whether it opens
+  # a sentence ("Someone wants to connect...") or sits mid-sentence
+  # ("matched with Someone").
+  defp other_name(%User{full_name: name}) when is_binary(name) and name != "", do: name
+  defp other_name(_), do: "Someone"
 end

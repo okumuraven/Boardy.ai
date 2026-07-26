@@ -21,6 +21,12 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
   onResolvedRef.current = onResolved;
 
   const isWaiting = match.my_response === "accepted" && match.other_response !== "accepted";
+  // The other side already said yes and is waiting on *this* person now -
+  // worth surfacing plainly rather than showing the exact same generic
+  // "Not Right Now / I'm Interested" buttons regardless of where things
+  // actually stand. Accepting from here unlocks immediately (no more
+  // waiting), so the button itself says so instead of staying generic.
+  const theyAlreadyAccepted = match.other_response === "accepted" && match.my_response !== "accepted";
 
   // Personalized, second-person pitch ("you need X because...") - falls
   // back to the older shared third-person fields for matches created
@@ -228,14 +234,23 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
               </div>
             </div>
           ) : (
-            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "0.5rem" }}>
-              <button onClick={() => setShowDeclineForm(true)} disabled={busy} className="btn-ghost">
-                Not Right Now
-              </button>
-              <button onClick={() => respond("accepted")} disabled={busy} className="btn-primary">
-                I'm Interested
-              </button>
-            </div>
+            <>
+              {theyAlreadyAccepted && (
+                <div className="panel" style={{ textAlign: "center", borderColor: "var(--signal)", background: "var(--signal-wash)" }}>
+                  <p style={{ margin: 0, color: "var(--paper)", fontSize: "0.95rem", fontWeight: 600 }}>
+                    🎉 {match.other_user?.name || "They"} is already interested - it's your move.
+                  </p>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "0.5rem" }}>
+                <button onClick={() => setShowDeclineForm(true)} disabled={busy} className="btn-ghost">
+                  Not Right Now
+                </button>
+                <button onClick={() => respond("accepted")} disabled={busy} className="btn-primary">
+                  {theyAlreadyAccepted ? "Accept & Start Chatting" : "I'm Interested"}
+                </button>
+              </div>
+            </>
           )}
         </div>
       </main>

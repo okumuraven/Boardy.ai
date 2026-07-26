@@ -1033,6 +1033,14 @@ body {
   padding: 0.08rem 0.4rem; border-radius: 3px; background: var(--warn-wash); color: var(--warn);
 }
 
+/* The other person already accepted and is waiting on this one -
+   deliberately the affirming gold, not the neutral/cautionary coral
+   the generic "Pending consent" pill uses, so it actually stands out
+   in the list instead of reading identical to every other open match. */
+.match-status-pill.signal { background: var(--signal-wash); color: var(--signal); }
+.match-row.highlighted { background: var(--signal-wash); }
+.match-row.highlighted:hover { background: var(--signal-wash); filter: brightness(1.05); }
+
 .match-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .match-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.9rem; text-align: center; padding: 2rem; }
 

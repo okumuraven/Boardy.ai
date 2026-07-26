@@ -17,13 +17,25 @@ const timeLabel = (iso) => {
 
 // Every match reaching this list is either still awaiting mutual review
 // or already unlocked - consent unlocks a match immediately now, no
-// intermediate status in between (see MatchesView.jsx).
+// intermediate status in between (see MatchesView.jsx). Within
+// "pending_consent" there are three real states worth telling apart at a
+// glance rather than one generic "Pending consent" pill for all of them:
+// nobody's responded yet, I'm the one waiting, or they're the one
+// waiting on me - that last one is the one worth surfacing clearly.
 const previewFor = (match) => {
   if (match.status === "unlocked") return match.last_message?.body || "Say hello — you're connected.";
+  if (match.other_response === "accepted" && match.my_response !== "accepted") return "They're interested — your move";
+  if (match.my_response === "accepted") return "Waiting for their response";
   return `${Math.round(match.ai_score)}% match — awaiting your review`;
 };
 
-const statusPillFor = (match) => (match.status === "pending_consent" ? "Pending consent" : null);
+const statusPillFor = (match) => {
+  if (match.status !== "pending_consent") return null;
+  if (match.other_response === "accepted" && match.my_response !== "accepted") return "Interested in you";
+  return "Pending consent";
+};
+
+const isHighlighted = (match) => match.status === "pending_consent" && match.other_response === "accepted" && match.my_response !== "accepted";
 
 export default function MatchesList({ matches, loading, selectedId, onSelect, hideOnMobile }) {
   return (
@@ -44,10 +56,11 @@ export default function MatchesList({ matches, loading, selectedId, onSelect, hi
       ) : (
         matches.map((match) => {
           const pill = statusPillFor(match);
+          const highlighted = isHighlighted(match);
           return (
             <button
               key={match.match_id}
-              className={`match-row ${selectedId === match.match_id ? "active" : ""}`}
+              className={`match-row ${selectedId === match.match_id ? "active" : ""} ${highlighted ? "highlighted" : ""}`}
               onClick={() => onSelect(match.match_id)}
             >
               <div className="match-avatar">
@@ -60,7 +73,7 @@ export default function MatchesList({ matches, loading, selectedId, onSelect, hi
                   <span className="match-time">{timeLabel(match.last_message?.inserted_at || match.updated_at)}</span>
                 </div>
                 <div className="match-preview">{previewFor(match)}</div>
-                {pill && <span className="match-status-pill">{pill}</span>}
+                {pill && <span className={`match-status-pill ${highlighted ? "signal" : ""}`}>{pill}</span>}
               </div>
             </button>
           );
