@@ -11,15 +11,7 @@
       rel="stylesheet"
     />
     <title>Kuzana Connect</title>
-    <script>
-      // Set the saved theme before first paint - avoids a flash of the
-      // light default for a returning visitor who chose dark (ThemeToggle
-      // sets the same attribute/key going forward).
-      (function () {
-        var saved = localStorage.getItem("kuzana-theme");
-        if (saved === "dark") document.documentElement.setAttribute("data-theme", "dark");
-      })();
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
