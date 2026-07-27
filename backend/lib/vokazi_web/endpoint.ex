@@ -37,7 +37,13 @@ defmodule VokaziWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
-  plug CORSPlug, headers: ["*"]
+  # Origin allowlist lives in config/prod.exs (:cors_plug, :origin) since
+  # CORSPlug's init/1 bakes it in at compile time - no origin: override
+  # here so it falls through to that config (and to CORSPlug's own sane
+  # default header/method list instead of the old wildcard).
+  plug CORSPlug
+
+  plug :put_security_headers
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
@@ -48,4 +54,15 @@ defmodule VokaziWeb.Endpoint do
   plug Plug.Head
   plug Plug.Session, @session_options
   plug VokaziWeb.Router
+
+  # This is a JSON API (no HTML views rendered except the OAuth callback
+  # redirects, which never echo request-controlled content into a page),
+  # so a locked-down `default-src 'none'` CSP is safe here.
+  defp put_security_headers(conn, _opts) do
+    conn
+    |> Plug.Conn.put_resp_header("x-content-type-options", "nosniff")
+    |> Plug.Conn.put_resp_header("x-frame-options", "DENY")
+    |> Plug.Conn.put_resp_header("referrer-policy", "strict-origin-when-cross-origin")
+    |> Plug.Conn.put_resp_header("content-security-policy", "default-src 'none'")
+  end
 end

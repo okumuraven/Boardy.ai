@@ -22,12 +22,17 @@ end
 
 config :vokazi, VokaziWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))],
-  # The frontend (localhost:5173) and backend (localhost:4000) are
-  # different origins, so Phoenix's default websocket origin check would
-  # otherwise silently reject every chat socket connection. This mirrors
-  # the intent already written in dev.exs, which never actually applies
-  # here since this container runs with MIX_ENV=prod.
-  check_origin: false
+  # Restricts which origins may open the chat/calls/notifications
+  # WebSocket - previously `false` (any origin allowed), which combined
+  # with the equally-wide-open CORS config let any website connect to
+  # the socket with a stolen/leaked token. Keep in sync with the CORS
+  # allowlist in config/prod.exs.
+  check_origin: [
+    "https://kuzana-connect.vercel.app",
+    "https://parrot.tail780ac1.ts.net",
+    "https://zr34p1lt-5173.use.devtunnels.ms",
+    "http://localhost:5173"
+  ]
 
 # Web Push (VAPID) - notification_system.md Phase 2. Keys are generated
 # once via `mix generate.vapid.keys`, free, no third-party account.
