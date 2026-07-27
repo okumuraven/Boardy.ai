@@ -47,6 +47,7 @@ defmodule VokaziWeb.Admin.MemberController do
         search: params["search"],
         role: params["role"],
         industry: params["industry"],
+        stuck: params["stuck"] == "true",
         page: parse_page(params["page"])
       })
 
@@ -115,6 +116,21 @@ defmodule VokaziWeb.Admin.MemberController do
     end
   end
 
+  @doc "Moderator+ - assigns a staff-set cohort label, the Bizi Buddy System's same-batch pairing input. Audit-logged."
+  def set_batch(conn, %{"id" => id} = params) do
+    if conn.assigns.current_admin.admin_role in ["moderator", "superadmin"] do
+      admin = conn.assigns.current_admin
+
+      case Members.set_batch(id, admin.id, params["batch"]) do
+        {:ok, user} -> json(conn, %{id: user.id, batch: user.batch})
+        {:error, :not_found} -> conn |> put_status(404) |> json(%{error: "Not found"})
+        {:error, _changeset} -> conn |> put_status(422) |> json(%{error: "Invalid data"})
+      end
+    else
+      conn |> put_status(403) |> json(%{error: "Forbidden - requires moderator or higher"})
+    end
+  end
+
   defp parse_page(nil), do: 1
 
   defp parse_page(page) do
@@ -137,6 +153,7 @@ defmodule VokaziWeb.Admin.MemberController do
       location: user.location,
       onboarding_completed: user.onboarding_completed,
       is_verified: user.is_verified,
+      batch: user.batch,
       inserted_at: user.inserted_at
     }
 

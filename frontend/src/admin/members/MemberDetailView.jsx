@@ -14,9 +14,13 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
   const [revealedPhone, setRevealedPhone] = useState(null);
   const [revealing, setRevealing] = useState(false);
   const [revealError, setRevealError] = useState('');
+  const [batchInput, setBatchInput] = useState('');
+  const [savingBatch, setSavingBatch] = useState(false);
+  const [batchError, setBatchError] = useState('');
 
   const canVerify = admin && ['moderator', 'superadmin'].includes(admin.admin_role);
   const canRevealPhone = canVerify;
+  const canSetBatch = canVerify;
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +32,7 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
         if (!res.ok) throw new Error('failed');
         return res.json();
       })
-      .then((data) => { if (!cancelled) setMember(data); })
+      .then((data) => { if (!cancelled) { setMember(data); setBatchInput(data.batch || ''); } })
       .catch((e) => { if (!cancelled) setError(e.message === 'not_found' ? 'Member not found.' : "Couldn't load this member."); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -49,6 +53,24 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
       setVerifyError("Couldn't update verification status.");
     } finally {
       setVerifying(false);
+    }
+  };
+
+  const saveBatch = async () => {
+    setSavingBatch(true);
+    setBatchError('');
+    try {
+      const res = await apiFetch(`/api/admin/members/${memberId}/batch`, {
+        method: 'PATCH',
+        body: JSON.stringify({ batch: batchInput.trim() }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      setMember((prev) => ({ ...prev, batch: data.batch }));
+    } catch {
+      setBatchError("Couldn't save the batch.");
+    } finally {
+      setSavingBatch(false);
     }
   };
 
@@ -97,6 +119,27 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
               </div>
             </div>
             <Field label="Joined" value={new Date(member.inserted_at).toLocaleDateString()} />
+            {canSetBatch ? (
+              <div>
+                <div className="admin-detail-field-label">Batch</div>
+                <div className="admin-detail-field-value" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <input
+                    type="text"
+                    placeholder="e.g. Jan 2025"
+                    value={batchInput}
+                    onChange={(e) => setBatchInput(e.target.value)}
+                    style={{ width: '110px', background: 'var(--ink-line)', border: '1px solid var(--ink-line-strong)', color: 'var(--paper)', borderRadius: '6px', padding: '0.3rem 0.5rem', fontSize: '0.85rem' }}
+                  />
+                  {batchInput !== (member.batch || '') && (
+                    <button className="btn-ghost btn-sm" onClick={saveBatch} disabled={savingBatch}>
+                      {savingBatch ? '...' : 'Save'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <Field label="Batch" value={member.batch || '-'} />
+            )}
             {canRevealPhone && (
               <div>
                 <div className="admin-detail-field-label">Phone</div>
@@ -118,6 +161,7 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
 
           {verifyError && <p style={{ color: 'var(--warn)', fontSize: '0.82rem', marginBottom: '1rem' }}>{verifyError}</p>}
           {revealError && <p style={{ color: 'var(--warn)', fontSize: '0.82rem', marginBottom: '1rem' }}>{revealError}</p>}
+          {batchError && <p style={{ color: 'var(--warn)', fontSize: '0.82rem', marginBottom: '1rem' }}>{batchError}</p>}
 
           {'offer_text' in member ? (
             <>

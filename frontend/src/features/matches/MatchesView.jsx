@@ -109,6 +109,7 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
           <ChatRoomView
             roomId={selectedDetail.chat_room_id}
             matchId={selectedDetail.match_id}
+            pairingKind={selectedDetail.pairing_kind}
             profile={profile}
             partnerName={selectedDetail.other_user?.name}
             startInScheduling={startInScheduling}

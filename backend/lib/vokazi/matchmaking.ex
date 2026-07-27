@@ -80,6 +80,7 @@ defmodule Vokazi.Matchmaking do
       match_id: match.id,
       status: match.status,
       ai_score: match.ai_score,
+      pairing_kind: match.pairing_kind,
       my_response: my_response,
       other_response: other_response,
       chat_room_id: chat_room && chat_room.id,

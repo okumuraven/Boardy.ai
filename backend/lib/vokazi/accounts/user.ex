@@ -36,6 +36,13 @@ defmodule Vokazi.Accounts.User do
     # distinct from admin_role/admin_status above (which are about staff
     # identity, not member trust signals). Also never member-castable.
     field :is_verified, :boolean, default: false
+    # Staff-assigned cohort label (e.g. "Jan 2025") mirroring Kuzana's
+    # real accelerator batches - only meaningful for the Bizi Buddy
+    # System's same-batch pairing rule (kuzana_playbook.md §6). Free
+    # text, not a closed set - batches are an open-ended, ongoing
+    # sequence, not a fixed list. Never member-castable, same reason as
+    # admin_role/is_verified above.
+    field :batch, :string
 
     has_one :profile, Vokazi.Accounts.Profile
 
@@ -122,8 +129,8 @@ defmodule Vokazi.Accounts.User do
   end
 
   @doc """
-  The ONLY path that can ever set admin_role/admin_status/is_verified -
-  used exclusively by `Vokazi.Admin.*` context modules and the
+  The ONLY path that can ever set admin_role/admin_status/is_verified/
+  batch - used exclusively by `Vokazi.Admin.*` context modules and the
   `mix admin.grant` bootstrap task, never by any member-facing controller.
   Each field is independently optional here (e.g. a suspend action only
   touches admin_status, an invite-acceptance only touches admin_role +
@@ -131,7 +138,7 @@ defmodule Vokazi.Accounts.User do
   """
   def admin_changeset(user, attrs) do
     user
-    |> cast(attrs, [:admin_role, :admin_status, :is_verified])
+    |> cast(attrs, [:admin_role, :admin_status, :is_verified, :batch])
     |> validate_inclusion(:admin_role, @admin_roles)
     |> validate_inclusion(:admin_status, @admin_statuses)
   end

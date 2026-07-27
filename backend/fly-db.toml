@@ -1,0 +1,33 @@
+# Fly.io app config for the Postgres database - deployed as the exact
+# same image already proven in local dev (docker-compose.yml), rather
+# than Fly's own unmanaged Postgres cluster tooling, since that tooling
+# doesn't ship pgvector out of the box (confirmed via Fly's own
+# community docs) and this app genuinely needs it for AI match
+# retrieval. Deliberately no [http_service]/[[services]] block - this
+# app is reachable only over Fly's private 6PN network at
+# kuzana-connect-db.internal:5432, never the public internet.
+app = "kuzana-connect-db"
+primary_region = "jnb"
+
+[build]
+  image = "pgvector/pgvector:pg15"
+
+[env]
+  POSTGRES_USER = "postgres"
+  POSTGRES_DB = "vokazi_prod"
+  # Mounted at /data (below), not directly at postgres's own data path -
+  # the mount root always contains a lost+found directory (a
+  # freshly-formatted volume gotcha), and initdb refuses to initialize
+  # into a non-empty directory. A subdirectory the postgres user
+  # actually owns and creates itself avoids both that and permission
+  # conflicts from nesting under /var/lib/postgresql/data directly.
+  PGDATA = "/data/postgres"
+
+[[mounts]]
+  source = "pgdata"
+  destination = "/data"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

@@ -6,9 +6,10 @@ import { ROLES, roleTitle } from '../../constants/roles';
 export default function MembersListView({ onSelect }) {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
+  const [stuckOnly, setStuckOnly] = useState(false);
   const { items, page, setPage, total_pages, total_count, loading, error } = useAdminList(
     '/api/admin/members',
-    { search, role },
+    { search, role, stuck: stuckOnly ? 'true' : '' },
     'members',
   );
 
@@ -27,6 +28,10 @@ export default function MembersListView({ onSelect }) {
             <option key={r} value={r}>{roleTitle(r)}</option>
           ))}
         </select>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--muted)', fontSize: '0.85rem' }}>
+          <input type="checkbox" checked={stuckOnly} onChange={(e) => setStuckOnly(e.target.checked)} />
+          Stuck in onboarding
+        </label>
       </div>
 
       {loading && <div className="admin-empty-state">Loading members...</div>}
@@ -43,6 +48,7 @@ export default function MembersListView({ onSelect }) {
                   <th>Name</th>
                   <th>Role</th>
                   <th>Company</th>
+                  <th>Batch</th>
                   <th>Onboarded</th>
                   <th>Interview</th>
                   <th>Verified</th>
@@ -54,6 +60,7 @@ export default function MembersListView({ onSelect }) {
                     <td>{m.full_name || m.email}</td>
                     <td>{m.role || '-'}</td>
                     <td>{m.company || '-'}</td>
+                    <td>{m.batch || '-'}</td>
                     <td>{m.onboarding_completed ? 'Yes' : 'No'}</td>
                     <td>{m.has_completed_interview ? 'Yes' : 'No'}</td>
                     <td>{m.is_verified ? 'Yes' : '-'}</td>

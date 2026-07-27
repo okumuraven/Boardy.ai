@@ -7,7 +7,7 @@ config :vokazi, VokaziWeb.Endpoint,
   force_ssl: [
     rewrite_on: [:x_forwarded_proto],
     exclude: [
-      # paths: ["/health"],
+      paths: ["/api/health"],
       # Local-only test access (LAN IP + this machine's Tailscale IP) -
       # there's no TLS listener in this docker-compose setup, so forcing
       # SSL here just breaks every non-localhost request with a redirect

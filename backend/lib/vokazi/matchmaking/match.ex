@@ -13,6 +13,12 @@ defmodule Vokazi.Matchmaking.Match do
   # introductions verified as useful by both parties" requirement - see
   # "Admin panel.md" §7.1.
   @outcome_statuses ["confirmed_valuable", "attempted_no_result", "unresponsive"]
+  # nil = ordinary match (AI-matched, directory-requested, or Strategy
+  # Board-style manual pairing). "buddy" = a Bizi Buddy System pairing
+  # (kuzana_playbook.md §6) - reuses the same match/chat infrastructure
+  # rather than a parallel system, just tagged distinctly. See
+  # "things to add.md" #2.
+  @pairing_kinds ["buddy"]
 
   schema "matches" do
     field :similarity_score, :float
@@ -44,6 +50,7 @@ defmodule Vokazi.Matchmaking.Match do
     field :outcome_status, :string
     field :outcome_notes, :string
     field :outcome_recorded_at, :utc_datetime
+    field :pairing_kind, :string
 
     belongs_to :user_a, Vokazi.Accounts.User
     belongs_to :user_b, Vokazi.Accounts.User
@@ -93,8 +100,10 @@ defmodule Vokazi.Matchmaking.Match do
       :outcome_status,
       :outcome_notes,
       :outcome_recorded_by_id,
-      :outcome_recorded_at
+      :outcome_recorded_at,
+      :pairing_kind
     ])
     |> validate_inclusion(:outcome_status, @outcome_statuses)
+    |> validate_inclusion(:pairing_kind, @pairing_kinds)
   end
 end

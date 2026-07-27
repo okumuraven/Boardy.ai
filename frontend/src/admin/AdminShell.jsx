@@ -10,12 +10,16 @@ import ScheduleDetailView from './schedules/ScheduleDetailView';
 import StatsView from './stats/StatsView';
 import AdminAccountsView from './admins/AdminAccountsView';
 import AuditLogView from './admins/AuditLogView';
+import BuddyPairingsView from './buddy_pairings/BuddyPairingsView';
+import BuddyConcernsView from './buddy_pairings/BuddyConcernsView';
 
 const TABS = [
   { key: 'members', label: 'Members' },
   { key: 'matches', label: 'Matches' },
   { key: 'decline_reasons', label: 'Decline reasons' },
   { key: 'schedules', label: 'Schedules' },
+  { key: 'buddy_pairings', label: 'Buddy Pairs' },
+  { key: 'buddy_concerns', label: 'Buddy Concerns' },
   { key: 'stats', label: 'Stats' },
 ];
 
@@ -96,6 +100,9 @@ export default function AdminShell({ admin, onLogout }) {
             <SchedulesListView onSelect={setSelectedScheduleId} />
           )
         )}
+
+        {tab === 'buddy_pairings' && <BuddyPairingsView admin={admin} />}
+        {tab === 'buddy_concerns' && <BuddyConcernsView admin={admin} />}
 
         {tab === 'stats' && <StatsView />}
 

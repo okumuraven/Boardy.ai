@@ -24,6 +24,16 @@ export default function StatsView() {
       </div>
 
       <div className="panel" style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
+        <p className="panel-label">Onboarding funnel</p>
+        <p style={{ color: 'var(--muted)', fontSize: '0.82rem', marginBottom: '1rem' }}>
+          Where people drop off - the highest-leverage place to follow up, per Kuzana's own playbook.
+        </p>
+        <FunnelBar label="Signed in" value={stats.funnel.signed_in} max={stats.funnel.signed_in} />
+        <FunnelBar label="Profile completed" value={stats.funnel.profile_completed} max={stats.funnel.signed_in} />
+        <FunnelBar label="Interview completed" value={stats.funnel.interview_completed} max={stats.funnel.signed_in} />
+      </div>
+
+      <div className="panel" style={{ marginBottom: '1.25rem', textAlign: 'left' }}>
         <p className="panel-label">Matches by status</p>
         <div className="admin-detail-grid">
           {Object.entries(stats.matches_by_status).map(([status, count]) => (
@@ -58,6 +68,22 @@ function StatCard({ label, value }) {
     <div className="admin-stat-card">
       <div className="admin-stat-value">{value}</div>
       <div className="admin-stat-label">{label}</div>
+    </div>
+  );
+}
+
+function FunnelBar({ label, value, max }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+
+  return (
+    <div style={{ marginBottom: '0.9rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--paper)', marginBottom: '0.25rem' }}>
+        <span>{label}</span>
+        <span style={{ color: 'var(--muted)' }}>{value} ({pct}%)</span>
+      </div>
+      <div style={{ height: '6px', borderRadius: '4px', background: 'var(--ink-line)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, background: 'var(--brass)' }} />
+      </div>
     </div>
   );
 }

@@ -1,0 +1,44 @@
+# Production image for Fly.io - kept separate from the local dev
+# Dockerfile (which relies on docker-compose's bind mount over /app and
+# would behave confusingly if reused here). Two stages: a full Elixir
+# image to compile, a slimmer one to actually run - smaller image,
+# no build toolchain shipped to production, non-root at runtime.
+FROM elixir:1.15 AS build
+
+RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV HEX_HTTP_TIMEOUT=120 \
+    HEX_HTTP_CONCURRENCY=1 \
+    MIX_ENV=prod
+
+RUN mix local.hex --force && mix local.rebar --force
+
+COPY mix.exs mix.lock ./
+COPY config config
+RUN mix deps.get --only prod && mix deps.compile
+
+COPY . .
+RUN mix compile
+
+FROM elixir:1.15-slim AS runtime
+
+RUN apt-get update \
+    && apt-get install -y postgresql-client openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 1000 vokazi \
+    && useradd --uid 1000 --gid vokazi --shell /bin/bash --create-home vokazi
+
+WORKDIR /app
+ENV MIX_ENV=prod
+
+COPY --from=build --chown=vokazi:vokazi /app /app
+
+USER vokazi
+
+RUN mix local.hex --force && mix local.rebar --force
+
+EXPOSE 4000
+
+CMD ["sh", "-c", "mix ecto.migrate && mix phx.server"]

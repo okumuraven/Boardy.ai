@@ -3,11 +3,12 @@ import { Socket, Presence } from "phoenix";
 import { getToken } from "../lib/api";
 import SchedulingFlow from "../features/scheduling";
 import MatchProfilePanel from "../features/matches/MatchProfilePanel";
+import FlagConcernPanel from "../features/matches/FlagConcernPanel";
 import CallPanel from "./CallPanel";
 
 const HISTORY_PAGE_SIZE = 50;
 
-export default function ChatRoomView({ roomId, matchId, profile, partnerName, startInScheduling, onBack }) {
+export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
   // notification click asked for it (`startInScheduling`), or when we're
@@ -171,6 +172,16 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
                 <span className="btn-icon">📅</span>
                 <span className="btn-label">{panelView === "schedule" ? "Hide Schedule" : "Schedule Intro Call"}</span>
               </button>
+              {pairingKind === "buddy" && (
+                <button
+                  onClick={() => setPanelView((v) => (v === "concern" ? null : "concern"))}
+                  className={`chat-action-btn ${panelView === "concern" ? "btn-primary" : "btn-ghost"}`}
+                  title={panelView === "concern" ? "Close" : "Flag a concern to the Kuzana team"}
+                >
+                  <span className="btn-icon">⚠️</span>
+                  <span className="btn-label">{panelView === "concern" ? "Close" : "Flag a Concern"}</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -250,6 +261,9 @@ export default function ChatRoomView({ roomId, matchId, profile, partnerName, st
           )}
           {panelView === "profile" && matchId && (
             <MatchProfilePanel matchId={matchId} profile={profile} partnerName={partnerName} onClose={() => setPanelView(null)} />
+          )}
+          {panelView === "concern" && matchId && (
+            <FlagConcernPanel matchId={matchId} onClose={() => setPanelView(null)} />
           )}
         </div>
       </div>

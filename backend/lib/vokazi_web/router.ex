@@ -33,6 +33,9 @@ defmodule VokaziWeb.Router do
   scope "/api", VokaziWeb do
     pipe_through :api
 
+    # Fly.io's health check target - see backend/fly.toml.
+    get "/health", HealthController, :show
+
     # The one entry point into this app - every other route requires the
     # session token this issues.
     post "/auth/google/signin", AuthController, :google_signin
@@ -55,6 +58,7 @@ defmodule VokaziWeb.Router do
     get "/matches/pending", MatchController, :pending_for_user
     get "/matches/:id/status", MatchController, :status
     post "/matchmaking/find_match", MatchController, :find_match
+    post "/matches/:id/flag_concern", MatchController, :flag_concern
 
     # Searchable/filterable member directory (Phase 4)
     get "/directory", DirectoryController, :index
@@ -128,6 +132,7 @@ defmodule VokaziWeb.Router do
     get "/members/:id", MemberController, :show
     patch "/members/:id/verify", MemberController, :set_verified
     post "/members/:id/reveal_phone", MemberController, :reveal_phone
+    patch "/members/:id/batch", MemberController, :set_batch
 
     get "/matches", MatchController, :index
     get "/matches/decline_reasons", MatchController, :decline_reasons
@@ -139,6 +144,12 @@ defmodule VokaziWeb.Router do
     get "/schedules/:id", ScheduleController, :show
 
     get "/stats", StatsController, :show
+
+    # Bizi Buddy System (kuzana_playbook.md §6) - see "things to add.md" #2
+    get "/buddy_pairings", BuddyPairingController, :index
+    post "/buddy_pairings", BuddyPairingController, :create
+    get "/buddy_pairings/concerns", BuddyPairingController, :concerns
+    patch "/buddy_pairings/concerns/:id/resolve", BuddyPairingController, :resolve_concern
 
     # Superadmin only - checked inside each action, not just by the pipeline
     get "/admins", AdminAccountController, :index

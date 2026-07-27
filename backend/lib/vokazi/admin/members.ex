@@ -64,6 +64,7 @@ defmodule Vokazi.Admin.Members do
       location: u.location,
       onboarding_completed: u.onboarding_completed,
       is_verified: u.is_verified,
+      batch: u.batch,
       has_completed_interview: !!(p && p.offer_text && p.need_text),
       inserted_at: u.inserted_at
     }
@@ -110,6 +111,38 @@ defmodule Vokazi.Admin.Members do
             target_type: "user",
             target_id: updated.id,
             metadata: %{"is_verified" => verified?}
+          })
+        end)
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{user: updated}} -> {:ok, updated}
+          {:error, _step, changeset, _changes} -> {:error, changeset}
+        end
+    end
+  end
+
+  @doc """
+  Moderator+ only (checked by the controller) - a staff-assigned cohort
+  label (e.g. "Jan 2025"), mirroring Kuzana's real accelerator batches.
+  Only meaningful today as the Bizi Buddy System's same-batch pairing
+  input (kuzana_playbook.md §6) - audit-logged like every other
+  member-affecting mutation.
+  """
+  def set_batch(member_id, admin_id, batch) do
+    case Repo.get(User, member_id) do
+      nil ->
+        {:error, :not_found}
+
+      user ->
+        Ecto.Multi.new()
+        |> Ecto.Multi.update(:user, User.admin_changeset(user, %{batch: batch}))
+        |> Ecto.Multi.insert(:audit_log, fn %{user: updated} ->
+          AuditLog.changeset(%AuditLog{}, %{
+            admin_user_id: admin_id,
+            action: "member.set_batch",
+            target_type: "user",
+            target_id: updated.id,
+            metadata: %{"batch" => batch}
           })
         end)
         |> Repo.transaction()

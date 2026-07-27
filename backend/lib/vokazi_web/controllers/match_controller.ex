@@ -2,7 +2,7 @@ defmodule VokaziWeb.MatchController do
   use VokaziWeb, :controller
   import Ecto.Query, only: [from: 2]
 
-  alias Vokazi.{Matchmaking, Repo}
+  alias Vokazi.{BuddyPairings, Matchmaking, Repo}
   alias Vokazi.Accounts.{User, Profile}
   alias Vokazi.Matchmaking.Match
 
@@ -138,6 +138,32 @@ defmodule VokaziWeb.MatchController do
     end
   end
 
+  @doc """
+  Bizi Buddy System early-warning flag (kuzana_playbook.md §6) - only
+  works on the caller's own buddy-kind match, only ever visible to
+  Moderator+ staff, never the other buddy.
+  """
+  def flag_concern(conn, %{"id" => match_id, "message" => message}) do
+    user_id = conn.assigns.current_user_id
+
+    case BuddyPairings.flag_concern(to_int(match_id), user_id, message) do
+      {:ok, concern} ->
+        json(conn, %{id: concern.id})
+
+      {:error, :not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "Not found"})
+
+      {:error, :not_a_participant} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a participant in this pairing"})
+
+      {:error, :not_a_buddy_pairing} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "This isn't a buddy pairing"})
+
+      {:error, _changeset} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "Invalid data"})
+    end
+  end
+
   defp match_detail(match, user_id) do
     {my_response, other_response, other_user_id, my_pitch} =
       if match.user_a_id == user_id do
@@ -153,6 +179,7 @@ defmodule VokaziWeb.MatchController do
       match_id: match.id,
       similarity_score: match.similarity_score,
       ai_score: match.ai_score,
+      pairing_kind: match.pairing_kind,
       ai_reasoning: match.ai_reasoning,
       ai_strengths: match.ai_strengths,
       ai_gaps: match.ai_gaps,

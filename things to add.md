@@ -13,7 +13,10 @@ Check an item's box when it's actually shipped and verified, not when it's merel
 
 ## 1. Onboarding conversion funnel
 
-- [ ] Not started
+- [x] Shipped 2026-07-26 — `Vokazi.Admin.Stats.summary/0`'s `funnel` key (signed_in/
+      profile_completed/interview_completed), `Vokazi.Admin.Members`'s `:stuck` filter, funnel bar
+      chart on `StatsView`, "Stuck in onboarding" checkbox on `MembersListView`. Verified against
+      real data (curl + live browser).
 
 **Why:** `kuzana_playbook.md` §8's single clearest stated insight: *"the real leverage point is
 improving conversion of incomplete applications, not driving more raw traffic"* — with a named
@@ -39,7 +42,13 @@ describes.
 
 ## 2. Bizi Buddy System (structured accountability-partner feature)
 
-- [ ] Not scoped yet — needs an explicit product decision before any implementation work starts
+- [x] Shipped 2026-07-27 — `batch` field on users (staff-set), pairings reuse the existing
+      Match+Chat infrastructure (`pairing_kind: "buddy"`, created straight into `"unlocked"` with
+      an immediate chat room), cross-company/same-batch validation, weekly check-in reminders via
+      a new Oban cron worker, member-facing "Flag a Concern" → `buddy_concerns` → Moderator+
+      queue/resolve, new "Buddy Pairs" + "Buddy Concerns" admin tabs. Verified against real data
+      (curl + live browser) with all validation rules (self-pairing, same-company, batch mismatch,
+      duplicate pairing) confirmed.
 
 **Why:** `kuzana_playbook.md` §6/§12 names this directly: *"a ready-made spec if Connect ever
 builds a structured accountability-partner feature, distinct from its current AI-matched networking
