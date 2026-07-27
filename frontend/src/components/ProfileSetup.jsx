@@ -46,7 +46,10 @@ export default function ProfileSetup({ onComplete }) {
       // show up until the next edit-and-save round-tripped through the
       // server. This is the same refetch-after-write pattern
       // ProfileView's edit form already uses (onProfileUpdated).
-      await onComplete();
+      // Passes the name along so App.jsx's one-time Welcome screen can
+      // greet the person by name before their real profile has even been
+      // fetched yet.
+      await onComplete(name);
 
     } catch (error) {
       // Never silently proceed on failure - a fake local profile means the

@@ -1,7 +1,7 @@
 defmodule VokaziWeb.AuthController do
   use VokaziWeb, :controller
 
-  alias Vokazi.Accounts.User
+  alias Vokazi.Accounts
   alias Vokazi.Auth.{GoogleSignIn, Session}
 
   @doc """
@@ -11,10 +11,16 @@ defmodule VokaziWeb.AuthController do
   client-supplied claim), and issues a backend session token. Every
   other route requires this token (`VokaziWeb.AuthPlug`) - there is no
   other way to become "logged in" as any account, including your own.
+
+  This never grants admin access as a side effect, even if the
+  signing-in email happens to have a pending invite - that only happens
+  through the dedicated `VokaziWeb.Admin.InviteAcceptController` flow,
+  which enforces the invite's expiry and exact-account match. See
+  "Admin panel.md" §3, §6.
   """
   def google_signin(conn, %{"id_token" => id_token}) do
     with {:ok, %{sub: sub, email: email, name: name}} <- GoogleSignIn.verify_id_token(id_token),
-         {:ok, user} <- find_or_create_user(sub, email, name) do
+         {:ok, user} <- Accounts.find_or_create_by_google(sub, email, name) do
       json(conn, %{token: Session.issue_token(user.id), user: %{id: user.id, onboarding_completed: user.onboarding_completed}})
     else
       {:error, _reason} ->
@@ -24,17 +30,5 @@ defmodule VokaziWeb.AuthController do
 
   def google_signin(conn, _params) do
     conn |> put_status(400) |> json(%{error: "Missing id_token"})
-  end
-
-  defp find_or_create_user(sub, email, name) do
-    case Vokazi.Repo.get_by(User, google_sub: sub) do
-      nil ->
-        %User{}
-        |> User.google_signin_changeset(%{google_sub: sub, email: email, full_name: name})
-        |> Vokazi.Repo.insert()
-
-      user ->
-        {:ok, user}
-    end
   end
 end

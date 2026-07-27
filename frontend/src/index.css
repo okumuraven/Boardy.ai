@@ -99,12 +99,6 @@ body {
   position: relative;
 }
 
-/* Kept as a hook for screens that want the onboarding-container's default
-   padding removed (pre-auth marketing screens sit flush instead). */
-.app-container.no-padding .onboarding-container {
-  padding-top: 0;
-}
-
 /* Navbar */
 .nav-bar {
   display: flex;
@@ -177,7 +171,13 @@ body {
   align-items: center;
   gap: 3rem;
   text-align: left;
-  padding: 0 4rem;
+  /* .nav-bar is position:absolute (out of flow), so this top padding is
+     the ONLY thing keeping hero content clear of it - centering alone
+     only worked here by luck, for whatever content happened to be short
+     enough. A fixed floor guarantees clearance regardless of how tall
+     the hero content grows (a stat callout, an example card, etc.),
+     instead of quietly breaking again next time copy changes. */
+  padding: 9rem 4rem 3rem;
   max-width: 1200px;
   margin: 0 auto;
   z-index: 10;
@@ -192,6 +192,46 @@ body {
   justify-content: center;
 }
 .onboarding-visual svg { width: 100%; max-width: 280px; height: auto; }
+
+/* Landing-page-only: the brand guide's own example composition (bold
+   text anchored left, a highlighted metric callout on the right, golden-
+   ratio split) - gives the visual column real content instead of a lone
+   icon floating in empty space. */
+.hero-visual-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.hero-stat-callout {
+  background: var(--brass);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1.75rem 2.25rem;
+  text-align: center;
+  min-width: 190px;
+}
+
+.hero-stat-callout .num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.hero-stat-callout .cap {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .hero-visual-stack { gap: 1.5rem; }
+  .hero-stat-callout { padding: 1.25rem 1.75rem; min-width: 150px; }
+  .hero-stat-callout .num { font-size: 2rem; }
+}
 
 .ai-greeting {
   font-family: var(--font-display);

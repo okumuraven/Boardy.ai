@@ -49,23 +49,33 @@ defmodule Vokazi.AI do
       url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
 
       prompt = """
-      You are an expert B2B matchmaker and executive summary writer. Read the conversation below and extract the user's Offer, Need, and contact preference.
+      You are helping a Kuzana Connect member write their own profile in their own words - not
+      selling them, not writing a corporate bio. Read the conversation below and extract their
+      Offer, Need, and contact preference.
 
-      Write "offer" and "need" in the FIRST PERSON, as if the user themselves is speaking directly
-      ("I'm a fintech founder with two years of traction..." / "I'm looking for a technical
-      co-founder who..."). NEVER write in the third person ("The user is..." / "They are looking
-      for...") - that reads like a case file, not a direct personal statement, and this text is
-      shown back to the user as their own profile ("Your Offer"/"Your Need").
+      Write "offer" and "need" in the FIRST PERSON, as if the member themselves is speaking
+      directly ("I run a logistics company delivering to retailers across three counties..." /
+      "I'm looking for a lender who understands seasonal cash-flow gaps"). NEVER write in the
+      third person ("The user is..." / "They are looking for...") - that reads like a case file,
+      not a direct personal statement, and this text is shown back to the member as their own
+      profile ("Your Offer"/"Your Need").
 
-      1. "offer": What is their core skill, product, or value proposition? (1-2 sentences, first person). Make it sound incredibly strong, professional, and confident. Use high-impact action verbs.
-      2. "need": What is their biggest bottleneck or requirement? (1-2 sentences, first person). Frame this professionally as a strategic requirement or investment opportunity.
+      1. "offer": What is their core skill, business, or track record? (1-2 sentences, first
+         person, direct - say it plainly, the way a real Kuzana member would describe their own
+         business to a peer, not the way a pitch deck would).
+      2. "need": What is their biggest bottleneck or requirement right now? (1-2 sentences, first
+         person, specific and concrete).
       3. "contact_preference": how they'd rather connect with a future intro - exactly one of "call", "video", or "chat". Infer this from anything they said about preferring to talk, hop on video, or message first. Default to "call" if nothing indicates a preference.
 
       Rules:
       - Return ONLY a valid JSON object with keys "offer", "need", and "contact_preference".
-      - DO NOT quote the raw conversation. Synthesize it into a highly polished, professional executive summary, written in the first person as described above.
-      - Ensure the tone is persuasive, strong, and business-focused.
-      - If the conversation is cut off or missing details, make your best professional inference or write "Not explicitly stated".
+      - DO NOT quote the raw conversation. Synthesize it into a clear, direct first-person
+        statement, written as described above.
+      - Never imply a ranking or judgment about the person's business stage, size, or sector - an
+        early-revenue founder and an institutional lender get exactly the same plain, respectful
+        treatment. No "incredibly strong" or inflated confidence - just what's real.
+      - If the conversation is cut off or missing details, make your best honest inference or
+        write "Not explicitly stated".
 
       Conversation Transcript:
       #{transcript}
@@ -199,7 +209,7 @@ defmodule Vokazi.AI do
   `%{"headline", "strengths", "gaps"}` written directly to that person
   ("you need X because...") rather than an unexplained percentage or a
   report about two strangers - the goal is for the match screen to feel
-  like Vokazi already knows this person and their needs, since that
+  like Kuzana Connect already knows this person and their needs, since that
   trust is what makes someone willing to say yes.
   """
   def validate_match(user_a, user_b) do
@@ -214,8 +224,9 @@ defmodule Vokazi.AI do
       name_b = user_b[:name] || "Person B"
 
       prompt = """
-      You are a skeptical, senior B2B matchmaking analyst. Two founders/professionals
-      were shortlisted as a potential introduction by a vector-similarity search.
+      You are a sharp, skeptical judge of whether two Kuzana Connect members are a genuinely
+      useful match - not just two people who used similar words. Two members were shortlisted
+      as a potential introduction by a vector-similarity search.
       Your job is to catch false positives: pairs that merely *sound* similar in
       wording, but where one person's Need is not actually satisfied by the other's
       Offer (in either direction) - and to be transparent about exactly what does

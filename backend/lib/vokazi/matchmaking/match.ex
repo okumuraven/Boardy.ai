@@ -9,6 +9,10 @@ defmodule Vokazi.Matchmaking.Match do
   # boardy_comparison.md); mutual consent now unlocks immediately.
   @statuses ["pending_consent", "declined", "unlocked", "slashed"]
   @responses ["pending", "accepted", "declined"]
+  # The literal evidence trail for the Stage 2 bounty's "5 meaningful
+  # introductions verified as useful by both parties" requirement - see
+  # "Admin panel.md" §7.1.
+  @outcome_statuses ["confirmed_valuable", "attempted_no_result", "unresponsive"]
 
   schema "matches" do
     field :similarity_score, :float
@@ -34,8 +38,17 @@ defmodule Vokazi.Matchmaking.Match do
     # real rejection signal instead of guessing.
     field :decline_reason, :string
 
+    # Admin-only fields (never cast by changeset/2 below, only by
+    # admin_changeset/2) - see "Admin panel.md" §3, §7.
+    field :creation_note, :string
+    field :outcome_status, :string
+    field :outcome_notes, :string
+    field :outcome_recorded_at, :utc_datetime
+
     belongs_to :user_a, Vokazi.Accounts.User
     belongs_to :user_b, Vokazi.Accounts.User
+    belongs_to :created_by_admin, Vokazi.Accounts.User
+    belongs_to :outcome_recorded_by, Vokazi.Accounts.User
 
     timestamps()
   end
@@ -64,5 +77,24 @@ defmodule Vokazi.Matchmaking.Match do
     |> validate_inclusion(:user_a_response, @responses)
     |> validate_inclusion(:user_b_response, @responses)
     |> unique_constraint([:user_a_id, :user_b_id])
+  end
+
+  @doc """
+  The ONLY path that touches the admin-only fields (manual match creation
+  metadata, outcome verification) - used exclusively by `Vokazi.Admin.*`
+  context modules, never by any member-facing controller. See
+  "Admin panel.md" §7.
+  """
+  def admin_changeset(match, attrs) do
+    match
+    |> cast(attrs, [
+      :created_by_admin_id,
+      :creation_note,
+      :outcome_status,
+      :outcome_notes,
+      :outcome_recorded_by_id,
+      :outcome_recorded_at
+    ])
+    |> validate_inclusion(:outcome_status, @outcome_statuses)
   end
 end

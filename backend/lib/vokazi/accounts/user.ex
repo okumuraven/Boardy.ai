@@ -23,6 +23,20 @@ defmodule Vokazi.Accounts.User do
     field :company, :string
     field :bio, :string
 
+    # Kuzana staff identity, layered on top of the same Google-verified
+    # account every member has - never a second auth system. nil means
+    # "not staff at all" (the overwhelming majority of rows). Neither
+    # field is ever cast by google_signin_changeset/2 or changeset/2
+    # below - the only path that can ever set them is admin_changeset/2,
+    # used exclusively by Vokazi.Admin.* context modules and the
+    # `mix admin.grant` bootstrap task. See "Admin panel.md" §2-3.
+    field :admin_role, :string
+    field :admin_status, :string
+    # Staff-granted authenticity checkmark on a *member's* account -
+    # distinct from admin_role/admin_status above (which are about staff
+    # identity, not member trust signals). Also never member-castable.
+    field :is_verified, :boolean, default: false
+
     has_one :profile, Vokazi.Accounts.Profile
 
     timestamps()
@@ -62,6 +76,14 @@ defmodule Vokazi.Accounts.User do
 
   def industries, do: @industries
 
+  # Closed set for staff identity - see "Admin panel.md" §5. Deliberately
+  # separate from @roles above (member-facing role taxonomy) - these are
+  # never shown or castable through any member-facing surface.
+  @admin_roles ["superadmin", "moderator", "support"]
+  @admin_statuses ["active", "suspended"]
+
+  def admin_roles, do: @admin_roles
+
   @doc """
   Creates the bare account identity - used exactly once, right after a
   Google ID token is verified (`Vokazi.Auth.GoogleSignIn`). `role`/
@@ -97,6 +119,32 @@ defmodule Vokazi.Accounts.User do
     |> validate_inclusion(:role, @roles)
     |> validate_inclusion(:industry, @industries, message: "must be one of the listed industries")
     |> unique_constraint(:email)
+  end
+
+  @doc """
+  The ONLY path that can ever set admin_role/admin_status/is_verified -
+  used exclusively by `Vokazi.Admin.*` context modules and the
+  `mix admin.grant` bootstrap task, never by any member-facing controller.
+  Each field is independently optional here (e.g. a suspend action only
+  touches admin_status, an invite-acceptance only touches admin_role +
+  admin_status) - callers pass just what they're changing.
+  """
+  def admin_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:admin_role, :admin_status, :is_verified])
+    |> validate_inclusion(:admin_role, @admin_roles)
+    |> validate_inclusion(:admin_status, @admin_statuses)
+  end
+
+  @doc """
+  The minimal self-service edit a newly-accepted admin makes about
+  themselves (name/location) right after accepting an invite - deliberately
+  narrow, same reason `admin_changeset/2` never touches these: an admin
+  editing their own name must never be able to also touch their own
+  `admin_role`/`admin_status` through the same request.
+  """
+  def admin_self_changeset(user, attrs) do
+    cast(user, attrs, [:full_name, :location])
   end
 
   # A blank/unset industry from a caller that doesn't know about this field

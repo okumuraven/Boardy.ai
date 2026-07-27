@@ -4,6 +4,7 @@ import LandingPage from './components/LandingPage';
 import Whitepaper from './components/Whitepaper';
 import Login from './components/Login';
 import ProfileSetup from './components/ProfileSetup';
+import Welcome from './components/Welcome';
 import AppShell from './features/shell/AppShell';
 
 export default function App() {
@@ -14,6 +15,12 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showWhitepaper, setShowWhitepaper] = useState(false);
   const [pendingMatchOpen, setPendingMatchOpen] = useState(null);
+  // Shows the one-time Welcome screen between ProfileSetup submitting and
+  // the real profile being fetched - deliberately transient (not
+  // persisted anywhere), so it only ever appears for a brand-new member
+  // finishing setup in this session, never again on a later login.
+  const [justOnboarded, setJustOnboarded] = useState(false);
+  const [justOnboardedName, setJustOnboardedName] = useState('');
 
   // Fetches the signed-in user's own profile - identity always comes
   // from the verified session token, never a client-supplied id.
@@ -101,6 +108,21 @@ export default function App() {
     setProfile(null);
   };
 
+  // ProfileSetup has just saved successfully - hold off on fetching the
+  // real profile (which is what would normally mount AppShell) until the
+  // person has actually clicked through the Welcome screen, so a
+  // brand-new member always sees it before landing on the voice
+  // interview, not a returning member on every later login.
+  const handleProfileSetupComplete = (name) => {
+    setJustOnboardedName(name || '');
+    setJustOnboarded(true);
+  };
+
+  const handleWelcomeContinue = () => {
+    setJustOnboarded(false);
+    fetchProfile();
+  };
+
   // Passed to Home's "Find a Match" action - on a fresh match, jumps the
   // shell straight to it instead of leaving the user to notice it later.
   const findMatch = () => {
@@ -185,7 +207,10 @@ export default function App() {
     }
 
     if (isAuthenticated && !profile) {
-      return <ProfileSetup onComplete={() => fetchProfile()} />;
+      if (justOnboarded) {
+        return <Welcome name={justOnboardedName} onContinue={handleWelcomeContinue} />;
+      }
+      return <ProfileSetup onComplete={handleProfileSetupComplete} />;
     }
 
     return (
@@ -202,7 +227,7 @@ export default function App() {
   };
 
   return (
-    <div className={`app-container ${(!isAuthenticated && !showLogin) ? 'no-padding' : ''}`}>
+    <div className="app-container">
       {renderScreen()}
     </div>
   );

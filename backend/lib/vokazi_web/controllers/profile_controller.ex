@@ -114,8 +114,8 @@ defmodule VokaziWeb.ProfileController do
 
       changeset =
         Profile.changeset(profile, %{
-          offer_text: "AI: I am an expert Web3 and React developer looking for a fast-paced team.",
-          need_text: "Need: Looking for a blockchain startup with a solid product roadmap.",
+          offer_text: "I run a logistics company handling last-mile delivery for retailers across three counties.",
+          need_text: "Looking for a lender who understands seasonal cash-flow gaps in logistics.",
           contact_preference: "call",
           offer_vector: mock_vector,
           need_vector: mock_vector

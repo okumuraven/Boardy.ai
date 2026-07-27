@@ -15,6 +15,15 @@ defmodule VokaziWeb.Router do
     plug VokaziWeb.AuthPlug
   end
 
+  # Kuzana staff only - same identity flow as everyone else (AuthPlug),
+  # plus a fresh-per-request admin_role/admin_status check (AdminPlug).
+  # See "Admin panel.md" §4.
+  pipeline :admin_api do
+    plug :accepts, ["json"]
+    plug VokaziWeb.AuthPlug
+    plug VokaziWeb.AdminPlug
+  end
+
   # Google's OAuth redirect lands here as a plain browser navigation
   # (Accept: text/html), so it can't go through the `:api` pipeline's
   # `:accepts, ["json"]` plug without a 406.
@@ -96,6 +105,49 @@ defmodule VokaziWeb.Router do
 
     # In-App Calling - dedicated call history view (Phase 3 polish)
     get "/calls/history", CallHistoryController, :index
+  end
+
+  # Admin invite acceptance - public and unauthenticated by necessity
+  # (the whole point is signing in for the very first time), protected
+  # instead by the invite token itself, its expiry, and an exact Google
+  # account match. See VokaziWeb.Admin.InviteAcceptController.
+  scope "/api/admin", VokaziWeb.Admin do
+    pipe_through :api
+
+    get "/invites/:token", InviteAcceptController, :show
+    post "/invites/:token/accept", InviteAcceptController, :accept
+  end
+
+  scope "/api/admin", VokaziWeb.Admin do
+    pipe_through :admin_api
+
+    get "/whoami", MemberController, :whoami
+    patch "/me", MemberController, :update_me
+
+    get "/members", MemberController, :index
+    get "/members/:id", MemberController, :show
+    patch "/members/:id/verify", MemberController, :set_verified
+    post "/members/:id/reveal_phone", MemberController, :reveal_phone
+
+    get "/matches", MatchController, :index
+    get "/matches/decline_reasons", MatchController, :decline_reasons
+    get "/matches/:id", MatchController, :show
+    post "/matches", MatchController, :create
+    post "/matches/:id/outcome", MatchController, :record_outcome
+
+    get "/schedules", ScheduleController, :index
+    get "/schedules/:id", ScheduleController, :show
+
+    get "/stats", StatsController, :show
+
+    # Superadmin only - checked inside each action, not just by the pipeline
+    get "/admins", AdminAccountController, :index
+    post "/admins/invite", AdminAccountController, :invite
+    delete "/admins/invites/:id", AdminAccountController, :revoke_invite
+    patch "/admins/:id/role", AdminAccountController, :set_role
+    patch "/admins/:id/suspend", AdminAccountController, :suspend
+    patch "/admins/:id/reactivate", AdminAccountController, :reactivate
+    get "/audit_logs", AdminAccountController, :audit_logs
   end
 
   scope "/api/auth/google/calendar", VokaziWeb do

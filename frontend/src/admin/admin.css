@@ -1,0 +1,212 @@
+/* Kuzana Connect admin panel - reuses the member app's design tokens
+   (--paper/--muted/--brass/--ink-raised/--ink-line/--signal/--warn from
+   index.css's :root) so it matches light/dark theming automatically,
+   without duplicating the palette. See "Admin panel.md" §11. */
+
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid var(--ink-line);
+  background: var(--ink-raised);
+}
+
+.admin-topbar-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  color: var(--paper);
+  font-weight: 400;
+}
+
+.admin-topbar-who {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-role-pill {
+  text-transform: capitalize;
+  background: var(--brass-wash);
+  color: var(--brass);
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.75rem;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--ink-line);
+  background: var(--ink-raised);
+  overflow-x: auto;
+}
+
+.admin-nav-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-nav-tab:hover { color: var(--paper); }
+.admin-nav-tab.active { color: var(--brass); border-bottom-color: var(--brass); }
+
+.admin-content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+
+.admin-toolbar input,
+.admin-toolbar select {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.admin-toolbar input:focus,
+.admin-toolbar select:focus {
+  outline: none;
+  border-color: var(--brass-dim);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+}
+
+.admin-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.admin-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--ink-line);
+  color: var(--paper);
+}
+
+.admin-table tr.clickable { cursor: pointer; }
+.admin-table tr.clickable:hover td { background: var(--ink-line); }
+
+.admin-pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  background: var(--brass-wash);
+  color: var(--brass);
+}
+
+.admin-pill.warn { background: var(--warn-wash); color: var(--warn); }
+.admin-pill.signal { background: var(--signal-wash); color: var(--signal); }
+.admin-pill.muted { background: var(--ink-line); color: var(--muted); }
+
+.admin-pagination {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.admin-back-link {
+  background: none;
+  border: none;
+  color: var(--brass);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-detail-field-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.2rem;
+}
+
+.admin-detail-field-value {
+  color: var(--paper);
+  font-size: 0.9rem;
+}
+
+.admin-empty-state {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.admin-stat-card {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+}
+
+.admin-stat-value {
+  font-size: 1.8rem;
+  color: var(--paper);
+  font-family: var(--font-display);
+}
+
+.admin-stat-label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+}
