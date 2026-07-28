@@ -9,6 +9,8 @@ import Config
 # exclusions below. Keep in sync with `check_origin` in runtime.exs.
 config :cors_plug,
   origin: [
+    "https://kuzanaconnect.tech",
+    "https://www.kuzanaconnect.tech",
     "https://kuzana-connect.vercel.app",
     "https://parrot.tail780ac1.ts.net",
     "https://zr34p1lt-5173.use.devtunnels.ms",

@@ -28,6 +28,8 @@ config :vokazi, VokaziWeb.Endpoint,
   # the socket with a stolen/leaked token. Keep in sync with the CORS
   # allowlist in config/prod.exs.
   check_origin: [
+    "https://kuzanaconnect.tech",
+    "https://www.kuzanaconnect.tech",
     "https://kuzana-connect.vercel.app",
     "https://parrot.tail780ac1.ts.net",
     "https://zr34p1lt-5173.use.devtunnels.ms",
