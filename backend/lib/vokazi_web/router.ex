@@ -109,6 +109,10 @@ defmodule VokaziWeb.Router do
 
     # In-App Calling - dedicated call history view (Phase 3 polish)
     get "/calls/history", CallHistoryController, :index
+
+    # In-app tester feedback - see "things to add.md"
+    get "/feedback/status", FeedbackController, :status
+    post "/feedback", FeedbackController, :create
   end
 
   # Admin invite acceptance - public and unauthenticated by necessity
@@ -144,6 +148,12 @@ defmodule VokaziWeb.Router do
     get "/schedules/:id", ScheduleController, :show
 
     get "/stats", StatsController, :show
+
+    # Tester feedback - viewing is Support+, sending an announcement is
+    # Moderator+ (checked inside the controller, same as buddy_pairings)
+    get "/feedback", FeedbackController, :index
+    get "/feature_announcements", FeatureAnnouncementController, :index
+    post "/feature_announcements", FeatureAnnouncementController, :create
 
     # Bizi Buddy System (kuzana_playbook.md §6) - see "things to add.md" #2
     get "/buddy_pairings", BuddyPairingController, :index

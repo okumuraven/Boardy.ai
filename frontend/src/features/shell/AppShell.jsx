@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import NotificationBell from "../notifications";
 import IncomingCallBanner from "./IncomingCallBanner";
+import FeedbackWidget from "../../components/FeedbackWidget";
 import HomeView from "../home/HomeView";
 import DirectoryView from "../directory";
 import MatchesView from "../matches/MatchesView";
@@ -109,6 +110,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
   return (
     <div className={`app-shell ${activeTab === "matches" && matchChatOpen ? "chat-open" : ""}`}>
       <IncomingCallBanner profile={profile} onAnswer={openMatchChat} />
+      <FeedbackWidget />
 
       <nav className="shell-rail">
         <div className="rail-brand"><KuzanaMark /></div>

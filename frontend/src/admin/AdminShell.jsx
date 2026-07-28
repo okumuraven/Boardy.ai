@@ -12,6 +12,8 @@ import AdminAccountsView from './admins/AdminAccountsView';
 import AuditLogView from './admins/AuditLogView';
 import BuddyPairingsView from './buddy_pairings/BuddyPairingsView';
 import BuddyConcernsView from './buddy_pairings/BuddyConcernsView';
+import FeedbackListView from './feedback/FeedbackListView';
+import AnnouncementsView from './announcements/AnnouncementsView';
 
 const TABS = [
   { key: 'members', label: 'Members' },
@@ -20,6 +22,8 @@ const TABS = [
   { key: 'schedules', label: 'Schedules' },
   { key: 'buddy_pairings', label: 'Buddy Pairs' },
   { key: 'buddy_concerns', label: 'Buddy Concerns' },
+  { key: 'feedback', label: 'Feedback' },
+  { key: 'announcements', label: 'Announcements' },
   { key: 'stats', label: 'Stats' },
 ];
 
@@ -103,6 +107,9 @@ export default function AdminShell({ admin, onLogout }) {
 
         {tab === 'buddy_pairings' && <BuddyPairingsView admin={admin} />}
         {tab === 'buddy_concerns' && <BuddyConcernsView admin={admin} />}
+
+        {tab === 'feedback' && <FeedbackListView />}
+        {tab === 'announcements' && <AnnouncementsView admin={admin} />}
 
         {tab === 'stats' && <StatsView />}
 

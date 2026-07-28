@@ -48,6 +48,9 @@ defmodule Vokazi.Accounts.User do
     # purely internal bookkeeping so the same account is never reminded
     # twice. See that module's moduledoc for why it's one-shot, not recurring.
     field :interview_reminder_sent_at, :utc_datetime
+    # Same one-shot bookkeeping pattern as interview_reminder_sent_at
+    # above, for Vokazi.Accounts.FeedbackReminderWorker.
+    field :feedback_reminder_sent_at, :utc_datetime
 
     has_one :profile, Vokazi.Accounts.Profile
 
