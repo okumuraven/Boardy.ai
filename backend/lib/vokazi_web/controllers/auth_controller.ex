@@ -20,7 +20,8 @@ defmodule VokaziWeb.AuthController do
   """
   def google_signin(conn, %{"id_token" => id_token}) do
     with {:ok, %{sub: sub, email: email, name: name}} <- GoogleSignIn.verify_id_token(id_token),
-         {:ok, user} <- Accounts.find_or_create_by_google(sub, email, name) do
+         {:ok, user, tag} <- Accounts.find_or_create_by_google(sub, email, name) do
+      if tag == :created, do: enqueue_welcome_email(user)
       json(conn, %{token: Session.issue_token(user.id), user: %{id: user.id, onboarding_completed: user.onboarding_completed}})
     else
       {:error, _reason} ->
@@ -30,5 +31,11 @@ defmodule VokaziWeb.AuthController do
 
   def google_signin(conn, _params) do
     conn |> put_status(400) |> json(%{error: "Missing id_token"})
+  end
+
+  defp enqueue_welcome_email(user) do
+    %{user_id: user.id}
+    |> Vokazi.Accounts.WelcomeEmailWorker.new()
+    |> Oban.insert()
   end
 end

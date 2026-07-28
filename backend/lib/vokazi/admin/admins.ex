@@ -147,7 +147,7 @@ defmodule Vokazi.Admin.Admins do
 
   defp do_accept(invite, sub, email, name) do
     Repo.transaction(fn ->
-      with {:ok, user} <- Accounts.find_or_create_by_google(sub, email, name),
+      with {:ok, user, _tag} <- Accounts.find_or_create_by_google(sub, email, name),
            {:ok, updated} <-
              user
              |> User.admin_changeset(%{admin_role: invite.admin_role, admin_status: "active"})

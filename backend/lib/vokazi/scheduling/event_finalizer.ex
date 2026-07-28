@@ -10,6 +10,7 @@ defmodule Vokazi.Scheduling.EventFinalizer do
   require Logger
   alias Vokazi.Repo
   alias Vokazi.Accounts.User
+  alias Vokazi.Notifications
   alias Vokazi.Scheduling.{IntroSchedule, CredentialStore, GoogleCalendarClient}
 
   def maybe_run(match, %{selected_slot_a: a, selected_slot_b: b} = schedule)
@@ -41,11 +42,11 @@ defmodule Vokazi.Scheduling.EventFinalizer do
         Logger.error("Vokazi.Scheduling.EventFinalizer: neither side has a Calendar token for match #{match.id}")
 
       {side, token} ->
-        finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match.id)
+        finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match, user_a, user_b)
     end
   end
 
-  defp finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match_id) do
+  defp finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match, user_a, user_b) do
     case GoogleCalendarClient.insert_event(token, event_details) do
       {:ok, %{event_id: event_id, meet_link: meet_link}} ->
         schedule
@@ -59,10 +60,27 @@ defmodule Vokazi.Scheduling.EventFinalizer do
         })
         |> Repo.update!()
 
+        notify_confirmed(match, user_a, user_b, start_dt)
+
       {:error, reason} ->
-        Logger.error("Vokazi.Scheduling.EventFinalizer: event creation failed for match #{match_id}: #{inspect(reason)}")
+        Logger.error("Vokazi.Scheduling.EventFinalizer: event creation failed for match #{match.id}: #{inspect(reason)}")
     end
   end
+
+  # No notification of any kind existed here before - a confirmed intro
+  # meeting is exactly the kind of thing easy to miss if not checked
+  # in-app, so this also drives the "calendar_slot" email (see
+  # Vokazi.Notifications.notify/4's @email_types).
+  defp notify_confirmed(match, user_a, user_b, start_dt) do
+    when_str = Calendar.strftime(start_dt, "%B %d at %H:%M UTC")
+    link = Jason.encode!(%{match_id: match.id})
+
+    Notifications.notify(user_a.id, "calendar_slot", "📅 Your intro with #{other_name(user_b)} is confirmed for #{when_str}", link)
+    Notifications.notify(user_b.id, "calendar_slot", "📅 Your intro with #{other_name(user_a)} is confirmed for #{when_str}", link)
+  end
+
+  defp other_name(%User{full_name: name}) when is_binary(name) and name != "", do: name
+  defp other_name(_), do: "Someone"
 
   defp first_available_token([]), do: :none
 

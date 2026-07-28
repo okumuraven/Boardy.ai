@@ -41,18 +41,21 @@ config :web_push_elixir,
   vapid_private_key: System.get_env("VAPID_PRIVATE_KEY"),
   vapid_subject: System.get_env("VAPID_SUBJECT") || "mailto:team@vokazi.app"
 
-# Durable retryable delivery jobs for Web Push (free, open-source Oban
-# core only - no Oban Web/Pro). Cron plugin drives the Bizi Buddy
-# System's weekly check-in reminder (kuzana_playbook.md §6) - Monday
-# 9am UTC, chosen to land at the start of the work week.
+# Durable retryable delivery jobs for Web Push and transactional email
+# (free, open-source Oban core only - no Oban Web/Pro). Cron plugin
+# drives two scheduled sweeps: the Bizi Buddy System's weekly check-in
+# reminder (kuzana_playbook.md §6) at Monday 9am UTC, and the one-shot
+# interview reminder daily at 8am UTC (ahead of the buddy check-in so
+# a member stuck for exactly a week isn't double-nudged the same hour).
 config :vokazi, Oban,
   engine: Oban.Engines.Basic,
   repo: Vokazi.Repo,
-  queues: [push: 5, buddy_checkins: 1],
+  queues: [push: 5, buddy_checkins: 1, mailers: 5],
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
-       {"0 9 * * 1", Vokazi.BuddyPairings.CheckInReminderWorker}
+       {"0 9 * * 1", Vokazi.BuddyPairings.CheckInReminderWorker},
+       {"0 8 * * *", Vokazi.Accounts.InterviewReminderWorker}
      ]}
   ]
 

@@ -43,6 +43,11 @@ defmodule Vokazi.Accounts.User do
     # sequence, not a fixed list. Never member-castable, same reason as
     # admin_role/is_verified above.
     field :batch, :string
+    # Set once, the moment `Vokazi.Accounts.InterviewReminderWorker`
+    # actually sends the one-shot 48h nudge - never member/admin-castable,
+    # purely internal bookkeeping so the same account is never reminded
+    # twice. See that module's moduledoc for why it's one-shot, not recurring.
+    field :interview_reminder_sent_at, :utc_datetime
 
     has_one :profile, Vokazi.Accounts.Profile
 

@@ -18,11 +18,17 @@ defmodule Vokazi.Accounts do
   same column). Adopting the freshly-verified sub onto that row is the
   correct one-time reconciliation; a bare insert would instead hit
   `unique_constraint(:email)` and fail a real, legitimate sign-in.
+
+  Returns `{:ok, user, :created | :existing}` - this function is shared
+  by both the member sign-in AND the admin accept-invite flow, and only
+  the former should ever react to "was this account just created" (e.g.
+  sending a member welcome email), so the tag is left for the caller to
+  act on rather than baked in here.
   """
   def find_or_create_by_google(sub, email, name) do
     case Repo.get_by(User, google_sub: sub) do
       nil -> find_by_email_or_create(email, sub, name)
-      user -> {:ok, user}
+      user -> {:ok, user, :existing}
     end
   end
 
@@ -32,11 +38,16 @@ defmodule Vokazi.Accounts do
         %User{}
         |> User.google_signin_changeset(%{google_sub: sub, email: email, full_name: name})
         |> Repo.insert()
+        |> tag_result(:created)
 
       existing ->
         existing
         |> User.google_signin_changeset(%{google_sub: sub, email: email, full_name: name})
         |> Repo.update()
+        |> tag_result(:existing)
     end
   end
+
+  defp tag_result({:ok, user}, tag), do: {:ok, user, tag}
+  defp tag_result(error, _tag), do: error
 end

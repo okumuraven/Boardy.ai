@@ -12,13 +12,20 @@ defmodule Vokazi.Notifications do
 
   import Ecto.Query, warn: false
   alias Vokazi.Repo
-  alias Vokazi.Notifications.{Notification, PushSubscription, PushWorker}
+  alias Vokazi.Notifications.{Notification, PushSubscription, PushWorker, EmailWorker}
+
+  # Only these types also get an email - the rest (chat_message,
+  # incoming_call, consent_needed) are too frequent or too time-sensitive
+  # to still be useful by the time an email would land, so they stay
+  # in-app + push only. See "things to add.md" for the full reasoning.
+  @email_types ~w(new_match buddy_paired calendar_slot)
 
   @doc """
-  Persists a notification, broadcasts it live to `user:{user_id}`, and
+  Persists a notification, broadcasts it live to `user:{user_id}`,
   enqueues a Web Push delivery job for each of that user's stored
-  subscriptions. Both deliveries are best-effort - the row itself is
-  the durable record either way.
+  subscriptions, and - for a small allowlist of high-value/low-frequency
+  types - also enqueues an email. All three deliveries are best-effort;
+  the row itself is the durable record either way.
   """
   def notify(user_id, type, body, link \\ nil) do
     %Notification{}
@@ -28,12 +35,21 @@ defmodule Vokazi.Notifications do
       {:ok, notification} ->
         VokaziWeb.Endpoint.broadcast!("user:#{user_id}", "new_notification", serialize(notification))
         enqueue_push_jobs(user_id, body, link)
+        maybe_enqueue_email(user_id, type, body)
         {:ok, notification}
 
       error ->
         error
     end
   end
+
+  defp maybe_enqueue_email(user_id, type, body) when type in @email_types do
+    %{user_id: user_id, type: type, body: body}
+    |> EmailWorker.new()
+    |> Oban.insert()
+  end
+
+  defp maybe_enqueue_email(_user_id, _type, _body), do: :ok
 
   @doc """
   Stores a browser's Web Push subscription for `user_id`. Re-subscribing
