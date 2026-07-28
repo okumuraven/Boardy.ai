@@ -48,11 +48,7 @@ export default function FeedbackWidget() {
   return (
     <>
       {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="btn-primary btn-sm"
-          style={{ position: 'fixed', right: '1.25rem', bottom: '1.25rem', zIndex: 90, borderRadius: '999px', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}
-        >
+        <button onClick={() => setOpen(true)} className="btn-primary btn-sm feedback-fab">
           Feedback
         </button>
       )}

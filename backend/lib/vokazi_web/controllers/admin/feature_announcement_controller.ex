@@ -23,7 +23,7 @@ defmodule VokaziWeb.Admin.FeatureAnnouncementController do
 
       case FeatureAnnouncements.create_and_broadcast(admin.id, title, message) do
         {:ok, announcement} -> json(conn, %{id: announcement.id})
-        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: format_errors(changeset)})
+        {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: VokaziWeb.ChangesetErrors.format(changeset)})
       end
     else
       forbidden(conn)
@@ -41,13 +41,5 @@ defmodule VokaziWeb.Admin.FeatureAnnouncementController do
       {int, _} -> int
       :error -> 1
     end
-  end
-
-  defp format_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
   end
 end

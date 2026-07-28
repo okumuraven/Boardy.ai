@@ -34,9 +34,19 @@ defmodule Vokazi.Feedback do
       Repo.one(from(a in FeatureAnnouncement, order_by: [desc: a.inserted_at], limit: 1, select: a.inserted_at))
 
     case {latest_submission_at, latest_announcement_at} do
-      {nil, _} -> true
-      {_submitted, nil} -> false
-      {submitted, announced} -> NaiveDateTime.compare(announced, submitted) == :gt
+      {nil, _} ->
+        true
+
+      {_submitted, nil} ->
+        false
+
+      {submitted, announced} ->
+        # Not strictly :gt - timestamps() is second-precision, so an
+        # announcement and a submission landing in the same second would
+        # otherwise compare :eq and wrongly stay hidden. Treating "same
+        # instant" as "show again too" errs toward an occasional harmless
+        # re-prompt rather than silently never re-showing.
+        NaiveDateTime.compare(announced, submitted) != :lt
     end
   end
 

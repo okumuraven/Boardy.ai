@@ -65,7 +65,7 @@ defmodule VokaziWeb.Admin.MatchController do
           conn |> put_status(422) |> json(%{error: "These users already have a match", match_id: existing.id})
 
         {:error, changeset} ->
-          conn |> put_status(422) |> json(%{error: "Invalid data", details: format_errors(changeset)})
+          conn |> put_status(422) |> json(%{error: "Invalid data", details: VokaziWeb.ChangesetErrors.format(changeset)})
       end
     else
       forbidden(conn)
@@ -82,7 +82,7 @@ defmodule VokaziWeb.Admin.MatchController do
           json(conn, %{id: match.id, outcome_status: match.outcome_status})
 
         {:error, changeset} ->
-          conn |> put_status(422) |> json(%{error: "Invalid data", details: format_errors(changeset)})
+          conn |> put_status(422) |> json(%{error: "Invalid data", details: VokaziWeb.ChangesetErrors.format(changeset)})
       end
     else
       forbidden(conn)
@@ -112,11 +112,4 @@ defmodule VokaziWeb.Admin.MatchController do
   defp parse_bool("false"), do: false
   defp parse_bool(_), do: nil
 
-  defp format_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
-  end
 end

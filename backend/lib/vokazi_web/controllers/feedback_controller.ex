@@ -12,15 +12,7 @@ defmodule VokaziWeb.FeedbackController do
   def create(conn, %{"rating" => rating} = params) do
     case Feedback.create_submission(conn.assigns.current_user_id, rating, params["message"]) do
       {:ok, submission} -> json(conn, %{id: submission.id})
-      {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: format_errors(changeset)})
+      {:error, changeset} -> conn |> put_status(:unprocessable_entity) |> json(%{error: VokaziWeb.ChangesetErrors.format(changeset)})
     end
-  end
-
-  defp format_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
   end
 end

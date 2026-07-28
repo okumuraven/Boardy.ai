@@ -27,7 +27,7 @@ defmodule VokaziWeb.Admin.AdminAccountController do
           conn |> put_status(422) |> json(%{error: "This email already has an admin account - use role change instead"})
 
         {:error, changeset} ->
-          conn |> put_status(422) |> json(%{error: "Invalid data", details: format_errors(changeset)})
+          conn |> put_status(422) |> json(%{error: "Invalid data", details: VokaziWeb.ChangesetErrors.format(changeset)})
       end
     else
       forbidden(conn)
@@ -110,7 +110,7 @@ defmodule VokaziWeb.Admin.AdminAccountController do
   defp error_response(conn, :not_an_admin), do: conn |> put_status(422) |> json(%{error: "This user is not an admin"})
 
   defp error_response(conn, %Ecto.Changeset{} = changeset),
-    do: conn |> put_status(422) |> json(%{error: "Invalid data", details: format_errors(changeset)})
+    do: conn |> put_status(422) |> json(%{error: "Invalid data", details: VokaziWeb.ChangesetErrors.format(changeset)})
 
   defp parse_page(nil), do: 1
 
@@ -121,11 +121,4 @@ defmodule VokaziWeb.Admin.AdminAccountController do
     end
   end
 
-  defp format_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Enum.reduce(opts, msg, fn {key, value}, acc ->
-        String.replace(acc, "%{#{key}}", to_string(value))
-      end)
-    end)
-  end
 end

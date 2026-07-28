@@ -1434,8 +1434,25 @@ body {
 }
 .home-investment-prompt p { margin: 0; font-size: 0.88rem; color: var(--paper); }
 
+/* Global floating feedback button (FeedbackWidget.jsx) - fixed position
+   by default, but needs to sit above the mobile bottom tab bar (64px,
+   see .shell-tabbar below) instead of overlapping it. */
+.feedback-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 90;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
 @media (max-width: 900px) {
   .shell-rail { display: none; }
+  .feedback-fab { bottom: calc(64px + 1.25rem); }
+  /* A conversation takes the whole screen on mobile (see .chat-open
+     rule further down) - the feedback button has no reason to float
+     over it either, same reasoning as hiding .shell-tabbar there. */
+  .app-shell.chat-open .feedback-fab { display: none; }
   .shell-tabbar {
     display: flex; align-items: center; justify-content: space-around;
     height: 64px; flex-shrink: 0; order: 2;
