@@ -42,6 +42,7 @@ export default function MembersListView({ onSelect }) {
           {items.length === 0 ? (
             <div className="admin-empty-state">No members match this filter.</div>
           ) : (
+            <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
@@ -68,6 +69,7 @@ export default function MembersListView({ onSelect }) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           <AdminPagination page={page} totalPages={total_pages} totalCount={total_count} onChange={setPage} />
         </>

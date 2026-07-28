@@ -137,6 +137,7 @@ export default function AdminAccountsView({ admin }) {
 
       {actionError && <p style={{ color: 'var(--warn)', fontSize: '0.85rem', marginBottom: '1rem' }}>{actionError}</p>}
 
+      <div className="admin-table-wrap">
       <table className="admin-table" style={{ marginBottom: '1.5rem' }}>
         <thead>
           <tr>
@@ -181,10 +182,12 @@ export default function AdminAccountsView({ admin }) {
           })}
         </tbody>
       </table>
+      </div>
 
       {data.pending_invites.length > 0 && (
         <>
           <p className="admin-detail-field-label" style={{ marginBottom: '0.5rem' }}>Pending invites (not yet signed in)</p>
+          <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
@@ -214,6 +217,7 @@ export default function AdminAccountsView({ admin }) {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>

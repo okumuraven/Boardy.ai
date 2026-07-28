@@ -86,6 +86,7 @@ export default function BuddyPairingsView({ admin }) {
           {items.length === 0 ? (
             <div className="admin-empty-state">No buddy pairings yet.</div>
           ) : (
+            <div className="admin-table-wrap">
             <table className="admin-table">
               <thead>
                 <tr>
@@ -106,6 +107,7 @@ export default function BuddyPairingsView({ admin }) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
           <AdminPagination page={page} totalPages={total_pages} totalCount={total_count} onChange={setPage} />
         </>
