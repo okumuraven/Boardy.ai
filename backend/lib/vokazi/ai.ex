@@ -2,37 +2,80 @@ defmodule Vokazi.AI do
   require Logger
 
   @doc """
+  Posts a request body to a Gemini model endpoint, rotating through every
+  configured API key on a 429 (quota exhausted) response before giving up.
+  `GEMINI_API_KEYS` is a comma-separated list of keys, each from a separate
+  Google account/project so each carries its own independent free-tier
+  daily quota - falls back to the single `GEMINI_API_KEY` env var if unset,
+  so single-key setups (e.g. local dev) are unaffected.
+  """
+  def gemini_post(model_and_action, body) do
+    case gemini_api_keys() do
+      [] -> {:error, :missing_api_key}
+      keys -> post_with_key_rotation(keys, model_and_action, body)
+    end
+  end
+
+  defp gemini_api_keys do
+    case System.get_env("GEMINI_API_KEYS") do
+      nil ->
+        case System.get_env("GEMINI_API_KEY") do
+          key when is_binary(key) and key != "" -> [key]
+          _ -> []
+        end
+
+      keys ->
+        keys |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))
+    end
+  end
+
+  defp post_with_key_rotation([key], model_and_action, body) do
+    do_gemini_post(key, model_and_action, body)
+  end
+
+  defp post_with_key_rotation([key | rest], model_and_action, body) do
+    case do_gemini_post(key, model_and_action, body) do
+      {:ok, %Req.Response{status: 429}} ->
+        Logger.warning("Vokazi.AI: Gemini key exhausted (429), rotating to next key")
+        post_with_key_rotation(rest, model_and_action, body)
+
+      result ->
+        result
+    end
+  end
+
+  defp do_gemini_post(key, model_and_action, body) do
+    url = "https://generativelanguage.googleapis.com/v1beta/models/#{model_and_action}?key=#{key}"
+    Req.post(url, json: body, receive_timeout: 60_000, retry: :transient)
+  end
+
+  @doc """
   Calls Gemini to generate a real pgvector embedding, requesting the
   1536-dim output directly via `outputDimensionality` so the vector we get
   back is Google's properly-normalized Matryoshka truncation (unit norm),
   not a manual slice of the raw 3072-dim output (which isn't normalized).
   """
   def generate_embedding(text) do
-    api_key = System.get_env("GEMINI_API_KEY")
+    body = %{
+      model: "models/gemini-embedding-2",
+      content: %{
+        parts: [%{text: text}]
+      },
+      outputDimensionality: 1536
+    }
 
-    if is_nil(api_key) or api_key == "" do
-      Logger.error("Vokazi.AI: GEMINI_API_KEY is not set. Cannot generate real vectors.")
-      {:error, :missing_api_key}
-    else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=#{api_key}"
+    case gemini_post("gemini-embedding-2:embedContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        embedding = data["embedding"]["values"]
+        {:ok, Pgvector.new(embedding)}
 
-      body = %{
-        model: "models/gemini-embedding-2",
-        content: %{
-          parts: [%{text: text}]
-        },
-        outputDimensionality: 1536
-      }
+      {:error, :missing_api_key} = error ->
+        Logger.error("Vokazi.AI: no GEMINI_API_KEY(S) set. Cannot generate real vectors.")
+        error
 
-      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
-        {:ok, %Req.Response{status: 200, body: data}} ->
-          embedding = data["embedding"]["values"]
-          {:ok, Pgvector.new(embedding)}
-
-        error ->
-          Logger.error("Vokazi.AI: Gemini embedding call failed: #{inspect(error)}")
-          {:error, "Failed to generate embedding"}
-      end
+      error ->
+        Logger.error("Vokazi.AI: Gemini embedding call failed: #{inspect(error)}")
+        {:error, "Failed to generate embedding"}
     end
   end
 
@@ -41,14 +84,7 @@ defmodule Vokazi.AI do
   and preferred way to connect for an intro call from the raw transcript.
   """
   def extract_summary(transcript) do
-    api_key = System.get_env("GEMINI_API_KEY")
-
-    if is_nil(api_key) or api_key == "" do
-      {:error, :missing_api_key}
-    else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
-
-      prompt = """
+    prompt = """
       You are helping a Kuzana Connect member write their own profile in their own words - not
       selling them, not writing a corporate bio. Read the conversation below and extract their
       Offer, Need, and contact preference.
@@ -81,33 +117,36 @@ defmodule Vokazi.AI do
       #{transcript}
       """
 
-      body = %{
-        contents: [%{parts: [%{text: prompt}]}],
-        generationConfig: %{
-          responseMimeType: "application/json"
-        }
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{
+        responseMimeType: "application/json"
       }
+    }
 
-      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
-        {:ok, %Req.Response{status: 200, body: data}} ->
-          try do
-            text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
-            parsed = Jason.decode!(extract_json_object(text_response))
+    case gemini_post("gemini-3.5-flash:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
 
-            offer = parsed["offer"] || "Not specified"
-            need = parsed["need"] || "Not specified"
-            contact_preference = parse_contact_preference(parsed["contact_preference"])
+          offer = parsed["offer"] || "Not specified"
+          need = parsed["need"] || "Not specified"
+          contact_preference = parse_contact_preference(parsed["contact_preference"])
 
-            {:ok, offer, need, contact_preference}
-          rescue
-            e ->
-              Logger.error("Vokazi.AI: failed to parse extract_summary JSON: #{inspect(e)}. Raw text: #{inspect(get_in(data, ["candidates", Access.at(0), "content", "parts", Access.at(0), "text"]))}")
-              {:error, "Failed to parse JSON"}
-          end
-        error ->
-          Logger.error("Vokazi.AI: Gemini summary extraction failed: #{inspect(error)}")
-          {:error, "Failed to call Gemini"}
-      end
+          {:ok, offer, need, contact_preference}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse extract_summary JSON: #{inspect(e)}. Raw text: #{inspect(get_in(data, ["candidates", Access.at(0), "content", "parts", Access.at(0), "text"]))}")
+            {:error, "Failed to parse JSON"}
+        end
+
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini summary extraction failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
     end
   end
 
@@ -129,16 +168,10 @@ defmodule Vokazi.AI do
   fits - the prompt is explicit that tags shouldn't be forced.
   """
   def extract_tags(offer_text, need_text) do
-    api_key = System.get_env("GEMINI_API_KEY")
+    allowed_tags = Vokazi.Accounts.Profile.connection_tags()
+    tags_csv = Enum.join(allowed_tags, ", ")
 
-    if is_nil(api_key) or api_key == "" do
-      {:error, :missing_api_key}
-    else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
-      allowed_tags = Vokazi.Accounts.Profile.connection_tags()
-      tags_csv = Enum.join(allowed_tags, ", ")
-
-      prompt = """
+    prompt = """
       You are classifying a professional's stated Offer and Need into a fixed set of
       connection-intent tags, used to filter a member directory. The ONLY allowed
       tags are: #{tags_csv}.
@@ -158,32 +191,34 @@ defmodule Vokazi.AI do
       empty array for either key if nothing in the allowed set genuinely applies.
       """
 
-      body = %{
-        contents: [%{parts: [%{text: prompt}]}],
-        generationConfig: %{responseMimeType: "application/json"}
-      }
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{responseMimeType: "application/json"}
+    }
 
-      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
-        {:ok, %Req.Response{status: 200, body: data}} ->
-          try do
-            text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
-            parsed = Jason.decode!(extract_json_object(text_response))
+    case gemini_post("gemini-3.5-flash:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
 
-            {:ok,
-             %{
-               looking_for_tags: sanitize_tags(parsed["looking_for_tags"], allowed_tags),
-               can_help_tags: sanitize_tags(parsed["can_help_tags"], allowed_tags)
-             }}
-          rescue
-            e ->
-              Logger.error("Vokazi.AI: failed to parse extract_tags JSON: #{inspect(e)}")
-              {:error, "Failed to parse JSON"}
-          end
+          {:ok,
+           %{
+             looking_for_tags: sanitize_tags(parsed["looking_for_tags"], allowed_tags),
+             can_help_tags: sanitize_tags(parsed["can_help_tags"], allowed_tags)
+           }}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse extract_tags JSON: #{inspect(e)}")
+            {:error, "Failed to parse JSON"}
+        end
 
-        error ->
-          Logger.error("Vokazi.AI: Gemini tag extraction failed: #{inspect(error)}")
-          {:error, "Failed to call Gemini"}
-      end
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini tag extraction failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
     end
   end
 
@@ -213,17 +248,10 @@ defmodule Vokazi.AI do
   trust is what makes someone willing to say yes.
   """
   def validate_match(user_a, user_b) do
-    api_key = System.get_env("GEMINI_API_KEY")
+    name_a = user_a[:name] || "Person A"
+    name_b = user_b[:name] || "Person B"
 
-    if is_nil(api_key) or api_key == "" do
-      {:error, :missing_api_key}
-    else
-      url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=#{api_key}"
-
-      name_a = user_a[:name] || "Person A"
-      name_b = user_b[:name] || "Person B"
-
-      prompt = """
+    prompt = """
       You are a sharp, skeptical judge of whether two Kuzana Connect members are a genuinely
       useful match - not just two people who used similar words. Two members were shortlisted
       as a potential introduction by a vector-similarity search.
@@ -280,40 +308,42 @@ defmodule Vokazi.AI do
       caveats worth naming.
       """
 
-      body = %{
-        contents: [%{parts: [%{text: prompt}]}],
-        generationConfig: %{
-          responseMimeType: "application/json"
-        }
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{
+        responseMimeType: "application/json"
       }
+    }
 
-      case Req.post(url, json: body, receive_timeout: 60_000, retry: :transient) do
-        {:ok, %Req.Response{status: 200, body: data}} ->
-          try do
-            text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
-            parsed = Jason.decode!(extract_json_object(text_response))
+    case gemini_post("gemini-3.5-flash:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
 
-            {:ok,
-             %{
-               score: parsed["score"] || 0,
-               is_valid: parsed["is_valid"] || false,
-               reasoning: parsed["reasoning"] || "",
-               strengths: List.wrap(parsed["strengths"]),
-               gaps: List.wrap(parsed["gaps"]),
-               intro_message: parsed["intro_message"] || "",
-               pitch_a: parse_pitch(parsed["pitch_a"]),
-               pitch_b: parse_pitch(parsed["pitch_b"])
-             }}
-          rescue
-            e ->
-              Logger.error("Vokazi.AI: failed to parse match validation JSON: #{inspect(e)}")
-              {:error, "Failed to parse JSON"}
-          end
+          {:ok,
+           %{
+             score: parsed["score"] || 0,
+             is_valid: parsed["is_valid"] || false,
+             reasoning: parsed["reasoning"] || "",
+             strengths: List.wrap(parsed["strengths"]),
+             gaps: List.wrap(parsed["gaps"]),
+             intro_message: parsed["intro_message"] || "",
+             pitch_a: parse_pitch(parsed["pitch_a"]),
+             pitch_b: parse_pitch(parsed["pitch_b"])
+           }}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse match validation JSON: #{inspect(e)}")
+            {:error, "Failed to parse JSON"}
+        end
 
-        error ->
-          Logger.error("Vokazi.AI: Gemini match validation call failed: #{inspect(error)}")
-          {:error, "Failed to call Gemini"}
-      end
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini match validation call failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
     end
   end
 
