@@ -7,7 +7,11 @@ import { apiFetch } from "./api";
 
 export async function fetchTurnCredentials() {
   const res = await apiFetch(`/api/calls/turn_credentials`);
-  if (!res.ok) throw new Error("Couldn't fetch calling credentials.");
+  if (!res.ok) {
+    const err = new Error("Couldn't fetch calling credentials.");
+    err.name = "TurnCredentialsError";
+    throw err;
+  }
   return res.json();
 }
 
@@ -15,9 +19,7 @@ export async function fetchTurnCredentials() {
 // callbacks - the caller decides what to do with each (push over the
 // channel, attach to an <audio> element, flip UI state).
 export function createPeerConnection(credentials, { onIceCandidate, onTrack, onConnectionStateChange }) {
-  const pc = new RTCPeerConnection({
-    iceServers: [{ urls: credentials.urls, username: credentials.username, credential: credentials.password }],
-  });
+  const pc = new RTCPeerConnection({ iceServers: credentials.ice_servers });
 
   pc.onicecandidate = (event) => {
     if (event.candidate) onIceCandidate(event.candidate.toJSON());
@@ -36,6 +38,11 @@ export function createPeerConnection(credentials, { onIceCandidate, onTrack, onC
 // processing turned on. Real-world testing (2026-07-23) caught audible
 // noise on a phone even before anyone spoke, tracing back to this.
 export function getMicrophoneStream() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    const err = new Error("This browser doesn't support calling.");
+    err.name = "UnsupportedBrowserError";
+    throw err;
+  }
   return navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: true,
@@ -45,16 +52,28 @@ export function getMicrophoneStream() {
   });
 }
 
-// getUserMedia's real DOMException names, translated into what a member
-// actually needs to know - not a raw browser error string.
-export function microphoneErrorMessage(error) {
+// Every real failure mode `setupPeerConnection` can throw, translated
+// into what a member actually needs to know - not a raw browser error
+// string, and not the wrong category of problem (a server-side TURN
+// failure is not a microphone problem, even though both currently
+// surface from the same catch block in CallPanel.jsx).
+export function callSetupErrorMessage(error) {
   if (error?.name === "NotAllowedError") {
     return "Microphone access was blocked - enable it in your browser settings to continue.";
   }
   if (error?.name === "NotFoundError") {
     return "No microphone found on this device.";
   }
-  return "Couldn't access your microphone.";
+  if (error?.name === "NotReadableError") {
+    return "Your microphone is already in use by another app - close it and try again.";
+  }
+  if (error?.name === "UnsupportedBrowserError") {
+    return "This browser doesn't support calling - try a recent version of Chrome, Safari, or Edge.";
+  }
+  if (error?.name === "TurnCredentialsError") {
+    return "Couldn't set up the call right now - please try again in a moment.";
+  }
+  return "Couldn't start the call. Please try again.";
 }
 
 export function stopStream(stream) {

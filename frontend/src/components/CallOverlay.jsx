@@ -13,12 +13,13 @@ export default function CallOverlay({
   partnerName,
   elapsed,
   muted,
-  micError,
+  callError,
   onCancel,
   onAccept,
   onDecline,
   onEnd,
   onToggleMute,
+  onDismissError,
 }) {
   return (
     <div className="call-overlay">
@@ -67,7 +68,13 @@ export default function CallOverlay({
           </>
         )}
 
-        {micError && <p className="call-overlay-error">{micError}</p>}
+        {status === "error" && (
+          <>
+            <p className="call-overlay-name">{partnerName || "Someone"}</p>
+            <p className="call-overlay-error">{callError}</p>
+            <button onClick={onDismissError} className="btn-ghost call-overlay-end">Close</button>
+          </>
+        )}
       </div>
     </div>
   );
