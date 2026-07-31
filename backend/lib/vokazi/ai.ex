@@ -173,7 +173,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-3.5-flash:generateContent", body) do
+    case gemini_post("gemini-flash-latest:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -245,7 +245,7 @@ defmodule Vokazi.AI do
       generationConfig: %{responseMimeType: "application/json"}
     }
 
-    case gemini_post("gemini-3.5-flash:generateContent", body) do
+    case gemini_post("gemini-flash-latest:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -364,7 +364,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-3.5-flash:generateContent", body) do
+    case gemini_post("gemini-flash-latest:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -397,8 +397,8 @@ defmodule Vokazi.AI do
   end
 
   @doc """
-  Despite `responseMimeType: "application/json"`, gemini-3.5-flash
-  sometimes appends a stray extra "}" (or other trailing bytes) after an
+  Despite `responseMimeType: "application/json"`, Gemini's flash models
+  sometimes append a stray extra "}" (or other trailing bytes) after an
   otherwise complete, valid JSON object - which makes `Jason.decode!`
   reject the whole string since it requires no trailing content. This
   scans for the first structurally-balanced `{...}` (tracking string
