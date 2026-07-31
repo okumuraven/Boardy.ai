@@ -3,17 +3,22 @@ defmodule Vokazi.AI do
 
   @doc """
   Posts a request body to a Gemini model endpoint, rotating through every
-  configured API key on a 429 (quota exhausted) or 503 (model overloaded)
-  response before giving up.
+  configured API key on any non-2xx result - an HTTP error status
+  (429 quota exhausted, 503 model overloaded, etc) or a transport-level
+  exception (timeout, connection refused) both mean "try the next key,"
+  not just the specific failure shapes seen in production so far.
 
-  Two things make this fast instead of making a real user sit through it:
+  Three things make this fast instead of making a real user sit through it:
 
-  1. No per-key retry backoff (`retry: false`) - a 429/503 means THIS key
-     isn't going to succeed in the next second either, so retrying it
-     3 times with 1s/2s/4s backoff before even trying the next key (the
-     old behavior) turned a 10-key rotation into a 100+ second wait. Each
-     dead key now costs only its own network round-trip.
-  2. Rotation starts from whichever key last actually worked
+  1. No per-key retry backoff (`retry: false`) - a failed key isn't going
+     to succeed in the next second either, so retrying it 3 times with
+     1s/2s/4s backoff before even trying the next key (the old behavior)
+     turned a 10-key rotation into a 100+ second wait. Each dead key now
+     costs only its own network round-trip.
+  2. A short 10s `receive_timeout` per key - a hung connection likely
+     isn't going to resolve at 30s either, and with several keys each
+     capable of hanging, that adds up fast.
+  3. Rotation starts from whichever key last actually worked
      (`:persistent_term`, process-wide), not always from the top of the
      list - once key 1 is exhausted for the day, every request from
      every user would otherwise pay the cost of re-discovering that
@@ -60,28 +65,37 @@ defmodule Vokazi.AI do
   end
 
   defp post_with_key_rotation([key | rest], model_and_action, body) do
-    case do_gemini_post(key, model_and_action, body) do
-      {:ok, %Req.Response{status: status}} when status in [429, 503] ->
-        Logger.warning("Vokazi.AI: Gemini key failed (#{status}), rotating to next key")
-        post_with_key_rotation(rest, model_and_action, body)
+    result = do_gemini_post(key, model_and_action, body)
 
-      result ->
-        remember_if_good(key, result)
-        result
+    if success?(result) do
+      remember_if_good(key, result)
+      result
+    else
+      Logger.warning("Vokazi.AI: Gemini key failed (#{inspect(failure_reason(result))}), rotating to next key")
+      post_with_key_rotation(rest, model_and_action, body)
     end
   end
 
-  defp remember_if_good(key, {:ok, %Req.Response{status: status}}) when status in 200..299 do
-    if :persistent_term.get(@last_good_key_id, nil) != key do
+  # A failure is anything that isn't a 2xx - an HTTP error status
+  # (429/503/etc) and a transport-level exception (timeout, connection
+  # refused) both mean "try the next key," not just the specific status
+  # codes we happened to have seen in production so far.
+  defp success?({:ok, %Req.Response{status: status}}), do: status in 200..299
+  defp success?(_), do: false
+
+  defp failure_reason({:ok, %Req.Response{status: status}}), do: status
+  defp failure_reason({:error, %{reason: reason}}), do: reason
+  defp failure_reason(_), do: :unknown
+
+  defp remember_if_good(key, result) do
+    if success?(result) and :persistent_term.get(@last_good_key_id, nil) != key do
       :persistent_term.put(@last_good_key_id, key)
     end
   end
 
-  defp remember_if_good(_key, _result), do: :ok
-
   defp do_gemini_post(key, model_and_action, body) do
     url = "https://generativelanguage.googleapis.com/v1beta/models/#{model_and_action}?key=#{key}"
-    Req.post(url, json: body, receive_timeout: 30_000, retry: false)
+    Req.post(url, json: body, receive_timeout: 10_000, retry: false)
   end
 
   @doc """
