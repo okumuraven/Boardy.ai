@@ -12,16 +12,16 @@ reference for building it; nothing here is built yet.
 ```mermaid
 flowchart TD
     A[Signed-in Connect member] --> B[Home or Profile]
-    B --> C["Apply to become a Bizi" card]
+    B --> C[Apply to become a Bizi card]
     C --> D[Bizi Rulebook screen]
     D -->|just wants to read the rules| B
     D -->|ready| E[Application form]
     E --> F{All required fields valid?}
     F -->|no| E
     F -->|yes| G[Submit]
-    G --> H[(bizi_applications row created,\nstatus = submitted)]
-    H --> I[Confirmation screen:\n"Submitted - we'll be in touch"]
-    I --> J[Profile: "My Application" status,\nrevisit anytime]
+    G --> H[(bizi_applications row created<br/>status = submitted)]
+    H --> I[Confirmation screen: Submitted, we will be in touch]
+    I --> J[Profile: My Application status, revisit anytime]
 
     style H fill:#4a6290,color:#fff
 ```
@@ -40,23 +40,24 @@ Two things worth being deliberate about, both already true in the diagram above:
 
 ```mermaid
 flowchart LR
-    subgraph Rulebook["Bizi Rulebook"]
+    subgraph Rulebook[Bizi Rulebook]
         R1[Eligibility recap]
-        R2["What the 12 months\nincludes"]
-        R3["Attendance policy\n($50/hr or $400/day)"]
-        R4["The 'one thing'\nfocus philosophy"]
-        R5["Kyle's own 'reasons not\nto work with Kuzana'"]
+        R2[What the 12 months includes]
+        R3[Attendance policy - 50 dollars per hour or 400 dollars per day]
+        R4[The one thing focus philosophy]
+        R5[Kyles own reasons not to work with Kuzana]
     end
 
-    R1 -.source.-> P1["kuzana_playbook.md §4\nDeal Flow / eligibility"]
-    R2 -.source.-> P2["kuzana_playbook.md §6\nStrategy Board, Buddy System,\nGrowth Budget · kuzana_website.md\n$20k equity + $100k working capital"]
-    R3 -.source.-> P3["kuzana_playbook.md §6\nWorkshop attendance policy"]
-    R4 -.source.-> P4["kuzana_playbook.md §6\n'One thing' coaching philosophy"]
-    R5 -.source.-> P5["kuzana_playbook.md §4\nverbatim candid disclosure"]
+    R1 -.->|source| P1[playbook - Deal Flow and eligibility]
+    R2 -.->|source| P2[playbook - Strategy Board, Buddy System, Growth Budget; website - 20k equity plus 100k working capital]
+    R3 -.->|source| P3[playbook - workshop attendance policy]
+    R4 -.->|source| P4[playbook - one thing coaching philosophy]
+    R5 -.->|source| P5[playbook - verbatim candid disclosure]
 ```
 
 Every section traces back to a real source document - nothing here is generic accelerator
-boilerplate.
+boilerplate. (Section references: R1/R5 from `kuzana_playbook.md` §4 "Deal Flow"; R2/R3/R4 from §6
+"Strategy Board, Bizi Buddy System, Growth Budget"; the $20k/$100k figures from `kuzana_website.md`.)
 
 ## 3. The application form itself
 
@@ -67,15 +68,15 @@ between stages:
 
 ```mermaid
 flowchart TD
-    subgraph Form["Application form (single Connect member)"]
+    subgraph Form[Application form - single Connect member]
         direction TB
         F1[Business name]
-        F2["Monthly revenue\n(checked against Ksh400k-20m)"]
-        F3["Business age\n(checked against 3mo-5yr)"]
+        F2[Monthly revenue - checked against Ksh400k to 20m]
+        F3[Business age - checked against 3 months to 5 years]
         F4[Location]
-        F5["One-line description"]
-        F6["How do you currently get customers?\n(the 'demand ownership' question)"]
-        F7["Why Kuzana, right now?"]
+        F5[One-line description]
+        F6[How do you currently get customers - the demand ownership question]
+        F7[Why Kuzana, right now?]
     end
     Form --> Submit[Submit]
 ```
@@ -89,23 +90,23 @@ honest information, not to gatekeep automatically.
 
 ```mermaid
 sequenceDiagram
-    participant M as Member (browser)
-    participant API as Phoenix backend
+    participant M as Member App
+    participant API as Phoenix Backend
     participant DB as Postgres
-    participant N as Vokazi.Notifications
-    participant S as Staff (Bell / NotificationChannel)
+    participant N as Notifications
+    participant S as Staff Bell
 
     M->>API: POST /api/bizi_applications
-    API->>DB: insert bizi_applications\n(status: "submitted")
+    API->>DB: insert bizi_applications, status = submitted
     DB-->>API: ok
-    API->>N: notify(type: "bizi_application",\ntarget: admin_role in [superadmin])
-    N->>S: in-app notification\n("New Bizi application: {business_name}")
+    API->>N: notify new Bizi application, target superadmin
+    N->>S: in-app notification - New Bizi application received
     API-->>M: 201 Created
     M->>M: show confirmation screen
 ```
 
 This reuses `Vokazi.Notifications` exactly as it already exists today - no new admin screen, no
-review-pipeline states. Staff see it lands, the same way they already see a new match or a chat
+review-pipeline states. Staff see it land, the same way they already see a new match or a chat
 message. **This is the one piece I flagged as a judgment call, not yet confirmed** - if you'd rather
 have zero staff-facing signal in this first pass, this step (and only this step) drops out cleanly
 without touching anything else in the diagram.
@@ -114,10 +115,10 @@ without touching anything else in the diagram.
 
 ```mermaid
 flowchart LR
-    A[submitted] -.not built yet.-> B[reviewing]
-    B -.not built yet.-> C[DD visit]
-    C -.not built yet.-> D[board approval]
-    D -.not built yet.-> E[accepted / declined]
+    A[submitted] -.->|not built yet| B[reviewing]
+    B -.->|not built yet| C[DD visit]
+    C -.->|not built yet| D[board approval]
+    D -.->|not built yet| E[accepted or declined]
 
     style A fill:#4a6290,color:#fff
     style B fill:#e8e4de,color:#999,stroke-dasharray: 5 5
@@ -148,14 +149,16 @@ erDiagram
         text description
         text customer_acquisition
         text why_kuzana
-        string status "submitted (only value for now)"
+        string status
         datetime inserted_at
     }
 ```
 
-One `users` row can submit more than one `bizi_applications` row over time deliberately (no unique
-constraint) - a member whose business changes significantly, or who was declined once, shouldn't be
-architecturally blocked from applying again later.
+`status` has exactly one real value right now, `submitted` - the column exists so the future review
+pipeline in §5 has somewhere to land without a schema migration, not because multiple states are
+handled today. One `users` row can submit more than one `bizi_applications` row over time
+deliberately (no unique constraint) - a member whose business changes significantly, or who was
+declined once, shouldn't be architecturally blocked from applying again later.
 
 ---
 
