@@ -3,7 +3,7 @@ defmodule VokaziWeb.TurnCredentialsController do
 
   alias Vokazi.Calling.TurnCredentials
 
-  @doc "Short-lived coturn credentials for this user - see `Vokazi.Calling.TurnCredentials`."
+  @doc "ICE server config for this user's call - see `Vokazi.Calling.TurnCredentials`."
   def show(conn, _params) do
     json(conn, TurnCredentials.generate(conn.assigns.current_user_id))
   end

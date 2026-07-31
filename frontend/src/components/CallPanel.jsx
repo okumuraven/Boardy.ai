@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchTurnCredentials, createPeerConnection, getMicrophoneStream, microphoneErrorMessage, stopStream } from "../lib/webrtc";
+import { fetchTurnCredentials, createPeerConnection, getMicrophoneStream, callSetupErrorMessage, stopStream } from "../lib/webrtc";
 import { playRingback, playRingtone, stopRingtone } from "../lib/ringtone";
+import { useCallSignaling } from "./useCallSignaling";
 import CallOverlay from "./CallOverlay";
 
 // In-App Calling. Phase 1 (call_feature.md) built the ring/accept/
@@ -11,11 +12,11 @@ import CallOverlay from "./CallOverlay";
 // the offer arrives. Renders as a small button in the chat header when
 // idle, and a full overlay for every other state.
 export default function CallPanel({ channel, profile, partnerName }) {
-  const [status, setStatus] = useState("idle"); // idle | calling | incoming | connecting | in_call
+  const [status, setStatus] = useState("idle"); // idle | calling | incoming | connecting | in_call | error
   const [incomingFrom, setIncomingFrom] = useState(null);
   const [elapsed, setElapsed] = useState(0);
   const [muted, setMuted] = useState(false);
-  const [micError, setMicError] = useState("");
+  const [callError, setCallError] = useState("");
 
   const callStartedAtRef = useRef(null);
   const isCallerRef = useRef(false);
@@ -38,19 +39,21 @@ export default function CallPanel({ channel, profile, partnerName }) {
     isCallerRef.current = false;
     callIdRef.current = null;
     setMuted(false);
-    setMicError("");
+    setCallError("");
+  };
+
+  const failCall = (message) => {
+    cleanupCall();
+    setCallError(message);
+    setStatus("error");
+  };
+
+  const dismissError = () => {
+    setCallError("");
+    setStatus("idle");
   };
 
   useEffect(() => cleanupCall, []);
-
-  const flushPendingCandidates = async () => {
-    const pc = peerConnectionRef.current;
-    const queued = pendingCandidatesRef.current;
-    pendingCandidatesRef.current = [];
-    for (const candidate of queued) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  };
 
   const setupPeerConnection = async () => {
     // Defensive: never let two live peer connections/mic streams exist at
@@ -70,7 +73,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
       },
       onConnectionStateChange: (state) => {
         if (state === "connected" || state === "completed") setStatus("in_call");
-        if (state === "failed") setMicError("Connection failed. Try ending and calling again.");
+        if (state === "failed") failCall("Connection failed. Try ending and calling again.");
       },
     });
     stream.getTracks().forEach((track) => pc.addTrack(track, stream));
@@ -85,96 +88,23 @@ export default function CallPanel({ channel, profile, partnerName }) {
       await pc.setLocalDescription(offer);
       channel?.push("webrtc_offer", { sdp: offer });
     } catch (err) {
-      setMicError(microphoneErrorMessage(err));
+      failCall(callSetupErrorMessage(err));
     }
   };
 
-  useEffect(() => {
-    if (!channel) return;
-
-    const bindings = [
-      [
-        "call_ring",
-        (payload) => {
-          isCallerRef.current = false;
-          callIdRef.current = payload.call_id;
-          setIncomingFrom({ user_id: payload.from_user_id, name: payload.from_name });
-          setStatus("incoming");
-        },
-      ],
-      [
-        "call_accepted",
-        (payload) => {
-          callStartedAtRef.current = payload.accepted_at;
-          setElapsed(0);
-          setStatus("connecting");
-          if (isCallerRef.current) startAudioAsCaller();
-        },
-      ],
-      [
-        "webrtc_offer",
-        async ({ sdp }) => {
-          const pc = peerConnectionRef.current;
-          if (!pc) return;
-          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-          await flushPendingCandidates();
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          channel.push("webrtc_answer", { sdp: answer });
-        },
-      ],
-      [
-        "webrtc_answer",
-        async ({ sdp }) => {
-          const pc = peerConnectionRef.current;
-          if (!pc) return;
-          await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-          await flushPendingCandidates();
-        },
-      ],
-      [
-        "webrtc_ice_candidate",
-        async ({ candidate }) => {
-          const pc = peerConnectionRef.current;
-          if (!pc || !pc.remoteDescription) {
-            pendingCandidatesRef.current.push(candidate);
-            return;
-          }
-          await pc.addIceCandidate(new RTCIceCandidate(candidate));
-        },
-      ],
-      [
-        "call_declined",
-        () => {
-          cleanupCall();
-          setStatus("idle");
-        },
-      ],
-      [
-        "call_cancelled",
-        () => {
-          cleanupCall();
-          setStatus("idle");
-        },
-      ],
-      [
-        "call_ended",
-        () => {
-          cleanupCall();
-          setStatus("idle");
-        },
-      ],
-      [
-        "call_timeout",
-        () => {
-          cleanupCall();
-          setStatus("idle");
-        },
-      ],
-    ].map(([event, callback]) => [event, channel.on(event, callback)]);
-
-    return () => bindings.forEach(([event, ref]) => channel.off(event, ref));
-  }, [channel]);
+  useCallSignaling(channel, {
+    setIncomingFrom,
+    setStatus,
+    setElapsed,
+    callStartedAtRef,
+    isCallerRef,
+    callIdRef,
+    peerConnectionRef,
+    pendingCandidatesRef,
+    startAudioAsCaller,
+    cleanupCall,
+    failCall,
+  });
 
   useEffect(() => {
     if (status !== "in_call") return;
@@ -196,11 +126,16 @@ export default function CallPanel({ channel, profile, partnerName }) {
   }, [status]);
 
   const startCall = () => {
+    if (!channel) return;
     isCallerRef.current = true;
     setStatus("calling");
-    channel?.push("call_ring", {}).receive("ok", ({ call_id }) => {
-      callIdRef.current = call_id;
-    });
+    channel
+      .push("call_ring", {})
+      .receive("ok", ({ call_id }) => {
+        callIdRef.current = call_id;
+      })
+      .receive("error", () => failCall("Couldn't start the call. Please try again."))
+      .receive("timeout", () => failCall("Couldn't start the call. Please try again."));
   };
 
   const cancelCall = () => {
@@ -216,7 +151,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
     try {
       await setupPeerConnection();
     } catch (err) {
-      setMicError(microphoneErrorMessage(err));
+      failCall(callSetupErrorMessage(err));
     }
   };
 
@@ -257,12 +192,13 @@ export default function CallPanel({ channel, profile, partnerName }) {
           partnerName={partnerName}
           elapsed={elapsed}
           muted={muted}
-          micError={micError}
+          callError={callError}
           onCancel={cancelCall}
           onAccept={acceptCall}
           onDecline={declineCall}
           onEnd={endCall}
           onToggleMute={toggleMute}
+          onDismissError={dismissError}
         />
       )}
     </>
