@@ -39,7 +39,7 @@ defmodule Vokazi.Scheduling.Briefing do
       generationConfig: %{responseMimeType: "application/json"}
     }
 
-    case Vokazi.AI.gemini_post("gemini-3.5-flash:generateContent", body) do
+    case Vokazi.AI.gemini_post("gemini-flash-latest:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
