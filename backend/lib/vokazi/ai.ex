@@ -4,13 +4,21 @@ defmodule Vokazi.AI do
   @doc """
   Posts a request body to a Gemini model endpoint, rotating through every
   configured API key on a 429 (quota exhausted) or 503 (model overloaded)
-  response before giving up. Both are worth rotating past: a 429 is
-  specific to that key's own quota, and while a 503 is more often a
-  model-wide availability issue, it can still vary key-to-key (different
-  underlying project/region routing) - either way, trying the next key
-  costs nothing but a moment, whereas giving up on the first non-429
-  failure meant a run of 10 configured keys could bail out after just
-  one 503, which is exactly what happened before this fix.
+  response before giving up.
+
+  Two things make this fast instead of making a real user sit through it:
+
+  1. No per-key retry backoff (`retry: false`) - a 429/503 means THIS key
+     isn't going to succeed in the next second either, so retrying it
+     3 times with 1s/2s/4s backoff before even trying the next key (the
+     old behavior) turned a 10-key rotation into a 100+ second wait. Each
+     dead key now costs only its own network round-trip.
+  2. Rotation starts from whichever key last actually worked
+     (`:persistent_term`, process-wide), not always from the top of the
+     list - once key 1 is exhausted for the day, every request from
+     every user would otherwise pay the cost of re-discovering that
+     before reaching a working key.
+
   `GEMINI_API_KEYS` is a comma-separated list of keys, each from a separate
   Google account/project so each carries its own independent free-tier
   daily quota - falls back to the single `GEMINI_API_KEY` env var if unset,
@@ -19,7 +27,7 @@ defmodule Vokazi.AI do
   def gemini_post(model_and_action, body) do
     case gemini_api_keys() do
       [] -> {:error, :missing_api_key}
-      keys -> post_with_key_rotation(keys, model_and_action, body)
+      keys -> post_with_key_rotation(rotate_from_last_good(keys), model_and_action, body)
     end
   end
 
@@ -36,8 +44,19 @@ defmodule Vokazi.AI do
     end
   end
 
+  @last_good_key_id {__MODULE__, :last_good_key}
+
+  defp rotate_from_last_good(keys) do
+    case Enum.find_index(keys, &(&1 == :persistent_term.get(@last_good_key_id, nil))) do
+      nil -> keys
+      index -> Enum.drop(keys, index) ++ Enum.take(keys, index)
+    end
+  end
+
   defp post_with_key_rotation([key], model_and_action, body) do
-    do_gemini_post(key, model_and_action, body)
+    result = do_gemini_post(key, model_and_action, body)
+    remember_if_good(key, result)
+    result
   end
 
   defp post_with_key_rotation([key | rest], model_and_action, body) do
@@ -47,13 +66,22 @@ defmodule Vokazi.AI do
         post_with_key_rotation(rest, model_and_action, body)
 
       result ->
+        remember_if_good(key, result)
         result
     end
   end
 
+  defp remember_if_good(key, {:ok, %Req.Response{status: status}}) when status in 200..299 do
+    if :persistent_term.get(@last_good_key_id, nil) != key do
+      :persistent_term.put(@last_good_key_id, key)
+    end
+  end
+
+  defp remember_if_good(_key, _result), do: :ok
+
   defp do_gemini_post(key, model_and_action, body) do
     url = "https://generativelanguage.googleapis.com/v1beta/models/#{model_and_action}?key=#{key}"
-    Req.post(url, json: body, receive_timeout: 60_000, retry: :transient)
+    Req.post(url, json: body, receive_timeout: 30_000, retry: false)
   end
 
   @doc """
