@@ -3,7 +3,14 @@ defmodule Vokazi.AI do
 
   @doc """
   Posts a request body to a Gemini model endpoint, rotating through every
-  configured API key on a 429 (quota exhausted) response before giving up.
+  configured API key on a 429 (quota exhausted) or 503 (model overloaded)
+  response before giving up. Both are worth rotating past: a 429 is
+  specific to that key's own quota, and while a 503 is more often a
+  model-wide availability issue, it can still vary key-to-key (different
+  underlying project/region routing) - either way, trying the next key
+  costs nothing but a moment, whereas giving up on the first non-429
+  failure meant a run of 10 configured keys could bail out after just
+  one 503, which is exactly what happened before this fix.
   `GEMINI_API_KEYS` is a comma-separated list of keys, each from a separate
   Google account/project so each carries its own independent free-tier
   daily quota - falls back to the single `GEMINI_API_KEY` env var if unset,
@@ -35,8 +42,8 @@ defmodule Vokazi.AI do
 
   defp post_with_key_rotation([key | rest], model_and_action, body) do
     case do_gemini_post(key, model_and_action, body) do
-      {:ok, %Req.Response{status: 429}} ->
-        Logger.warning("Vokazi.AI: Gemini key exhausted (429), rotating to next key")
+      {:ok, %Req.Response{status: status}} when status in [429, 503] ->
+        Logger.warning("Vokazi.AI: Gemini key failed (#{status}), rotating to next key")
         post_with_key_rotation(rest, model_and_action, body)
 
       result ->
