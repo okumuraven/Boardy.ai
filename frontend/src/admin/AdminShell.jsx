@@ -14,6 +14,8 @@ import BuddyPairingsView from './buddy_pairings/BuddyPairingsView';
 import BuddyConcernsView from './buddy_pairings/BuddyConcernsView';
 import FeedbackListView from './feedback/FeedbackListView';
 import AnnouncementsView from './announcements/AnnouncementsView';
+import BiziApplicationsListView from './bizi_applications/BiziApplicationsListView';
+import BiziApplicationDetailView from './bizi_applications/BiziApplicationDetailView';
 
 const TABS = [
   { key: 'members', label: 'Members' },
@@ -22,6 +24,7 @@ const TABS = [
   { key: 'schedules', label: 'Schedules' },
   { key: 'buddy_pairings', label: 'Buddy Pairs' },
   { key: 'buddy_concerns', label: 'Buddy Concerns' },
+  { key: 'bizi_applications', label: 'Bizi Applications' },
   { key: 'feedback', label: 'Feedback' },
   { key: 'announcements', label: 'Announcements' },
   { key: 'stats', label: 'Stats' },
@@ -45,6 +48,7 @@ export default function AdminShell({ admin, onLogout }) {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [selectedMatchId, setSelectedMatchId] = useState(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [selectedBiziApplicationId, setSelectedBiziApplicationId] = useState(null);
   const isSuperadmin = admin.admin_role === 'superadmin';
   const visibleTabs = isSuperadmin ? [...TABS, ...SUPERADMIN_TABS] : TABS;
 
@@ -53,6 +57,7 @@ export default function AdminShell({ admin, onLogout }) {
     setSelectedMemberId(null);
     setSelectedMatchId(null);
     setSelectedScheduleId(null);
+    setSelectedBiziApplicationId(null);
   };
 
   return (
@@ -107,6 +112,14 @@ export default function AdminShell({ admin, onLogout }) {
 
         {tab === 'buddy_pairings' && <BuddyPairingsView admin={admin} />}
         {tab === 'buddy_concerns' && <BuddyConcernsView admin={admin} />}
+
+        {tab === 'bizi_applications' && (
+          selectedBiziApplicationId ? (
+            <BiziApplicationDetailView applicationId={selectedBiziApplicationId} onBack={() => setSelectedBiziApplicationId(null)} />
+          ) : (
+            <BiziApplicationsListView onSelect={setSelectedBiziApplicationId} />
+          )
+        )}
 
         {tab === 'feedback' && <FeedbackListView />}
         {tab === 'announcements' && <AnnouncementsView admin={admin} />}

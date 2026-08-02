@@ -3,6 +3,7 @@ import { apiFetch } from "../../lib/api";
 import SocialProfileSection from "./SocialProfileSection";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
+import BiziSection from "../bizi/BiziSection";
 import ThemeToggle from "../shell/ThemeToggle";
 import { INDUSTRIES } from "../../constants/industries";
 import { ROLES, roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
@@ -161,6 +162,7 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             ) : (
               <>
                 <div className="profile-view-row"><span className="k">Full name</span><span className="v">{profile?.name || "—"}</span></div>
+                <div className="profile-view-row"><span className="k">Email</span><span className="v">{profile?.email || "—"}</span></div>
                 <div className="profile-view-row"><span className="k">Phone number</span><span className="v">{profile?.phone_number || "—"}</span></div>
                 <div className="profile-view-row"><span className="k">Role</span><span className="v">{roleTitle(profile?.role)}</span></div>
                 <div className="profile-view-row"><span className="k">Industry</span><span className="v">{profile?.industry || "—"}</span></div>
@@ -206,6 +208,8 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
           {(isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding")) && (
             <InvestmentDetailsForm profile={profile} />
           )}
+
+          <BiziSection profile={profile} />
         </div>
       </div>
     </div>

@@ -48,6 +48,7 @@ export default function App() {
         if (data && data.onboarding_completed) {
           setProfile({
             name: data.full_name,
+            email: data.email,
             role: data.role,
             industry: data.industry,
             location: data.location,

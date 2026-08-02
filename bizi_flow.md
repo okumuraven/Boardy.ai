@@ -218,7 +218,7 @@ erDiagram
         string whatsapp
         string company_name
         text business_description
-        string track
+        array track
         string heard_about_us
         string referred_by
         map eligibility_checklist
@@ -234,7 +234,14 @@ matches Kuzana's own "Simple Database Rules" from `kuzana_playbook.md` §9 (a ty
 over many near-identical columns) while still letting the backend validate that every key is `true`
 before accepting the submission. `batch_target` captures which batch this was submitted for (e.g.
 "Batch 4" - real, time-sensitive, since Kuzana's live form already shows a hard soft-deadline of
-May 31, 2026 before applicants roll to Batch 5).
+May 31, 2026 before applicants roll to Batch 5) - set automatically from
+`frontend/constants/biziTracks.js`'s `CURRENT_BATCH`, not asked as a question.
+
+**`track` is an array, corrected 2026-07-31.** The real form says "Track**(s)**" - plural,
+multi-select - caught during a manual click-through of a real submission that only recorded one
+track. Originally built as a single-value field; migrated to `{:array, :string}` with a
+`validate_tracks/1` changeset check (at least one, every value from the real closed set) rather than
+`validate_inclusion/3`, which only works on scalar fields.
 
 ---
 

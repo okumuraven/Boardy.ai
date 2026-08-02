@@ -113,6 +113,10 @@ defmodule VokaziWeb.Router do
     # In-app tester feedback - see "things to add.md"
     get "/feedback/status", FeedbackController, :status
     post "/feedback", FeedbackController, :create
+
+    # Bizi application - Apply + Rulebook only, see bizi_flow.md
+    get "/bizi_applications", BiziApplicationController, :index
+    post "/bizi_applications", BiziApplicationController, :create
   end
 
   # Admin invite acceptance - public and unauthenticated by necessity
@@ -148,6 +152,11 @@ defmodule VokaziWeb.Router do
     get "/schedules/:id", ScheduleController, :show
 
     get "/stats", StatsController, :show
+
+    # Bizi application review (bizi_flow.md) - Support+, read-only. See
+    # Vokazi.Admin.BiziApplications moduledoc for the scope boundary.
+    get "/bizi_applications", BiziApplicationController, :index
+    get "/bizi_applications/:id", BiziApplicationController, :show
 
     # Tester feedback - viewing is Support+, sending an announcement is
     # Moderator+ (checked inside the controller, same as buddy_pairings)

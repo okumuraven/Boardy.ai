@@ -13,6 +13,7 @@ defmodule VokaziWeb.ProfileController do
         json(conn, %{
           id: user.id,
           full_name: user.full_name,
+          email: user.email,
           role: user.role,
           industry: user.industry,
           location: user.location,
