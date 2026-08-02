@@ -11,7 +11,8 @@ defmodule Vokazi.Notifications.Notification do
     "incoming_call",
     "buddy_paired",
     "buddy_checkin",
-    "buddy_concern"
+    "buddy_concern",
+    "bizi_application"
   ]
 
   schema "notifications" do
