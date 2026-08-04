@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { isCapitalSideRole } from "../../constants/roles";
+import "./Home.css";
 import Dashboard from "../../components/Dashboard";
 
 const TYPE_GLYPH = {

@@ -19,12 +19,22 @@ defmodule Vokazi.Calling do
   """
   def start_call(room_id, caller_id) do
     room = Repo.get!(ChatRoom, room_id)
-    match = Repo.get!(Match, room.match_id)
-    callee_id = if match.user_a_id == caller_id, do: match.user_b_id, else: match.user_a_id
 
-    %CallLog{}
-    |> CallLog.changeset(%{match_id: match.id, caller_id: caller_id, callee_id: callee_id, status: "ringing"})
-    |> Repo.insert()
+    if is_nil(room.match_id) do
+      # In-App Calling doesn't exist for a Bizi verification room - no
+      # UI path leads here (matchId is null, CallPanel never renders),
+      # but the channel event itself is still reachable from a raw
+      # socket push, so this has to fail cleanly rather than crash on
+      # `Repo.get!(Match, nil)`.
+      {:error, :not_a_match_room}
+    else
+      match = Repo.get!(Match, room.match_id)
+      callee_id = if match.user_a_id == caller_id, do: match.user_b_id, else: match.user_a_id
+
+      %CallLog{}
+      |> CallLog.changeset(%{match_id: match.id, caller_id: caller_id, callee_id: callee_id, status: "ringing"})
+      |> Repo.insert()
+    end
   end
 
   def mark_in_progress(call_id), do: update_status(call_id, "in_progress")
@@ -60,13 +70,22 @@ defmodule Vokazi.Calling do
   def active_ring_for_room(room_id, user_id) do
     room = Repo.get!(ChatRoom, room_id)
 
-    from(c in CallLog,
-      where: c.match_id == ^room.match_id and c.callee_id == ^user_id and c.status == "ringing",
-      order_by: [desc: c.inserted_at],
-      limit: 1,
-      preload: [:caller]
-    )
-    |> Repo.one()
+    # In-App Calling has no meaning in a Bizi verification room (no
+    # match behind it, no call button rendered client-side either) -
+    # `c.match_id == ^nil` would raise anyway (Ecto forbids comparing a
+    # column to a pinned nil with `==`, precisely to catch this class of
+    # bug), so this is the correct behavior, not just a crash dodge.
+    if is_nil(room.match_id) do
+      nil
+    else
+      from(c in CallLog,
+        where: c.match_id == ^room.match_id and c.callee_id == ^user_id and c.status == "ringing",
+        order_by: [desc: c.inserted_at],
+        limit: 1,
+        preload: [:caller]
+      )
+      |> Repo.one()
+    end
   end
 
   @doc """

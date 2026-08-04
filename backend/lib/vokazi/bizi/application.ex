@@ -52,6 +52,23 @@ defmodule Vokazi.Bizi.Application do
     "reliable_email"
   ]
 
+  # The real 7-stage pipeline (bizi_verification.md / bizi_verification_system.md
+  # §2) - `verification` deliberately collapses the DD visit, the 5+5
+  # reference checks, and the finance/tax check into one stage, since in
+  # practice they happen together around a single site visit. Any stage
+  # can go straight to `declined` - decline isn't only a board_review
+  # outcome.
+  @statuses [
+    "submitted",
+    "screening",
+    "documents_requested",
+    "verification",
+    "expert_review",
+    "board_review",
+    "approved",
+    "declined"
+  ]
+
   schema "bizi_applications" do
     field :preferred_name, :string
     field :other_names, :string
@@ -70,7 +87,26 @@ defmodule Vokazi.Bizi.Application do
     field :batch_target, :string
     field :status, :string, default: "submitted"
 
+    # Staff-driven verification fields (bizi_verification_system.md §3) -
+    # structured facts only. The narrative (who did what, with what
+    # comment) lives entirely in Vokazi.Bizi.StageEvent, never duplicated
+    # here - kuzana_playbook.md §9's "enter each fact once" rule.
+    field :revenue_verified, :boolean, default: false
+    field :board_decision_reason, :string
+    field :decided_at, :utc_datetime
+    belongs_to :assigned_to_admin, Vokazi.Accounts.User, foreign_key: :assigned_to_admin_id
+    belongs_to :decided_by_admin, Vokazi.Accounts.User, foreign_key: :decided_by_admin_id
+
     belongs_to :user, Vokazi.Accounts.User
+    # Ecto's default has_many foreign-key inference is :application_id
+    # (derived from this module's own name) - explicit here because the
+    # real migration columns are :bizi_application_id, matching the
+    # table name convention, not the schema module's bare name. Nothing
+    # currently preloads through these (the admin context queries the
+    # child tables directly), but leaving the default wrong would be a
+    # runtime landmine for the first future caller that does.
+    has_many :stage_events, Vokazi.Bizi.StageEvent, foreign_key: :bizi_application_id
+    has_many :references, Vokazi.Bizi.Reference, foreign_key: :bizi_application_id
 
     timestamps()
   end
@@ -78,6 +114,7 @@ defmodule Vokazi.Bizi.Application do
   def tracks, do: @tracks
   def heard_about_options, do: @heard_about_options
   def eligibility_keys, do: @eligibility_keys
+  def statuses, do: @statuses
 
   @doc false
   def changeset(application, attrs) do
@@ -135,6 +172,28 @@ defmodule Vokazi.Bizi.Application do
       true ->
         changeset
     end
+  end
+
+  @doc """
+  Staff-driven updates only - status, assignment, and the final decision.
+  Deliberately separate from `changeset/2` above: an admin advancing an
+  application through the pipeline should never re-trigger the
+  applicant-submission validations (description length, eligibility-all-
+  checked), and a member editing their own application should never be
+  able to touch `status`/`assigned_to_admin_id`/decision fields through
+  the member-facing endpoint - there is no path that casts both sets.
+  """
+  def admin_changeset(application, attrs) do
+    application
+    |> cast(attrs, [
+      :status,
+      :assigned_to_admin_id,
+      :revenue_verified,
+      :board_decision_reason,
+      :decided_by_admin_id,
+      :decided_at
+    ])
+    |> validate_inclusion(:status, @statuses)
   end
 
   # Kuzana's own rule is explicit: "Must meet ALL below requirements" -

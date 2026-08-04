@@ -1,0 +1,21 @@
+/* Global floating feedback button (FeedbackWidget.jsx) - fixed position
+   by default, but needs to sit above the mobile bottom tab bar (64px,
+   see AppShell.css's .shell-tabbar) instead of overlapping it. */
+.feedback-fab {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 90;
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* An open conversation's send button sits in this same bottom-right
+   corner at ANY screen width (not just mobile) once the chat panel
+   fills enough of the viewport - a desktop chat-open state hid the fab
+   here too, so this can't be scoped to the mobile media query below. */
+.app-shell.chat-open .feedback-fab { display: none; }
+
+@media (max-width: 900px) {
+  .feedback-fab { bottom: calc(64px + 1.25rem); }
+}

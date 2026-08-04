@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiFetch } from "../../lib/api";
+import "../../styles/SharedFormFields.css";
 import { BIZI_TRACKS, HEARD_ABOUT_OPTIONS, CURRENT_BATCH, suggestTrack } from "../../constants/biziTracks";
 import { ELIGIBILITY_GROUPS, ELIGIBILITY_KEYS, emptyEligibility, allEligibilityChecked } from "../../constants/biziEligibility";
 

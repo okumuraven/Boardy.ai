@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import "./CallHistory.css";
 
 const initials = (name) =>
   (name || "?")

@@ -1,0 +1,130 @@
+/* ---- Calendar ---- */
+
+.calendar-view-placeholder { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); padding: 2rem; }
+.calendar-view-placeholder h2 { font-family: var(--font-display); font-weight: 400; color: var(--paper); margin: 0 0 0.5rem; }
+
+.calendar-view { flex: 1; overflow-y: auto; padding: 2rem 2.25rem; display: flex; gap: 2.5rem; align-items: flex-start; }
+.calendar-list { flex: 1; min-width: 0; }
+.calendar-list-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
+/* Matches the app's other empty states (e.g. .match-empty) in tone -
+   muted, centered - but as its own contained block rather than a bare
+   line of text, since this one sits inside a list that can also hold
+   real content above/below it (header, add-event form). */
+.calendar-empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 3rem 1.5rem; color: var(--muted);
+  background: var(--ink-raised); border: 1px dashed var(--ink-line-strong); border-radius: 8px;
+}
+.calendar-empty-icon { font-size: 1.8rem; margin-bottom: 0.75rem; opacity: 0.7; }
+.calendar-empty-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--paper); margin: 0 0 0.35rem; }
+.calendar-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 380px; margin: 0; }
+
+.agenda-clear-filter {
+  display: block; background: none; border: none; cursor: pointer; padding: 0;
+  margin-bottom: 1.1rem; font-size: 0.8rem; color: var(--brass); font-family: var(--font-mono);
+}
+.agenda-clear-filter:hover { color: var(--paper); }
+
+.agenda-day { margin-bottom: 1.6rem; }
+.agenda-day-header {
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--brass); margin: 0 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--ink-line);
+}
+.agenda-item { background: var(--ink); border: 1px solid var(--ink-line-strong); border-radius: 7px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; }
+.agenda-item-row { display: flex; align-items: center; gap: 0.9rem; }
+.agenda-item-time { font-family: var(--font-mono); font-size: 0.78rem; color: var(--brass); width: 4.6rem; flex-shrink: 0; }
+.agenda-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.agenda-item-title { font-family: var(--font-display); font-size: 1rem; color: var(--paper); }
+.agenda-item-sub { font-size: 0.78rem; color: var(--muted); }
+.agenda-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.agenda-item-delete {
+  background: none; border: 1px solid var(--ink-line-strong); border-radius: 5px; color: var(--muted);
+  cursor: pointer; width: 26px; height: 26px; font-size: 1rem; line-height: 1;
+}
+.agenda-item-delete:hover { color: var(--warn); border-color: var(--warn); }
+
+.add-event-form {
+  background: var(--ink-raised); border: 1px solid var(--ink-line); border-radius: 7px;
+  padding: 0.9rem 1rem; margin-bottom: 1.1rem; display: flex; flex-direction: column; gap: 0.6rem;
+}
+.add-event-form-error { margin: 0; color: var(--warn); font-size: 0.8rem; }
+.add-event-form-title {
+  background: var(--ink); border: 1px solid var(--ink-line-strong); border-radius: 5px;
+  padding: 0.55rem 0.75rem; color: var(--paper); font-size: 0.9rem; font-family: inherit;
+}
+.add-event-form-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.add-event-form-row input {
+  background: var(--ink); border: 1px solid var(--ink-line-strong); border-radius: 5px;
+  padding: 0.45rem 0.6rem; color: var(--paper); font-size: 0.82rem; font-family: var(--font-mono); color-scheme: dark;
+}
+.add-event-form-dash { color: var(--muted); }
+.add-event-form-actions { display: flex; justify-content: flex-end; gap: 0.6rem; }
+
+@media (max-width: 640px) {
+  .agenda-item-row { flex-wrap: wrap; }
+  .agenda-item-actions { width: 100%; justify-content: flex-end; }
+  .add-event-form-row { flex-direction: column; align-items: stretch; }
+  .add-event-form-row input { width: 100%; }
+  .add-event-form-dash { display: none; }
+}
+
+.calendar-card-briefing-toggle {
+  background: none; border: none; cursor: pointer; padding: 0;
+  margin-top: 0.6rem; font-size: 0.78rem; color: var(--brass); font-family: var(--font-mono);
+}
+.calendar-card-briefing-toggle:hover { color: var(--paper); }
+.calendar-card-briefing {
+  margin-top: 0.55rem; padding: 0.75rem 0.9rem; background: var(--ink-raised); border-radius: 6px;
+  border: 1px solid var(--ink-line);
+}
+.calendar-card-briefing p { margin: 0; color: var(--paper); font-size: 0.85rem; line-height: 1.55; }
+.calendar-card-briefing ul { margin: 0.6rem 0 0; padding-left: 1.1rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.6; }
+.calendar-card-briefing li + li { margin-top: 0.3rem; }
+
+@media (max-width: 640px) {
+  .calendar-card-briefing { padding: 0.65rem 0.75rem; }
+  .calendar-card-briefing p, .calendar-card-briefing ul { font-size: 0.78rem; }
+}
+
+.mini-cal {
+  width: 250px; flex-shrink: 0;
+  background: var(--ink-raised); border: 1px solid var(--ink-line);
+  border-radius: 8px; padding: 1.1rem;
+}
+.mini-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+.mini-cal-head h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0; color: var(--paper); }
+.mini-cal-nav { display: flex; gap: 0.25rem; }
+.mini-cal-nav button {
+  width: 26px; height: 26px; border-radius: 5px; border: 1px solid var(--ink-line-strong);
+  background: transparent; color: var(--muted); cursor: pointer; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.mini-cal-nav button:hover { border-color: var(--brass-dim); color: var(--paper); }
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.mini-cal-grid .dow { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.03em; color: var(--muted); text-align: center; padding-bottom: 0.5rem; }
+.mini-cal-grid .day {
+  position: relative;
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 0.72rem; color: var(--paper); border-radius: 4px;
+  border: 1px solid transparent; background: none; padding: 0; cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mini-cal-grid .day:hover:not(:disabled) { border-color: var(--ink-line-strong); }
+.mini-cal-grid .day:disabled { cursor: default; }
+.mini-cal-grid .day.faded { color: var(--faded); }
+/* Distinct from a plain hover ring - today should read at a glance,
+   the same brass accent used for has-event so the two combine cleanly
+   when today happens to also have something scheduled on it. */
+.mini-cal-grid .day.today { border-color: var(--brass); color: var(--brass); font-weight: 700; }
+.mini-cal-grid .day.has-event { background: var(--brass-dim); color: var(--brass); font-weight: 700; border-color: var(--brass); }
+.mini-cal-grid .day.has-event::after {
+  content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--brass);
+}
+.mini-cal-grid .day.selected { border: 2px solid var(--paper); }
+
+@media (max-width: 900px) {
+  .calendar-view { flex-direction: column; }
+  .mini-cal { width: 100%; }
+}

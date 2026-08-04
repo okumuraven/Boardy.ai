@@ -49,6 +49,7 @@ export default function App() {
           setProfile({
             name: data.full_name,
             email: data.email,
+            is_bizi: data.is_bizi,
             role: data.role,
             industry: data.industry,
             location: data.location,

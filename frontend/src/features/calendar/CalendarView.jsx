@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../../lib/api";
 import MiniCalendar from "./MiniCalendar";
+import "./Calendar.css";
 import AgendaDay from "./AgendaDay";
 import AddPersonalEventForm from "./AddPersonalEventForm";
 import { dateKeyFromDate } from "./dateKey";

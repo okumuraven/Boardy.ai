@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import NotificationBell from "../notifications";
 import IncomingCallBanner from "./IncomingCallBanner";
+import "./AppShell.css";
 import FeedbackWidget from "../../components/FeedbackWidget";
 import HomeView from "../home/HomeView";
 import DirectoryView from "../directory";

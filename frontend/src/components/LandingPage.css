@@ -1,0 +1,249 @@
+/* Onboarding/marketing composition - asymmetric golden-ratio split
+   (61.8% content / 38.2% visual), left-anchored text, per the brand
+   guide's own example layouts (not a centered hero). The visual column
+   (.onboarding-visual) holds the arc mark; collapses to a single
+   column on narrower screens since there's no room for a real split. */
+.onboarding-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1.618fr 1fr;
+  align-items: center;
+  gap: 3rem;
+  text-align: left;
+  /* .nav-bar is position:absolute (out of flow), so this top padding is
+     the ONLY thing keeping hero content clear of it - centering alone
+     only worked here by luck, for whatever content happened to be short
+     enough. A fixed floor guarantees clearance regardless of how tall
+     the hero content grows (a stat callout, an example card, etc.),
+     instead of quietly breaking again next time copy changes. */
+  padding: 9rem 4rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 10;
+  min-height: 100vh;
+}
+
+.onboarding-content { max-width: 560px; }
+
+.onboarding-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.onboarding-visual svg { width: 100%; max-width: 280px; height: auto; }
+
+/* Landing-page-only: the brand guide's own example composition (bold
+   text anchored left, a highlighted metric callout on the right, golden-
+   ratio split) - gives the visual column real content instead of a lone
+   icon floating in empty space. */
+.hero-visual-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.hero-stat-callout {
+  background: var(--brass);
+  color: #fff;
+  border-radius: 4px;
+  padding: 1.75rem 2.25rem;
+  text-align: center;
+  min-width: 190px;
+}
+
+.hero-stat-callout .num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.75rem;
+  line-height: 1;
+}
+
+.hero-stat-callout .cap {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .hero-visual-stack { gap: 1.5rem; }
+  .hero-stat-callout { padding: 1.25rem 1.75rem; min-width: 150px; }
+  .hero-stat-callout .num { font-size: 2rem; }
+}
+
+.ai-greeting {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 3.1rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  text-wrap: balance;
+}
+
+/* A real class, not an inline font-size override - Login/ProfileSetup/
+   MatchReview's headings are secondary to the landing page's main hero
+   and want a smaller desktop size, but an inline style would beat the
+   @media rules below at every breakpoint regardless of viewport width
+   (inline always outranks external CSS). Same specificity as .ai-greeting
+   itself, so ordinary source-order cascade rules decide who wins - the
+   later @media block below correctly takes over once its condition matches. */
+.ai-greeting-compact { font-size: 2.5rem; }
+
+.accent-text {
+  color: var(--brass);
+}
+
+.ai-subtext {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 0 3rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.3s;
+}
+
+/* Input command bar */
+.command-center {
+  width: 100%;
+  max-width: 480px;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 4px;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUpIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: 0.6s;
+}
+
+.command-center:focus-within {
+  border-color: var(--brass-dim);
+}
+
+.country-pill {
+  background: transparent;
+  padding: 0.8rem 1rem;
+  border-right: 1px solid var(--ink-line);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 0.5rem;
+}
+
+.premium-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--paper);
+  font-size: 1.05rem;
+  font-weight: 500;
+  outline: none;
+  padding: 0.5rem;
+}
+
+.premium-input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.action-btn {
+  width: 54px;
+  height: 54px;
+  border-radius: 3px;
+  border: none;
+  background: var(--ink-line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  transition: all 0.25s ease;
+}
+
+.action-btn.ready {
+  background: var(--brass);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.action-btn.ready:hover {
+  filter: brightness(1.1);
+}
+
+/* Landing page primary CTA - a bolder, more inviting take on
+   .action-btn.ready scoped to just this button, since the shared class
+   is also a bare circular icon button elsewhere (VoiceInterview's call
+   button) that shouldn't pick up this treatment. */
+.landing-cta {
+  font-weight: 700;
+  font-size: 1.02rem;
+  box-shadow: 0 6px 20px var(--brass-dim);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, filter 0.25s ease;
+}
+
+.landing-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--brass-dim);
+}
+
+.landing-cta:active {
+  transform: translateY(0);
+}
+
+.landing-cta .landing-cta-icon {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-cta:hover .landing-cta-icon {
+  transform: translateX(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-greeting, .ai-subtext, .command-center {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 900px) {
+  /* No room for a real 61.8/38.2 split below tablet width - collapse to
+     one column, text first, visual shrinks below it rather than beside. */
+  .onboarding-container { grid-template-columns: 1fr; text-align: center; }
+  .onboarding-content { max-width: 100%; margin: 0 auto; }
+  .onboarding-visual { order: -1; }
+  .onboarding-visual svg { max-width: 140px; }
+  .ai-subtext { margin-left: auto; margin-right: auto; }
+}
+
+@media (max-width: 768px) {
+  .ai-greeting { font-size: 1.9rem; margin-bottom: 1rem; }
+  .ai-subtext { font-size: 0.98rem; margin-bottom: 1.75rem; }
+  .command-center { flex-direction: column; border-radius: 8px; padding: 1rem; gap: 1rem; }
+  .country-pill { width: 100%; justify-content: center; margin-right: 0; border-right: none; border-bottom: 1px solid var(--ink-line); padding-bottom: 1rem; }
+  .premium-input { text-align: center; width: 100%; padding: 0.75rem 0; }
+  .action-btn { width: 100%; border-radius: 3px; height: 50px; }
+  .onboarding-container { padding: 0 1.25rem; }
+
+  /* Screens with a real <nav> (Dashboard, Login, ProfileSetup) need their
+     centered content to clear the fixed nav instead of centering in the
+     full viewport height and overlapping it. */
+  .app-container:has(.nav-bar) .onboarding-container { justify-content: flex-start; padding-top: 6.5rem; }
+}
+
+@media (max-width: 480px) {
+  .ai-greeting { font-size: 1.65rem; }
+}

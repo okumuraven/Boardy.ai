@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiFetch } from '../lib/api';
 import KuzanaMark from './KuzanaMark';
+import '../styles/SharedFormFields.css';
 import { INDUSTRIES } from "../constants/industries";
 import { ROLES, roleTitle } from "../constants/roles";
 

@@ -1,4 +1,5 @@
 import KuzanaMark from './KuzanaMark';
+import './LandingPage.css';
 
 export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
   return (

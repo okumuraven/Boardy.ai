@@ -1,3 +1,5 @@
+import "./CallOverlay.css";
+
 const formatElapsed = (seconds) => {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;

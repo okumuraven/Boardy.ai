@@ -1,14 +1,24 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
-import { getToken } from "../lib/api";
+import { getToken, apiFetch } from "../lib/api";
+import "./ChatSystem.css";
 import SchedulingFlow from "../features/scheduling";
 import MatchProfilePanel from "../features/matches/MatchProfilePanel";
 import FlagConcernPanel from "../features/matches/FlagConcernPanel";
 import CallPanel from "./CallPanel";
+import AttachmentBubble from "./AttachmentBubble";
 
 const HISTORY_PAGE_SIZE = 50;
 
-export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack }) {
+const formatBytes = (bytes) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
+export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack, attachmentActions }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
   // notification click asked for it (`startInScheduling`), or when we're
@@ -28,6 +38,17 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const [otherOnline, setOtherOnline] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  // The file finishes its HTTP upload (and gets a real attachment id)
+  // *before* the user hits send - "sending" only ever pushes a small
+  // JSON reference over the channel, never raw bytes.
+  const [pendingAttachment, setPendingAttachment] = useState(null);
+  const [uploadState, setUploadState] = useState("idle"); // idle | uploading | error
+  const [uploadError, setUploadError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const fileInputRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordingTimerRef = useRef(null);
   // Mirrors channelRef.current for CallPanel's prop - reading a ref's
   // .current during render isn't allowed, so this is set alongside the
   // ref right when the channel is actually created.
@@ -106,14 +127,99 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const handleSendMessage = (e) => {
     e.preventDefault();
     const content = newMessage.trim();
-    if (!content || connectionState !== "joined") return;
+    if ((!content && !pendingAttachment) || connectionState !== "joined" || uploadState === "uploading") return;
 
+    // Only the attachment (real upload effort already spent) survives a
+    // failed/timed-out send so it can be retried without re-uploading -
+    // text clearing optimistically is pre-existing behavior, unchanged.
     channelRef.current
-      ?.push("new_msg", { content })
-      .receive("error", ({ reason }) => alert(reason || "Message failed to send."));
+      ?.push("new_msg", { content, attachment_id: pendingAttachment?.id })
+      .receive("ok", () => setPendingAttachment(null))
+      .receive("error", ({ reason }) => alert(reason || "Message failed to send."))
+      .receive("timeout", () => alert("Message timed out - please try again."));
 
     setNewMessage("");
   };
+
+  const uploadFile = async (file) => {
+    setUploadState("uploading");
+    setUploadError("");
+    setPendingAttachment(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await apiFetch(`/api/chat_rooms/${roomId}/attachments`, { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Upload failed.");
+      setPendingAttachment(data);
+      setUploadState("idle");
+    } catch (err) {
+      setUploadState("error");
+      setUploadError(err.message || "Couldn't upload that file.");
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) uploadFile(file);
+  };
+
+  const discardRecordingRef = useRef(false);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop());
+        clearInterval(recordingTimerRef.current);
+        setIsRecording(false);
+        setRecordingSeconds(0);
+
+        if (!discardRecordingRef.current && chunks.length) {
+          const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
+          uploadFile(new File([blob], "voice-note.webm", { type: blob.type }));
+        }
+      };
+
+      discardRecordingRef.current = false;
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    } catch {
+      setUploadState("error");
+      setUploadError("Microphone access was denied or unavailable.");
+    }
+  };
+
+  // `discard: true` (the pending-strip's × while recording) throws the
+  // clip away instead of uploading it - same MediaRecorder stop event
+  // either way, the flag just tells onstop whether to keep going.
+  const stopRecording = (discard = false) => {
+    discardRecordingRef.current = discard;
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+  };
+
+  useEffect(() => {
+    return () => {
+      clearInterval(recordingTimerRef.current);
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") {
+        discardRecordingRef.current = true;
+        recorder.stop();
+      }
+    };
+  }, []);
 
   const handleLoadMore = () => {
     const earliest = messages[0];
@@ -142,9 +248,11 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         {/* Header */}
         <div className="chat-header">
           <div className="chat-header-identity">
-            <button onClick={onBack} className="nav-link chat-header-back">
-              ←
-            </button>
+            {onBack && (
+              <button onClick={onBack} className="nav-link chat-header-back">
+                ←
+              </button>
+            )}
             <div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
               <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -218,7 +326,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 const isMe = msg.sender_id === profile.id;
                 return (
                   <div key={msg.id} className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
-                    <span className="msg-text">{msg.content}</span>
+                    {msg.attachment && <AttachmentBubble attachment={msg.attachment} />}
+                    {msg.attachment && attachmentActions?.(msg)}
+                    {msg.content && <span className="msg-text">{msg.content}</span>}
                     <span className="msg-time">{time}</span>
                   </div>
                 );
@@ -229,7 +339,71 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         </div>
 
         {/* Input Area */}
+        {(pendingAttachment || uploadState !== "idle" || isRecording) && (
+          <div className={`chat-pending-attachment ${uploadState === "error" ? "error" : ""}`}>
+            {isRecording ? (
+              <span className="chat-pending-attachment-name">
+                <span className="chat-recording-dot" /> Recording... {formatDuration(recordingSeconds)}
+              </span>
+            ) : uploadState === "uploading" ? (
+              <span className="chat-pending-attachment-name">Uploading...</span>
+            ) : uploadState === "error" ? (
+              <span className="chat-pending-attachment-name">{uploadError}</span>
+            ) : pendingAttachment ? (
+              <span className="chat-pending-attachment-name">
+                {pendingAttachment.content_type?.startsWith("audio/") ? "🎤 Voice note" : `📎 ${pendingAttachment.filename}`} · {formatBytes(pendingAttachment.byte_size)}
+              </span>
+            ) : null}
+            {isRecording ? (
+              <button type="button" className="chat-pending-attachment-remove" onClick={() => stopRecording(true)} aria-label="Cancel recording" title="Cancel recording">
+                ×
+              </button>
+            ) : (pendingAttachment || uploadState === "error") ? (
+              <button
+                type="button"
+                className="chat-pending-attachment-remove"
+                onClick={() => { setPendingAttachment(null); setUploadState("idle"); setUploadError(""); }}
+                aria-label="Remove attachment"
+                title="Remove attachment"
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
+        )}
         <form onSubmit={handleSendMessage} className="chat-input-row">
+          <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: "none" }} />
+          <button
+            type="button"
+            className="chat-attach-btn"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={connectionState !== "joined" || uploadState === "uploading"}
+            title="Attach a file"
+            aria-label="Attach a file"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={`chat-attach-btn ${isRecording ? "recording" : ""}`}
+            onClick={() => (isRecording ? stopRecording(false) : startRecording())}
+            disabled={connectionState !== "joined" || uploadState === "uploading"}
+            title={isRecording ? "Stop and send voice note" : "Record a voice note"}
+            aria-label={isRecording ? "Stop and send voice note" : "Record a voice note"}
+          >
+            {isRecording ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            )}
+          </button>
           <input
             type="text"
             value={newMessage}
@@ -241,7 +415,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
           <button
             type="submit"
             className="chat-send-btn"
-            disabled={!newMessage.trim() || connectionState !== "joined"}
+            disabled={(!newMessage.trim() && !pendingAttachment) || connectionState !== "joined" || uploadState === "uploading"}
             title="Send"
             aria-label="Send"
           >

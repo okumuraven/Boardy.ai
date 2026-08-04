@@ -20,6 +20,7 @@ defmodule VokaziWeb.ProfileController do
           company: user.company,
           bio: user.bio,
           onboarding_completed: user.onboarding_completed,
+          is_bizi: user.is_bizi,
           offer_text: if(user.profile, do: user.profile.offer_text, else: nil),
           need_text: if(user.profile, do: user.profile.need_text, else: nil),
           phone_number: if(user.profile, do: user.profile.phone_number, else: nil),

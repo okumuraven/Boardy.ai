@@ -1,0 +1,61 @@
+/* ---- Matches (list + stage) ---- */
+
+.matches-view { flex: 1; min-width: 0; display: flex; }
+
+.matches-list {
+  width: 280px; flex-shrink: 0;
+  border-right: 1px solid var(--ink-line);
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+.matches-list header { padding: 1.1rem 1.1rem 0.75rem; }
+.matches-list header h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; margin: 0 0 0.15rem; color: var(--paper); }
+.matches-list header .count { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+
+.match-row {
+  display: flex; gap: 0.7rem; align-items: flex-start;
+  padding: 0.75rem 1.1rem; cursor: pointer; text-align: left;
+  border: none; width: 100%; background: transparent;
+  border-left: 2px solid transparent;
+  transition: background 0.15s ease;
+}
+.match-row:hover { background: var(--ink-line); }
+.match-row.active { background: var(--brass-wash); border-left-color: var(--brass); }
+
+.match-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ink); border: 1.5px solid var(--ink-line-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem; color: var(--paper);
+  flex-shrink: 0; position: relative;
+}
+.match-avatar .status-dot { position: absolute; bottom: -1px; right: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--signal); border: 2px solid var(--ink-raised); }
+
+.match-body { flex: 1; min-width: 0; }
+.match-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.match-name { font-size: 0.88rem; color: var(--paper); }
+.match-time { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+.match-preview { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.match-row.active .match-preview { color: var(--paper); }
+
+.match-status-pill {
+  display: inline-block; font-family: var(--font-mono); font-size: 0.63rem;
+  letter-spacing: 0.03em; text-transform: uppercase; margin-top: 0.3rem;
+  padding: 0.08rem 0.4rem; border-radius: 3px; background: var(--warn-wash); color: var(--warn);
+}
+
+/* The other person already accepted and is waiting on this one -
+   deliberately the affirming gold, not the neutral/cautionary coral
+   the generic "Pending consent" pill uses, so it actually stands out
+   in the list instead of reading identical to every other open match. */
+.match-status-pill.signal { background: var(--signal-wash); color: var(--signal); }
+.match-row.highlighted { background: var(--signal-wash); }
+.match-row.highlighted:hover { background: var(--signal-wash); filter: brightness(1.05); }
+
+.match-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.match-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.9rem; text-align: center; padding: 2rem; }
+
+@media (max-width: 900px) {
+  .matches-list { width: 100%; border-right: none; }
+  .matches-list.hide-on-mobile-when-selected { display: none; }
+  .match-stage.hide-on-mobile-unselected { display: none; }
+}

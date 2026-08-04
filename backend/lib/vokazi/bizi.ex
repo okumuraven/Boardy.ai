@@ -40,6 +40,15 @@ defmodule Vokazi.Bizi do
   end
 
   @doc """
+  The one real authorization check behind the member-facing verification
+  chat endpoint - `nil` for any id that isn't this user's own
+  application, same "not found" either way a stranger's id would get.
+  """
+  def get_own_application(user_id, application_id) do
+    Repo.get_by(Application, id: application_id, user_id: user_id)
+  end
+
+  @doc """
   Creates the application, then notifies every active Superadmin through
   the same in-app Bell they already use for a new match or chat message
   (bizi_flow.md §6) - no new admin screen. The notification is
