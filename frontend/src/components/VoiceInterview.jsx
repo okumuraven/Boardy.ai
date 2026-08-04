@@ -1,3 +1,5 @@
+import './VoiceInterview.css';
+
 // The mic-button voice interview: idle / connecting / active states,
 // pulsing rings while recording, and a live transcript preview. Lives
 // inside HomeView's dashboard now, not as its own full-viewport hero -

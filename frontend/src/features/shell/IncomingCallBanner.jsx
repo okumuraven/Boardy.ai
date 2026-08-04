@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
 import { getToken } from "../../lib/api";
+import "./IncomingCallBanner.css";
 
 // Makes an incoming call visible from anywhere in the app - not just
 // when the specific match's chat happens to be open (see CallPanel.jsx,

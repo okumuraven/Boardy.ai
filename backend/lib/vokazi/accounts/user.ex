@@ -43,6 +43,14 @@ defmodule Vokazi.Accounts.User do
     # sequence, not a fixed list. Never member-castable, same reason as
     # admin_role/is_verified above.
     field :batch, :string
+    # Set exactly once, atomically, by the final Superadmin board
+    # decision on a Bizi application (Vokazi.Admin.BiziApplications.
+    # record_decision/4) - deliberately its own field, not reused from
+    # is_verified (a generic authenticity checkmark) or batch (scoped
+    # only to Bizi Buddy pairing). See bizi_verification_system.md §10.
+    # Never member-castable, same reason as admin_role/is_verified above.
+    field :is_bizi, :boolean, default: false
+    field :bizi_approved_at, :utc_datetime
     # Set once, the moment `Vokazi.Accounts.InterviewReminderWorker`
     # actually sends the one-shot 48h nudge - never member/admin-castable,
     # purely internal bookkeeping so the same account is never reminded
@@ -138,15 +146,16 @@ defmodule Vokazi.Accounts.User do
 
   @doc """
   The ONLY path that can ever set admin_role/admin_status/is_verified/
-  batch - used exclusively by `Vokazi.Admin.*` context modules and the
-  `mix admin.grant` bootstrap task, never by any member-facing controller.
-  Each field is independently optional here (e.g. a suspend action only
-  touches admin_status, an invite-acceptance only touches admin_role +
-  admin_status) - callers pass just what they're changing.
+  batch/is_bizi/bizi_approved_at - used exclusively by `Vokazi.Admin.*`
+  context modules and the `mix admin.grant` bootstrap task, never by any
+  member-facing controller. Each field is independently optional here
+  (e.g. a suspend action only touches admin_status, an invite-acceptance
+  only touches admin_role + admin_status) - callers pass just what
+  they're changing.
   """
   def admin_changeset(user, attrs) do
     user
-    |> cast(attrs, [:admin_role, :admin_status, :is_verified, :batch])
+    |> cast(attrs, [:admin_role, :admin_status, :is_verified, :batch, :is_bizi, :bizi_approved_at])
     |> validate_inclusion(:admin_role, @admin_roles)
     |> validate_inclusion(:admin_status, @admin_statuses)
   end

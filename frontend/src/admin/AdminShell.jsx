@@ -115,7 +115,7 @@ export default function AdminShell({ admin, onLogout }) {
 
         {tab === 'bizi_applications' && (
           selectedBiziApplicationId ? (
-            <BiziApplicationDetailView applicationId={selectedBiziApplicationId} onBack={() => setSelectedBiziApplicationId(null)} />
+            <BiziApplicationDetailView applicationId={selectedBiziApplicationId} admin={admin} onBack={() => setSelectedBiziApplicationId(null)} />
           ) : (
             <BiziApplicationsListView onSelect={setSelectedBiziApplicationId} />
           )

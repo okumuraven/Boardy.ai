@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import "./ThemeToggle.css";
 
 const STORAGE_KEY = "kuzana-theme";
 

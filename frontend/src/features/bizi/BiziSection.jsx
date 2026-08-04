@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { isFounderRole } from "../../constants/roles";
+import { biziStatusLabel } from "../../constants/biziStatuses";
 import BiziRulebook from "./BiziRulebook";
 import BiziApplicationForm from "./BiziApplicationForm";
+import BiziVerificationChat from "./BiziVerificationChat";
 
 // Kuzana's real form rejects everyone but the operating founder outright
 // (kuzana_website.md §9) - shown to non-founders as a better-fitting
@@ -26,21 +28,23 @@ function ReferAFounder() {
   );
 }
 
-const STATUS_LABEL = { submitted: "Submitted" };
-
-function ApplicationList({ applications, onReadRulebook, onApplyAgain }) {
+function ApplicationList({ applications, onReadRulebook, onApplyAgain, onOpenChat }) {
   return (
     <div className="panel">
       <p className="panel-label">Your Bizi applications</p>
       {applications.map((a) => (
-        <div key={a.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0.85rem 0", borderBottom: "1px solid var(--ink-line)" }}>
+        <div
+          key={a.id}
+          onClick={() => onOpenChat(a)}
+          style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "0.85rem 0", borderBottom: "1px solid var(--ink-line)", cursor: "pointer" }}
+        >
           <div>
             <div style={{ fontWeight: 600, color: "var(--paper)", fontSize: "0.95rem" }}>{a.company_name}</div>
             <div style={{ fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.15rem" }}>
               {(a.track || []).join(", ")} · {new Date(a.inserted_at).toLocaleDateString()}
             </div>
           </div>
-          <span className="match-status-pill">{STATUS_LABEL[a.status] || a.status}</span>
+          <span className={`match-status-pill ${a.status === 'approved' ? 'signal' : ''}`}>{biziStatusLabel(a.status)}</span>
         </div>
       ))}
       <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem" }}>
@@ -89,6 +93,7 @@ function EntryCard({ onReadRulebook, onApply }) {
 export default function BiziSection({ profile }) {
   const [view, setView] = useState("loading");
   const [applications, setApplications] = useState([]);
+  const [activeApplication, setActiveApplication] = useState(null);
   const founder = isFounderRole(profile?.role);
 
   useEffect(() => {
@@ -138,12 +143,20 @@ export default function BiziSection({ profile }) {
     );
   }
 
+  if (view === "chat" && activeApplication) {
+    return <BiziVerificationChat application={activeApplication} profile={profile} onBack={() => setView("list")} />;
+  }
+
   if (view === "list") {
     return (
       <ApplicationList
         applications={applications}
         onReadRulebook={() => setView("rulebook")}
         onApplyAgain={() => setView("form")}
+        onOpenChat={(application) => {
+          setActiveApplication(application);
+          setView("chat");
+        }}
       />
     );
   }

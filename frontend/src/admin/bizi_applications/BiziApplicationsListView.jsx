@@ -1,5 +1,6 @@
 import { useAdminList } from '../useAdminList';
 import AdminPagination from '../AdminPagination';
+import { biziStatusLabel } from '../../constants/biziStatuses';
 
 // Closes the loop on the notification Vokazi.Bizi already sends every
 // active Superadmin on submit - previously that notification had
@@ -29,8 +30,8 @@ export default function BiziApplicationsListView({ onSelect }) {
                     <th>Company</th>
                     <th>Applicant</th>
                     <th>Track(s)</th>
-                    <th>Batch</th>
                     <th>Status</th>
+                    <th>Assigned to</th>
                     <th>Submitted</th>
                   </tr>
                 </thead>
@@ -40,8 +41,11 @@ export default function BiziApplicationsListView({ onSelect }) {
                       <td>{a.company_name}</td>
                       <td>{a.applicant?.name || a.applicant?.email || '?'}</td>
                       <td>{(a.track || []).join(', ')}</td>
-                      <td>{a.batch_target || <span style={{ color: 'var(--muted)' }}>-</span>}</td>
-                      <td>{a.status}</td>
+                      <td>
+                        <span className="admin-pill">{biziStatusLabel(a.status)}</span>
+                        {a.stuck && <span className="admin-pill warn" style={{ marginLeft: '0.4rem' }}>Stuck</span>}
+                      </td>
+                      <td>{a.assigned_to?.name || <span style={{ color: 'var(--muted)' }}>Unassigned</span>}</td>
                       <td>{new Date(a.inserted_at).toLocaleDateString()}</td>
                     </tr>
                   ))}

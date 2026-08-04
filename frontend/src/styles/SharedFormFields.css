@@ -1,0 +1,68 @@
+/* Onboarding-style form fields - shared between ProfileSetup and Bizi's
+   application form, a dedicated set of classes so these fields don't
+   need per-field inline style overrides fighting other input styles
+   (the same "inline beats @media" trap that made a past heading bug
+   happen). Each field gets a small persistent label instead of
+   placeholder-only text, so a name/phone/company still reads clearly
+   once filled in and scrolled past on a small screen. */
+.setup-field { width: 100%; text-align: left; }
+
+.setup-field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.45rem;
+}
+
+.setup-field-control { position: relative; }
+
+.setup-field input,
+.setup-field select {
+  width: 100%;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 6px;
+  color: var(--paper);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.setup-field input::placeholder { color: var(--muted); opacity: 0.6; }
+
+.setup-field input:focus,
+.setup-field select:focus { border-color: var(--brass-dim); background: var(--ink-line); }
+
+.setup-field select { padding-right: 2.6rem; cursor: pointer; }
+
+/* A real SVG child instead of a background-image data URI - lets the
+   chevron use currentColor so it matches --muted (and turns --brass on
+   focus) in both themes automatically, instead of two hand-encoded SVGs
+   baked to one fixed gray that only half-worked in dark mode. */
+.setup-field-chevron {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.setup-field select:focus + .setup-field-chevron { color: var(--brass); transform: translateY(-50%) rotate(180deg); }
+
+@media (max-width: 480px) {
+  /* Comfortable ~48px+ touch targets on phones, not the desktop's tighter padding. */
+  .setup-field input,
+  .setup-field select { padding: 1rem 1rem; font-size: 1rem; }
+  .setup-field select { padding-right: 2.6rem; }
+}

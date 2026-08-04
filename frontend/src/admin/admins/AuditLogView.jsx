@@ -13,6 +13,11 @@ const ACTIONS = [
   'admin.set_role',
   'admin.suspend',
   'admin.reactivate',
+  'bizi_application.advance_stage',
+  'bizi_application.assign',
+  'bizi_application.add_reference',
+  'bizi_application.update_reference',
+  'bizi_application.decision',
 ];
 
 // Superadmin-only - the full mutation trail (§3). Reads are never

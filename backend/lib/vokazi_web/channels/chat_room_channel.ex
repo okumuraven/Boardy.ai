@@ -75,17 +75,21 @@ defmodule VokaziWeb.ChatRoomChannel do
   end
 
   @impl true
-  def handle_in("new_msg", %{"content" => content}, socket) do
+  def handle_in("new_msg", %{"content" => content} = payload, socket) do
     user_id = socket.assigns.user_id
     room_id = socket.assigns.room_id
+    attachment_id = Map.get(payload, "attachment_id")
 
-    case Chat.create_message(%{content: content, sender_id: user_id, chat_room_id: room_id}) do
+    case Chat.create_message(%{content: content, sender_id: user_id, chat_room_id: room_id, attachment_id: attachment_id}) do
       {:ok, message} ->
         broadcast!(socket, "new_msg", serialize_message(message))
         {:reply, :ok, socket}
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         {:reply, {:error, %{reason: changeset_error_message(changeset)}}, socket}
+
+      {:error, reason} ->
+        {:reply, {:error, %{reason: to_string(reason)}}, socket}
     end
   end
 
@@ -307,9 +311,21 @@ defmodule VokaziWeb.ChatRoomChannel do
       content: message.content,
       sender_id: message.sender_id,
       sender_name: message.sender && message.sender.full_name,
-      inserted_at: Vokazi.DateTimeJSON.utc(message.inserted_at)
+      inserted_at: Vokazi.DateTimeJSON.utc(message.inserted_at),
+      attachment: serialize_attachment(Map.get(message, :attachment))
     }
   end
+
+  defp serialize_attachment(%Vokazi.Chat.Attachment{} = attachment) do
+    %{
+      id: attachment.id,
+      filename: attachment.filename,
+      content_type: attachment.content_type,
+      byte_size: attachment.byte_size
+    }
+  end
+
+  defp serialize_attachment(_), do: nil
 
   defp changeset_error_message(changeset) do
     changeset.errors

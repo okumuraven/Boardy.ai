@@ -211,6 +211,172 @@
   margin-top: 0.2rem;
 }
 
+/* Bizi verification pipeline (bizi_verification_system.md) - a horizontal
+   stepper on desktop, horizontally scrollable on narrow screens (same
+   "scope the scroll, not the page" principle as .admin-table-wrap below)
+   rather than stacking vertically, which would lose the "this is a
+   linear process" read entirely. */
+.bizi-pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0.1rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.bizi-pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  flex-shrink: 0;
+  text-align: center;
+  position: relative;
+}
+
+.bizi-pipeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 22px);
+  right: calc(-50% + 22px);
+  height: 2px;
+  background: var(--ink-line-strong);
+}
+
+.bizi-pipeline-step.done:not(:last-child)::after { background: var(--signal); }
+
+.bizi-pipeline-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: var(--ink-raised);
+  font-size: 0.78rem;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.bizi-pipeline-step.done .bizi-pipeline-dot { border-color: var(--signal); background: var(--signal-wash); color: var(--signal); }
+.bizi-pipeline-step.current .bizi-pipeline-dot { border-color: var(--brass); background: var(--brass-wash); color: var(--brass); }
+.bizi-pipeline-step.declined .bizi-pipeline-dot { border-color: var(--warn); background: var(--warn-wash); color: var(--warn); }
+
+.bizi-pipeline-label {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+  max-width: 90px;
+}
+
+.bizi-pipeline-step.current .bizi-pipeline-label,
+.bizi-pipeline-step.done .bizi-pipeline-label { color: var(--paper); font-weight: 600; }
+
+/* Stage-history timeline - the real case file (bizi_verification_system.md
+   §4). One entry per stage_event, newest first. */
+.bizi-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bizi-timeline-item {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.bizi-timeline-item:last-child { border-bottom: none; }
+
+.bizi-timeline-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  background: var(--ink-line);
+  color: var(--muted);
+}
+
+.bizi-timeline-icon.system { background: var(--brass-wash); color: var(--brass); }
+.bizi-timeline-icon.decision { background: var(--signal-wash); color: var(--signal); }
+
+.bizi-timeline-body { flex: 1; min-width: 0; }
+.bizi-timeline-who { color: var(--paper); font-size: 0.88rem; font-weight: 600; }
+.bizi-timeline-who .tag { color: var(--muted); font-weight: 400; }
+.bizi-timeline-comment { color: var(--paper); font-size: 0.85rem; margin-top: 0.25rem; white-space: pre-wrap; }
+.bizi-timeline-time { color: var(--muted); font-size: 0.74rem; margin-top: 0.25rem; }
+
+/* Reference-check list (5 customers + 5 creditors, bizi_verification.md
+   stage 5) - each row a self-contained card, not a dense table, since
+   staff need room for notes and two independent checkboxes per row. */
+.bizi-reference-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--ink-line);
+  flex-wrap: wrap;
+}
+
+.bizi-reference-row:last-child { border-bottom: none; }
+
+.bizi-reference-checks {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.bizi-reference-checks label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.bizi-decision-panel {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.bizi-decision-panel .btn-primary.approve { background: var(--signal); color: #1a1a1a; }
+.bizi-decision-panel .btn-primary.decline { background: var(--warn); }
+
+/* Verification chat (Phase C) embedded inside the detail page's normal
+   scrolling column, not a full-height app-shell pane like Matches gets -
+   ChatRoomView's own height:100% needs an explicit box to fill here. */
+.bizi-verification-chat {
+  height: 560px;
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bizi-tag-control { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+.bizi-tag-control select {
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line-strong);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.78rem;
+}
+.bizi-tag-badge { display: inline-block; margin-top: 0.4rem; }
+
 /* Every list view wraps its <table> in this instead of leaving it bare -
    without it, a wide table (Members, Matches, Audit log especially) forces
    the ENTIRE page to scroll sideways on a narrow screen, dragging the
@@ -294,5 +460,32 @@
 
   .admin-stat-value {
     font-size: 1.5rem;
+  }
+
+  .bizi-pipeline-step {
+    min-width: 76px;
+  }
+
+  .bizi-pipeline-dot {
+    width: 26px;
+    height: 26px;
+  }
+
+  .bizi-pipeline-step:not(:last-child)::after {
+    top: 13px;
+  }
+
+  .bizi-pipeline-label {
+    font-size: 0.68rem;
+    max-width: 76px;
+  }
+
+  .bizi-reference-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bizi-decision-panel {
+    flex-direction: column;
   }
 }

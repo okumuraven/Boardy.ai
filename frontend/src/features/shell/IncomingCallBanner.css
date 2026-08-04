@@ -1,0 +1,33 @@
+/* Global incoming-call banner (IncomingCallBanner.jsx) - fixed above
+   everything, including the mobile tab bar, since it has to be visible
+   regardless of which tab is active. */
+.incoming-call-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: var(--brass);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  animation: incoming-call-pulse 1.4s ease-in-out infinite;
+}
+.incoming-call-banner-icon { font-size: 1.05rem; }
+
+/* Stays fully readable throughout - the shared `pulse` keyframe fades
+   to near-invisible (0.1 opacity), meant for loading skeletons, not an
+   urgent alert that has to stay legible the whole time. */
+@keyframes incoming-call-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}

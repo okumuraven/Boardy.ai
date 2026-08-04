@@ -1,0 +1,15 @@
+/* In-App Calling overlay (Phase 1) - covers the chat panel regardless of
+   where CallPanel sits in the DOM. */
+.call-overlay {
+  position: absolute; inset: 0; z-index: 20;
+  background: var(--ink); display: flex; align-items: center; justify-content: center;
+}
+.call-overlay-card { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; text-align: center; }
+.call-overlay-avatar {
+  width: 72px; height: 72px; font-size: 1.6rem; margin-bottom: 0.75rem;
+}
+.call-overlay-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--paper); margin: 0; }
+.call-overlay-status { font-family: var(--font-mono); color: var(--muted); margin: 0 0 0.75rem; }
+.call-overlay-end { border-color: var(--warn-dim); color: var(--warn); }
+.call-overlay-muted { border-color: var(--brass-dim); color: var(--brass); }
+.call-overlay-error { color: var(--warn); font-size: 0.82rem; margin-top: 0.75rem; max-width: 320px; text-align: center; }

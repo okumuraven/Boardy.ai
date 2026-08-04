@@ -1,0 +1,93 @@
+/* Kuzana Connect brand system (Kuzana Brand Guidelines 2025). Token
+   *names* are kept from the previous design (--ink, --brass, --paper...)
+   so every existing rule/inline style in this codebase repaints
+   correctly without being touched individually - only what each name
+   *resolves to* has changed. Light is the brand-accurate default;
+   :root[data-theme="dark"] below is our own extension (not in the
+   source guide, which is light/parchment-only) for a toggleable dark
+   mode using the same three brand hues recalibrated for a dark ground.
+
+   Color roles, per the guide: Focus Blue (30% - primary actions, key
+   data, structural headings) -> --brass (kept the name, not the hue).
+   Gold (3% - community/warmth/foundation) -> --signal (verified/online/
+   positive states - Gold reads as affirming, not the off-palette green
+   this token used to be). Coral (7% - energy/urgency/process) -> --warn
+   ("worth knowing"/caution - Coral's hustle-and-urgency read fits better
+   than the old amber). Page BG/Panel/Rule/Caption/Ink map directly. */
+:root {
+  --ink: #fafaf7;
+  --ink-raised: #f3f0ea;
+  --ink-line: rgba(26, 26, 26, 0.08);
+  --ink-line-strong: rgba(26, 26, 26, 0.16);
+
+  /* Focus Blue - the single primary accent. */
+  --brass: #4a6290;
+  --brass-dim: rgba(74, 98, 144, 0.35);
+  --brass-wash: rgba(74, 98, 144, 0.1);
+
+  /* Gold - warm/affirming functional state (online, verified, unlocked). */
+  --signal: #fdc469;
+  --signal-wash: rgba(253, 196, 105, 0.18);
+
+  /* Coral - energy/urgency, "worth knowing" caution. */
+  --warn: #fe7272;
+  --warn-wash: rgba(254, 114, 114, 0.1);
+  --warn-dim: rgba(254, 114, 114, 0.3);
+
+  --paper: #1a1a1a;
+  --muted: #5a6172;
+  --faded: rgba(26, 26, 26, 0.3);
+
+  --font-display: "Space Grotesk", -apple-system, "Segoe UI", sans-serif;
+  --font-body: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+
+  /* Back-compat aliases so any not-yet-migrated component still resolves
+     to sane values. */
+  --bg-dark: var(--ink);
+  --bg-card: var(--ink-raised);
+  --primary: var(--brass);
+  --secondary: var(--brass);
+  --text-main: var(--paper);
+  --text-muted: var(--muted);
+  --border: var(--ink-line);
+  --border-focus: var(--brass-dim);
+}
+
+/* Dark mode - same three brand hues, recalibrated for a dark ground
+   (brightened enough to hold contrast) rather than a literal inversion. */
+:root[data-theme="dark"] {
+  --ink: #15140f;
+  --ink-raised: #1f1d17;
+  --ink-line: rgba(243, 240, 234, 0.08);
+  --ink-line-strong: rgba(243, 240, 234, 0.16);
+
+  --brass: #86a0cc;
+  --brass-dim: rgba(134, 160, 204, 0.35);
+  --brass-wash: rgba(134, 160, 204, 0.12);
+
+  --signal: #fdc469;
+  --signal-wash: rgba(253, 196, 105, 0.15);
+
+  --warn: #fe7272;
+  --warn-wash: rgba(254, 114, 114, 0.14);
+  --warn-dim: rgba(254, 114, 114, 0.4);
+
+  --paper: #f3f0ea;
+  --muted: #9099ab;
+  --faded: rgba(243, 240, 234, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+}
+
+body {
+  background-color: var(--ink);
+  color: var(--paper);
+  min-height: 100vh;
+  overflow-x: hidden;
+}

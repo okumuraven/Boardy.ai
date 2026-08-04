@@ -27,6 +27,18 @@ defmodule VokaziWeb.BiziApplicationController do
     end
   end
 
+  @doc "Get-or-create this member's own verification chat room - 'not found' for any id that isn't their own application, same as a stranger's id would get."
+  def chat_room(conn, %{"id" => id}) do
+    case Bizi.get_own_application(conn.assigns.current_user_id, id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Not found"})
+
+      application ->
+        {:ok, room} = Vokazi.Admin.BiziApplications.open_verification_chat(application.id)
+        json(conn, %{chat_room_id: room.id})
+    end
+  end
+
   defp check_founder(user_id) do
     case Vokazi.Repo.get(Vokazi.Accounts.User, user_id) do
       %{role: role} -> if Bizi.eligible_role?(role), do: :ok, else: {:error, :not_a_founder}

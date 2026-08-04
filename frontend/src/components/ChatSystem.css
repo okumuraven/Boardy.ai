@@ -1,0 +1,205 @@
+.chat-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+  background: var(--ink-raised);
+}
+
+.chat-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--ink-line);
+  padding-bottom: 1rem;
+}
+
+.chat-header-identity { display: flex; align-items: center; min-width: 0; }
+.chat-header-back { flex-shrink: 0; font-size: 1.2rem; margin-right: 1rem; }
+.chat-header-identity h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.chat-header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.chat-action-btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem; font-size: 0.85rem; white-space: nowrap;
+  border-radius: 999px;
+}
+/* Header actions read as a bordered form control by default (.btn-ghost's
+   box). A real chat header (WhatsApp/Telegram) uses borderless icon
+   buttons that only reveal themselves on hover - so drop the box here
+   specifically, without touching .btn-ghost anywhere else it's used. */
+.chat-action-btn.btn-ghost { border-color: transparent; background: transparent; }
+.chat-action-btn.btn-ghost:hover:not(:disabled) { background: var(--ink-line); border-color: transparent; }
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  background: var(--ink);
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Real chat bubbles: rounded shape with one corner pulled in to read as
+   a tail, and the timestamp tucked inside the bubble itself instead of
+   sitting on its own full-width line below it (see .msg-time). */
+.msg-bubble {
+  max-width: 75%;
+  padding: 0.5rem 0.75rem 0.35rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.15rem 0;
+}
+.msg-bubble.them { align-self: flex-start; background: var(--ink-raised); border: 1px solid var(--ink-line); color: var(--paper); border-bottom-left-radius: 4px; }
+.msg-bubble.me { align-self: flex-end; background: var(--brass); color: var(--ink); font-weight: 500; border-bottom-right-radius: 4px; }
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg-time { align-self: flex-end; font-size: 0.68rem; opacity: 0.6; }
+
+/* Call log entries (ring/end/miss) are app events, not chat content - a
+   full-size colored bubble the same weight as a real message is what
+   made these look off. WhatsApp/Telegram show these as a small centered
+   system pill instead. */
+.msg-system {
+  align-self: center;
+  max-width: 90%;
+  padding: 0.35rem 0.9rem;
+  margin: 0.25rem 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  background: var(--ink-line);
+  border-radius: 999px;
+  text-align: center;
+}
+
+.chat-input-row { display: flex; gap: 0.6rem; align-items: center; }
+
+.chat-input {
+  flex: 1;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  padding: 0.75rem 1.15rem;
+  color: var(--paper);
+  outline: none;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.chat-input:focus { border-color: var(--brass-dim); }
+
+/* Icon send button, not a rectangular text button - the size/shape a
+   real messaging app uses next to a pill input. */
+.chat-send-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brass);
+  color: var(--ink);
+}
+.chat-send-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.chat-send-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Attach button sits to the left of the text input, same circular
+   footprint as .chat-send-btn but ghost-styled - it's a secondary
+   action, not the primary "commit" one. */
+.chat-attach-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-line);
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-attach-btn:hover:not(:disabled) { border-color: var(--brass-dim); color: var(--brass); }
+.chat-attach-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* A file picked but not yet sent - sits above the input row, same
+   pill-on-dark-strip treatment as an inline banner rather than a full
+   panel, since it's meant to feel provisional. */
+.chat-pending-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--paper);
+}
+.chat-pending-attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-pending-attachment-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.chat-pending-attachment-remove:hover { color: var(--warn); }
+
+/* Schedule panel docked beside chat (replaces the old full-screen toggle) */
+.chat-side-panel {
+  width: 0; border-left: 1px solid var(--ink-line); background: var(--ink);
+  overflow: hidden; transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+.chat-side-panel.open { width: 320px; }
+.chat-side-panel-inner { width: 320px; height: 100%; overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .chat-panel { padding: 1rem; }
+  .msg-bubble { max-width: 88%; }
+}
+
+@media (max-width: 900px) {
+  .chat-side-panel.open { position: absolute; inset: 0; width: auto; z-index: 10; }
+  .chat-side-panel-inner { width: 100%; }
+
+  /* Chat header action buttons go icon-only - "View Hasan Ali" /
+     "Schedule Intro Call" have no realistic way to fit as full text
+     next to the match name on a phone-width screen. */
+  .chat-action-btn { padding: 0.5rem 0.65rem; }
+  .chat-action-btn .btn-label { display: none; }
+  .chat-header-identity h2 { max-width: 40vw; }
+
+  /* Tighter, denser message rhythm - the desktop spacing (already
+     approved) reads fine on a wide screen but looks sparse and
+     unfinished on a phone. */
+  .chat-panel { padding: 0.75rem; }
+  .chat-column { padding: 0.85rem; }
+  .chat-messages { gap: 0.5rem; padding: 0.75rem; }
+  .msg-bubble { padding: 0.6rem 0.8rem; font-size: 0.92rem; }
+}

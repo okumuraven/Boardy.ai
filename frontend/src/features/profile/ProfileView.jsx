@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiFetch } from "../../lib/api";
 import SocialProfileSection from "./SocialProfileSection";
+import "./Profile.css";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
 import BiziSection from "../bizi/BiziSection";
@@ -71,6 +72,15 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
         <div>
           <h2>{profile?.name || "Your profile"}</h2>
           <span className="role">{roleTitle(profile?.role)}</span>
+          {profile?.is_bizi && (
+            <span
+              className="chip selected"
+              style={{ marginLeft: "0.6rem", fontSize: "0.72rem", padding: "0.25rem 0.65rem", cursor: "default" }}
+              title="Approved into the Kuzana Bizi program"
+            >
+              Verified Bizi
+            </span>
+          )}
         </div>
       </div>
 

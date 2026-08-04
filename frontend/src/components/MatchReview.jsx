@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { apiFetch } from "../lib/api";
+import "./MatchReview.css";
 
 // Shows the transparent AI breakdown for a candidate match - score,
 // reasoning, what lines up, and what doesn't - and lets each person

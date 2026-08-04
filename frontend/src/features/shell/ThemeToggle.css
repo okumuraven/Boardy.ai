@@ -1,0 +1,8 @@
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid var(--ink-line-strong); background: transparent; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.theme-toggle:hover { border-color: var(--brass-dim); color: var(--paper); }
+.theme-toggle svg { width: 16px; height: 16px; }

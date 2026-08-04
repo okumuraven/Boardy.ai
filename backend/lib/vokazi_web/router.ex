@@ -79,6 +79,13 @@ defmodule VokaziWeb.Router do
     # In-App Notification Hub (notification_system.md Phase 1)
     get "/notifications", NotificationController, :index
     post "/notifications/:id/read", NotificationController, :mark_read
+
+    # Universal message attachments (Phase B, bizi_verification_build_plan.md) -
+    # raw bytes can't ride the chat channel's JSON frames, so the file
+    # goes over plain HTTP first; the returned id is what a "new_msg"
+    # channel push then references to actually attach it to a message.
+    post "/chat_rooms/:id/attachments", ChatAttachmentController, :create
+    get "/attachments/:id", ChatAttachmentController, :show
     post "/notifications/mark_all_read", NotificationController, :mark_all_read
 
     # Web Push (notification_system.md Phase 2)
@@ -117,6 +124,12 @@ defmodule VokaziWeb.Router do
     # Bizi application - Apply + Rulebook only, see bizi_flow.md
     get "/bizi_applications", BiziApplicationController, :index
     post "/bizi_applications", BiziApplicationController, :create
+
+    # Verification chat (Phase C, bizi_verification_build_plan.md) -
+    # get-or-create is safe as a GET here since it's an idempotent
+    # lazy-create, same reasoning as the admin detail view's own use of
+    # the same open_verification_chat/1.
+    get "/bizi_applications/:id/chat_room", BiziApplicationController, :chat_room
   end
 
   # Admin invite acceptance - public and unauthenticated by necessity
@@ -153,10 +166,17 @@ defmodule VokaziWeb.Router do
 
     get "/stats", StatsController, :show
 
-    # Bizi application review (bizi_flow.md) - Support+, read-only. See
-    # Vokazi.Admin.BiziApplications moduledoc for the scope boundary.
+    # Bizi verification pipeline (bizi_verification_system.md) - viewing
+    # is Support+, advancing/assigning/references is Moderator+, the
+    # final decision is Superadmin only (checked inside the controller).
     get "/bizi_applications", BiziApplicationController, :index
     get "/bizi_applications/:id", BiziApplicationController, :show
+    patch "/bizi_applications/:id/stage", BiziApplicationController, :advance_stage
+    patch "/bizi_applications/:id/assign", BiziApplicationController, :assign
+    post "/bizi_applications/:id/references", BiziApplicationController, :create_reference
+    patch "/bizi_applications/:id/references/:reference_id", BiziApplicationController, :update_reference
+    post "/bizi_applications/:id/decision", BiziApplicationController, :decide
+    post "/bizi_applications/:id/documents", BiziApplicationController, :tag_document
 
     # Tester feedback - viewing is Support+, sending an announcement is
     # Moderator+ (checked inside the controller, same as buddy_pairings)

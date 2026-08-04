@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
+import './FeedbackWidget.css';
 
 // Global floating feedback prompt - visible anywhere in the signed-in
 // app (mounted once in AppShell). Hides itself once a member has

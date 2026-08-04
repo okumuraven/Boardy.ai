@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../../lib/api";
 import MemberCard from "./MemberCard";
+import "./Directory.css";
 import { INDUSTRIES } from "../../constants/industries";
 import { CONNECTION_TAGS, tagLabel } from "../../constants/connectionTags";
 import { FUNDING_TYPES, fundingTypeLabel } from "../../constants/fundingTypes";
