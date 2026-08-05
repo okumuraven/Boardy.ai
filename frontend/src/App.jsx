@@ -61,7 +61,10 @@ export default function App() {
             phone_number: data.phone_number,
             contact_preference: data.contact_preference,
             looking_for_tags: data.looking_for_tags || [],
-            can_help_tags: data.can_help_tags || []
+            can_help_tags: data.can_help_tags || [],
+            avatar_url: data.avatar_url,
+            business_photos: data.business_photos || [],
+            business_photos_public: data.business_photos_public
           });
         }
         return data;

@@ -5,6 +5,7 @@ import { biziStatusLabel } from "../../constants/biziStatuses";
 import BiziRulebook from "./BiziRulebook";
 import BiziApplicationForm from "./BiziApplicationForm";
 import BiziVerificationChat from "./BiziVerificationChat";
+import "./Bizi.css";
 
 // Kuzana's real form rejects everyone but the operating founder outright
 // (kuzana_website.md §9) - shown to non-founders as a better-fitting
@@ -90,7 +91,7 @@ function EntryCard({ onReadRulebook, onApply }) {
 // actually sees. The backend enforces the same check server-side
 // regardless (Vokazi.Bizi.eligible_role?/1) - this is a UI nicety, not
 // the real boundary.
-export default function BiziSection({ profile }) {
+export default function BiziSection({ profile, openRequest, onConsumeOpenRequest }) {
   const [view, setView] = useState("loading");
   const [applications, setApplications] = useState([]);
   const [activeApplication, setActiveApplication] = useState(null);
@@ -107,59 +108,82 @@ export default function BiziSection({ profile }) {
       .catch(() => setView("entry"));
   }, [profile?.id, founder]);
 
-  if (!founder) return <ReferAFounder />;
+  // Landing here from the Calendar tab's "View" on a booked call
+  // (Phase D) - same deep-link shape AppShell already uses for Matches
+  // (pendingMatchOpen), just resolved once the applications list is
+  // actually loaded instead of immediately.
+  useEffect(() => {
+    if (!openRequest?.applicationId || applications.length === 0) return;
+    const application = applications.find((a) => String(a.id) === String(openRequest.applicationId));
+    if (application) {
+      setActiveApplication(application);
+      setView("chat");
+    }
+    onConsumeOpenRequest?.();
+  }, [openRequest, applications]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmitted = (application) => {
     setApplications([application, ...applications]);
     setView("confirmation");
   };
 
-  if (view === "loading") return null;
+  const content = () => {
+    if (!founder) return <ReferAFounder />;
+    if (view === "loading") return null;
 
-  if (view === "rulebook") {
-    return <BiziRulebook onBack={() => setView(applications.length > 0 ? "list" : "entry")} onApply={() => setView("form")} canApply />;
-  }
+    if (view === "rulebook") {
+      return <BiziRulebook onBack={() => setView(applications.length > 0 ? "list" : "entry")} onApply={() => setView("form")} canApply />;
+    }
 
-  if (view === "form") {
-    return <BiziApplicationForm profile={profile} onBack={() => setView(applications.length > 0 ? "list" : "entry")} onSubmitted={handleSubmitted} />;
-  }
+    if (view === "form") {
+      return <BiziApplicationForm profile={profile} onBack={() => setView(applications.length > 0 ? "list" : "entry")} onSubmitted={handleSubmitted} />;
+    }
 
-  if (view === "confirmation") {
-    return (
-      <div className="panel" style={{ textAlign: "center", padding: "2.5rem 1.5rem" }}>
-        <div className="stage-marker" style={{ width: 40, height: 40, margin: "0 auto 1.1rem", borderColor: "var(--signal)", background: "var(--signal-wash)" }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
+    if (view === "confirmation") {
+      return (
+        <div className="panel" style={{ textAlign: "center", padding: "2.5rem 1.5rem" }}>
+          <div className="stage-marker" style={{ width: 40, height: 40, margin: "0 auto 1.1rem", borderColor: "var(--signal)", background: "var(--signal-wash)" }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--signal)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <p className="panel-label" style={{ justifyContent: "center" }}>Submitted</p>
+          <p style={{ color: "var(--paper)", fontSize: "0.95rem", margin: 0, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
+            Kuzana will contact you by email, phone, or WhatsApp about your application status.
+          </p>
+          <button className="btn-ghost" style={{ marginTop: "1.5rem" }} onClick={() => setView("list")}>
+            Back to my applications
+          </button>
         </div>
-        <p className="panel-label" style={{ justifyContent: "center" }}>Submitted</p>
-        <p style={{ color: "var(--paper)", fontSize: "0.95rem", margin: 0, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
-          Kuzana will contact you by email, phone, or WhatsApp about your application status.
-        </p>
-        <button className="btn-ghost" style={{ marginTop: "1.5rem" }} onClick={() => setView("list")}>
-          Back to my applications
-        </button>
-      </div>
-    );
-  }
+      );
+    }
 
-  if (view === "chat" && activeApplication) {
-    return <BiziVerificationChat application={activeApplication} profile={profile} onBack={() => setView("list")} />;
-  }
+    if (view === "chat" && activeApplication) {
+      return <BiziVerificationChat application={activeApplication} profile={profile} onBack={() => setView("list")} />;
+    }
 
-  if (view === "list") {
-    return (
-      <ApplicationList
-        applications={applications}
-        onReadRulebook={() => setView("rulebook")}
-        onApplyAgain={() => setView("form")}
-        onOpenChat={(application) => {
-          setActiveApplication(application);
-          setView("chat");
-        }}
-      />
-    );
-  }
+    if (view === "list") {
+      return (
+        <ApplicationList
+          applications={applications}
+          onReadRulebook={() => setView("rulebook")}
+          onApplyAgain={() => setView("form")}
+          onOpenChat={(application) => {
+            setActiveApplication(application);
+            setView("chat");
+          }}
+        />
+      );
+    }
 
-  return <EntryCard onReadRulebook={() => setView("rulebook")} onApply={() => setView("form")} />;
+    return <EntryCard onReadRulebook={() => setView("rulebook")} onApply={() => setView("form")} />;
+  };
+
+  const isChatView = view === "chat" && activeApplication;
+
+  return (
+    <div className={`bizi-tab-view ${isChatView ? "chat-view" : ""}`}>
+      {isChatView ? content() : <div className="bizi-tab-content">{content()}</div>}
+    </div>
+  );
 }

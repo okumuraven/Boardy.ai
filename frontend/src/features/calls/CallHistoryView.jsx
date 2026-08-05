@@ -1,14 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import Avatar from "../../components/Avatar";
 import "./CallHistory.css";
-
-const initials = (name) =>
-  (name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 const timeLabel = (iso) => {
   if (!iso) return "";
@@ -72,7 +65,7 @@ export default function CallHistoryView({ profile, onOpenMatch }) {
         <div className="call-history-list">
           {calls.map((call) => (
             <button key={call.id} className="call-row" onClick={() => onOpenMatch(call.match_id)}>
-              <div className="call-avatar">{initials(call.other_user_name)}</div>
+              <Avatar avatarUrl={call.other_user_avatar_url} name={call.other_user_name} className="call-avatar" />
               <div className="call-body">
                 <div className="call-top">
                   <span className="call-name">{call.other_user_name || "Someone"}</span>

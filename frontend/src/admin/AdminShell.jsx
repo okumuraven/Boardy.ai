@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import './admin.css';
+import { useState, useEffect } from 'react';
+import './AdminShell.css';
+import './AdminPrimitives.css';
 import MembersListView from './members/MembersListView';
 import MemberDetailView from './members/MemberDetailView';
 import MatchesListView from './matches/MatchesListView';
@@ -40,17 +41,41 @@ const SUPERADMIN_TABS = [
   { key: 'audit_log', label: 'Audit log' },
 ];
 
+// The Google Calendar OAuth round-trip (Phase D, ScheduleCallPanel's
+// "Connect your Google Calendar" button) is a full browser redirect to
+// Google and back - no React state survives that. sessionStorage +
+// this one query-param read is how the admin lands back on the exact
+// Bizi application they were booking a call for, same problem the
+// member app's own `?calendar_connected=1&match_id=...` redirect solves
+// for matched-member scheduling.
+const readCalendarRedirectState = () => {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    connected: params.has('calendar_connected'),
+    error: params.has('calendar_connect_error'),
+    returnBiziId: sessionStorage.getItem('kuzana_admin_return_bizi_id'),
+  };
+};
+
 // Same no-router-library convention as the member app (main.jsx's single
 // pathname branch) - tab + selected-id local state instead of a routing
 // dependency, since nothing here needs a shareable/bookmarkable URL yet.
 export default function AdminShell({ admin, onLogout }) {
-  const [tab, setTab] = useState('members');
+  const [{ connected: justConnectedCalendar, error: calendarConnectError, returnBiziId }] = useState(readCalendarRedirectState);
+  const [tab, setTab] = useState(() => (justConnectedCalendar || calendarConnectError) ? 'bizi_applications' : 'members');
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [selectedMatchId, setSelectedMatchId] = useState(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
-  const [selectedBiziApplicationId, setSelectedBiziApplicationId] = useState(null);
+  const [selectedBiziApplicationId, setSelectedBiziApplicationId] = useState(() => (justConnectedCalendar && returnBiziId) ? returnBiziId : null);
   const isSuperadmin = admin.admin_role === 'superadmin';
   const visibleTabs = isSuperadmin ? [...TABS, ...SUPERADMIN_TABS] : TABS;
+
+  useEffect(() => {
+    if (justConnectedCalendar || calendarConnectError) {
+      sessionStorage.removeItem('kuzana_admin_return_bizi_id');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [justConnectedCalendar, calendarConnectError]);
 
   const changeTab = (key) => {
     setTab(key);
@@ -82,6 +107,14 @@ export default function AdminShell({ admin, onLogout }) {
           </button>
         ))}
       </div>
+
+      {calendarConnectError && (
+        <div className="panel warn" style={{ margin: '1rem 1.5rem 0' }}>
+          <p style={{ color: 'var(--warn)', margin: 0, fontSize: '0.85rem' }}>
+            Couldn't connect your Google Calendar. Please try again.
+          </p>
+        </div>
+      )}
 
       <div className="admin-content">
         {tab === 'members' && (

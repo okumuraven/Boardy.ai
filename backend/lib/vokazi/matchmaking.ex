@@ -84,7 +84,11 @@ defmodule Vokazi.Matchmaking do
       my_response: my_response,
       other_response: other_response,
       chat_room_id: chat_room && chat_room.id,
-      other_user: %{name: other_user && other_user.full_name},
+      other_user: %{
+        id: other_user && other_user.id,
+        name: other_user && other_user.full_name,
+        avatar_url: other_user && other_user.avatar_path && "/api/profiles/#{other_user.id}/avatar"
+      },
       last_message: last_message && %{body: last_message.content, inserted_at: Vokazi.DateTimeJSON.utc(last_message.inserted_at)},
       updated_at: Vokazi.DateTimeJSON.utc(match.updated_at)
     }

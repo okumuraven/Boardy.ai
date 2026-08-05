@@ -26,7 +26,10 @@ defmodule VokaziWeb.ProfileController do
           phone_number: if(user.profile, do: user.profile.phone_number, else: nil),
           contact_preference: if(user.profile, do: user.profile.contact_preference, else: "call"),
           looking_for_tags: if(user.profile, do: user.profile.looking_for_tags, else: []),
-          can_help_tags: if(user.profile, do: user.profile.can_help_tags, else: [])
+          can_help_tags: if(user.profile, do: user.profile.can_help_tags, else: []),
+          avatar_url: if(user.avatar_path, do: "/api/profiles/#{user.id}/avatar", else: nil),
+          business_photos: business_photo_urls(user),
+          business_photos_public: if(user.profile, do: user.profile.business_photos_public, else: false)
         })
     end
   end
@@ -103,6 +106,18 @@ defmodule VokaziWeb.ProfileController do
         IO.inspect(reason, label: "DB_ERROR")
         conn |> put_status(500) |> json(%{error: "Database error", details: inspect(reason)})
     end
+  end
+
+  # A member always sees the full list of their own business photos here
+  # regardless of business_photos_public - that flag only gates what
+  # *other* members see (Vokazi.Directory.to_member/3), never the owner's
+  # own view of their own data.
+  defp business_photo_urls(%User{profile: nil}), do: []
+
+  defp business_photo_urls(%User{id: user_id, profile: profile}) do
+    profile.business_photos
+    |> Enum.with_index()
+    |> Enum.map(fn {_path, index} -> "/api/profiles/#{user_id}/business_photos/#{index}" end)
   end
 
   # Local dev bypass to simulate Vapi Webhook + OpenAI Embeddings - always

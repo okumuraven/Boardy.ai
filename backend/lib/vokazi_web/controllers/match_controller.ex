@@ -188,8 +188,10 @@ defmodule VokaziWeb.MatchController do
       my_response: my_response,
       other_response: other_response,
       other_user: %{
+        id: other_user && other_user.id,
         name: other_user && other_user.full_name,
         role: other_user && other_user.role,
+        avatar_url: other_user && other_user.avatar_path && "/api/profiles/#{other_user.id}/avatar",
         offer_text: other_profile && other_profile.offer_text,
         need_text: other_profile && other_profile.need_text
       }

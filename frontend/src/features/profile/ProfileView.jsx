@@ -1,21 +1,16 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { apiFetch } from "../../lib/api";
 import SocialProfileSection from "./SocialProfileSection";
+import ProfilePhotos from "./ProfilePhotos";
+import Avatar from "../../components/Avatar";
 import "./Profile.css";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
-import BiziSection from "../bizi/BiziSection";
 import ThemeToggle from "../shell/ThemeToggle";
 import { INDUSTRIES } from "../../constants/industries";
 import { ROLES, roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
 
-const initials = (name) =>
-  (name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+const AVATAR_ACCEPT = "image/jpeg,image/png,image/webp";
 
 const CONTACT_MODES = ["call", "video", "chat"];
 const CONTACT_LABEL = { call: "📞 Call", video: "🎥 Video", chat: "💬 Chat" };
@@ -29,6 +24,37 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const avatarInputRef = useRef(null);
+
+  const uploadAvatar = (file) => {
+    setAvatarError("");
+    setUploadingAvatar(true);
+    const body = new FormData();
+    body.append("file", file);
+
+    apiFetch("/api/profiles/avatar", { method: "POST", body })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) setAvatarError(data.error || "Couldn't upload photo.");
+        else onProfileUpdated?.();
+      })
+      .catch(() => setAvatarError("Couldn't reach the server. Please try again."))
+      .finally(() => setUploadingAvatar(false));
+  };
+
+  const removeAvatar = () => {
+    setAvatarError("");
+    setUploadingAvatar(true);
+    apiFetch("/api/profiles/avatar", { method: "DELETE" })
+      .then((res) => {
+        if (!res.ok) throw new Error();
+        onProfileUpdated?.();
+      })
+      .catch(() => setAvatarError("Couldn't remove photo. Please try again."))
+      .finally(() => setUploadingAvatar(false));
+  };
 
   const startEdit = () => {
     setForm({
@@ -68,7 +94,29 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   return (
     <div className="profile-view">
       <div className="profile-view-hero">
-        <div className="profile-view-avatar">{initials(profile?.name)}</div>
+        <div className="profile-view-avatar-wrap">
+          <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="profile-view-avatar" />
+          <button
+            className="profile-view-avatar-edit"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            title={profile?.avatar_url ? "Change photo" : "Add a photo"}
+            aria-label={profile?.avatar_url ? "Change photo" : "Add a photo"}
+          >
+            {uploadingAvatar ? "···" : "✎"}
+          </button>
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept={AVATAR_ACCEPT}
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadAvatar(file);
+              e.target.value = "";
+            }}
+          />
+        </div>
         <div>
           <h2>{profile?.name || "Your profile"}</h2>
           <span className="role">{roleTitle(profile?.role)}</span>
@@ -83,6 +131,18 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
           )}
         </div>
       </div>
+
+      {profile?.avatar_url && (
+        <button
+          onClick={removeAvatar}
+          disabled={uploadingAvatar}
+          className="btn-ghost btn-sm"
+          style={{ marginTop: "-1.4rem", marginBottom: "1.4rem" }}
+        >
+          Remove photo
+        </button>
+      )}
+      {avatarError && <p style={{ color: "var(--warn)", fontSize: "0.85rem", margin: "0 0 1rem" }}>{avatarError}</p>}
 
       {error && <p style={{ color: "var(--warn)", fontSize: "0.85rem", margin: "0 0 1rem" }}>{error}</p>}
 
@@ -211,6 +271,8 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <div className="profile-view-copy">{profile?.need_text || "Complete your voice interview from Home to fill this in."}</div>
           </div>
 
+          <ProfilePhotos profile={profile} onProfileUpdated={onProfileUpdated} />
+
           <div className="panel">
             <SocialProfileSection profile={profile} />
           </div>
@@ -218,8 +280,6 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
           {(isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding")) && (
             <InvestmentDetailsForm profile={profile} />
           )}
-
-          <BiziSection profile={profile} />
         </div>
       </div>
     </div>

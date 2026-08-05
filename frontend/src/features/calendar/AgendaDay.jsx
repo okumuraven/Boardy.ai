@@ -63,6 +63,32 @@ function CallItem({ item, onOpenMatch }) {
   );
 }
 
+// A booked Bizi verification call (Phase D) - no match_id/other_user to
+// key off like CallItem has, just an application to open in the Bizi tab.
+function BiziCallItem({ item, onOpenBizi }) {
+  return (
+    <div className="agenda-item">
+      <div className="agenda-item-row">
+        <span className="agenda-item-time">{formatTime(item.time)}</span>
+        <div className="agenda-item-body">
+          <span className="agenda-item-title">🚀 Bizi verification call - {item.company_name}</span>
+          <span className="agenda-item-sub">With the Kuzana team</span>
+        </div>
+        <div className="agenda-item-actions">
+          {item.meet_link && (
+            <a href={item.meet_link} target="_blank" rel="noreferrer" className="btn-primary" style={{ padding: "0.35rem 0.8rem", fontSize: "0.78rem", textDecoration: "none" }}>
+              Join
+            </a>
+          )}
+          <button onClick={() => onOpenBizi?.(item.application_id)} className="btn-ghost" style={{ padding: "0.35rem 0.8rem", fontSize: "0.78rem" }}>
+            View
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PersonalItem({ item, onDelete }) {
   return (
     <div className="agenda-item">
@@ -88,17 +114,15 @@ function PersonalItem({ item, onDelete }) {
 // still-proposed) interleaved with the user's own personal events,
 // chronological within the day. Personal events are the only ones with
 // a delete affordance - calls are managed from the match itself.
-export default function AgendaDay({ dateKey, items, onOpenMatch, onDeletePersonalEvent }) {
+export default function AgendaDay({ dateKey, items, onOpenMatch, onOpenBizi, onDeletePersonalEvent }) {
   return (
     <div className="agenda-day">
       <h3 className="agenda-day-header">{dayHeaderLabel(dateKey)}</h3>
-      {items.map((item) =>
-        item.kind === "personal" ? (
-          <PersonalItem key={`p-${item.id}`} item={item} onDelete={onDeletePersonalEvent} />
-        ) : (
-          <CallItem key={`c-${item.match_id}-${item.status}`} item={item} onOpenMatch={onOpenMatch} />
-        )
-      )}
+      {items.map((item) => {
+        if (item.kind === "personal") return <PersonalItem key={`p-${item.id}`} item={item} onDelete={onDeletePersonalEvent} />;
+        if (item.kind === "bizi_call") return <BiziCallItem key={`b-${item.application_id}`} item={item} onOpenBizi={onOpenBizi} />;
+        return <CallItem key={`c-${item.match_id}-${item.status}`} item={item} onOpenMatch={onOpenMatch} />;
+      })}
     </div>
   );
 }

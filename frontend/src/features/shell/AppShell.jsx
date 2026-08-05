@@ -8,10 +8,12 @@ import DirectoryView from "../directory";
 import MatchesView from "../matches/MatchesView";
 import CallHistoryView from "../calls";
 import CalendarView from "../calendar/CalendarView";
+import BiziSection from "../bizi/BiziSection";
 import ProfileView from "../profile/ProfileView";
 import ThemeToggle from "./ThemeToggle";
 import KuzanaMark from "../../components/KuzanaMark";
-import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, ProfileIcon } from "./icons";
+import Avatar from "../../components/Avatar";
+import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, BiziIcon, ProfileIcon } from "./icons";
 
 const TABS = [
   { key: "home", label: "Home", Icon: HomeIcon },
@@ -19,16 +21,9 @@ const TABS = [
   { key: "matches", label: "Matches", Icon: MatchesIcon },
   { key: "calls", label: "Calls", Icon: CallHistoryIcon },
   { key: "calendar", label: "Calendar", Icon: CalendarIcon },
+  { key: "bizi", label: "Bizi", Icon: BiziIcon },
   { key: "profile", label: "Profile", Icon: ProfileIcon },
 ];
-
-const initials = (name) =>
-  (name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
 
 // The persistent shell (rail on desktop, bottom tab bar on mobile via CSS
 // alone - same markup, same state) that replaced the old full-screen-swap
@@ -49,6 +44,7 @@ const initialTabFromUrl = () => {
 export default function AppShell({ profile, onInterviewComplete, onFindMatch, onProfileUpdated, onLogout, pendingMatchOpen, onConsumePendingMatchOpen }) {
   const [activeTab, setActiveTab] = useState(initialTabFromUrl);
   const [openRequest, setOpenRequest] = useState(null);
+  const [biziOpenRequest, setBiziOpenRequest] = useState(null);
   // Every tab stays mounted (see below), so MatchesView's own one-time
   // fetch-on-mount never learns about a match created from the Directory
   // tab. Bumping this forces a refetch without tearing MatchesView down.
@@ -94,6 +90,12 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     setOpenRequest({ matchId, openScheduling: false });
   };
 
+  // From a Calendar card's "View" on a booked Bizi call (Phase D).
+  const openBiziApplication = (applicationId) => {
+    setActiveTab("bizi");
+    setBiziOpenRequest({ applicationId });
+  };
+
   const navButtons = (className, activeClassName) =>
     TABS.map(({ key, label, Icon }) => (
       <button
@@ -119,8 +121,8 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
         <div className="rail-bottom">
           <ThemeToggle />
           <NotificationBell profile={profile} onOpen={handleBellOpen} />
-          <button className="rail-avatar" title={profile?.name || "Profile"} onClick={() => setActiveTab("profile")}>
-            {initials(profile?.name)}
+          <button className="rail-avatar-btn" title={profile?.name || "Profile"} onClick={() => setActiveTab("profile")}>
+            <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="rail-avatar" />
           </button>
         </div>
       </nav>
@@ -150,7 +152,10 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
           <CallHistoryView profile={profile} onOpenMatch={openMatchChat} />
         </div>
         <div className={`shell-view ${activeTab === "calendar" ? "active" : ""}`}>
-          <CalendarView profile={profile} onOpenMatch={openMatchScheduling} />
+          <CalendarView profile={profile} onOpenMatch={openMatchScheduling} onOpenBizi={openBiziApplication} />
+        </div>
+        <div className={`shell-view ${activeTab === "bizi" ? "active" : ""}`}>
+          <BiziSection profile={profile} openRequest={biziOpenRequest} onConsumeOpenRequest={() => setBiziOpenRequest(null)} />
         </div>
         <div className={`shell-view ${activeTab === "profile" ? "active" : ""}`}>
           <ProfileView profile={profile} onProfileUpdated={onProfileUpdated} onLogout={onLogout} />

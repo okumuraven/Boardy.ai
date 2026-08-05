@@ -2,12 +2,12 @@ defmodule Vokazi.Chat.Storage do
   @moduledoc """
   Local-disk storage for chat attachments (Phase B,
   bizi_verification_build_plan.md). Files live under
-  priv/chat_attachments/<room_id>/, outside priv/static so
+  <uploads_dir>/chat_attachments/<room_id>/, outside priv/static so
   `Plug.Static`'s fixed `only:` allowlist never serves them directly -
   every read has to go through `VokaziWeb.ChatAttachmentController`'s
-  participant check instead. Not solved here: this needs a persistent
-  Fly volume in production, same open note as `bizi_verification_system.md`
-  already carries for this exact gap.
+  participant check instead. Shares its root with
+  `Vokazi.Accounts.MediaStorage` (avatars/business photos) so a single
+  Fly volume mount covers every kind of user-uploaded file.
   """
 
   @doc "Persists an uploaded file under its room's directory. Returns the relative `storage_path` to record on the Attachment row."
@@ -33,7 +33,10 @@ defmodule Vokazi.Chat.Storage do
 
   defp root_dir do
     Application.get_env(:vokazi, :chat_attachments_dir) ||
-      Path.join(:code.priv_dir(:vokazi), "chat_attachments")
+      case Application.get_env(:vokazi, :uploads_dir) do
+        nil -> Path.join(:code.priv_dir(:vokazi), "chat_attachments")
+        uploads_dir -> Path.join(uploads_dir, "chat_attachments")
+      end
   end
 
   defp random_prefix, do: :crypto.strong_rand_bytes(8) |> Base.url_encode64(padding: false)

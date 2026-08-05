@@ -53,6 +53,16 @@ defmodule VokaziWeb.Router do
     post "/profiles/sync_real_transcript", ProfileController, :sync_real_transcript
     post "/profiles", ProfileController, :update
 
+    # Profile photos - optional avatar + up to 3 "show your work"
+    # business photos, gated behind a per-member visibility toggle.
+    post "/profiles/avatar", ProfileMediaController, :upload_avatar
+    delete "/profiles/avatar", ProfileMediaController, :delete_avatar
+    get "/profiles/:user_id/avatar", ProfileMediaController, :show_avatar
+    post "/profiles/business_photos", ProfileMediaController, :add_business_photo
+    delete "/profiles/business_photos/:index", ProfileMediaController, :remove_business_photo
+    post "/profiles/business_photos/visibility", ProfileMediaController, :set_visibility
+    get "/profiles/:user_id/business_photos/:index", ProfileMediaController, :show_business_photo
+
     post "/matches/:id/respond", MatchController, :respond
     get "/matches", MatchController, :index
     get "/matches/pending", MatchController, :pending_for_user
@@ -130,6 +140,11 @@ defmodule VokaziWeb.Router do
     # lazy-create, same reasoning as the admin detail view's own use of
     # the same open_verification_chat/1.
     get "/bizi_applications/:id/chat_room", BiziApplicationController, :chat_room
+
+    # This member's own upcoming Bizi verification calls (Phase D) -
+    # merged client-side into the Calendar tab's agenda alongside
+    # match schedules and personal events.
+    get "/bizi_applications/calendar", BiziApplicationController, :calendar
   end
 
   # Admin invite acceptance - public and unauthenticated by necessity
@@ -170,13 +185,27 @@ defmodule VokaziWeb.Router do
     # is Support+, advancing/assigning/references is Moderator+, the
     # final decision is Superadmin only (checked inside the controller).
     get "/bizi_applications", BiziApplicationController, :index
+    # Declared before the :id show route below - "decline_reasons" would
+    # otherwise be swallowed by :id and crash trying to look up an
+    # application literally named that, same landmine the Match decline
+    # reasons route already had to be declared ahead of its own :id show.
+    get "/bizi_applications/decline_reasons", BiziApplicationController, :decline_reasons
     get "/bizi_applications/:id", BiziApplicationController, :show
+    post "/bizi_applications/:id/ai_screen", BiziApplicationController, :ai_screen
     patch "/bizi_applications/:id/stage", BiziApplicationController, :advance_stage
     patch "/bizi_applications/:id/assign", BiziApplicationController, :assign
     post "/bizi_applications/:id/references", BiziApplicationController, :create_reference
     patch "/bizi_applications/:id/references/:reference_id", BiziApplicationController, :update_reference
     post "/bizi_applications/:id/decision", BiziApplicationController, :decide
     post "/bizi_applications/:id/documents", BiziApplicationController, :tag_document
+    post "/bizi_applications/:id/schedule_call", BiziApplicationController, :schedule_call
+
+    # An admin's own Google Calendar connection, for booking Bizi
+    # verification calls (Phase D, bizi_verification_build_plan.md) -
+    # deliberately not the mutual-availability matcher above, which is
+    # scoped to matched members, not staff.
+    get "/calendar/connect_url", CalendarController, :connect_url
+    get "/calendar/status", CalendarController, :status
 
     # Tester feedback - viewing is Support+, sending an announcement is
     # Moderator+ (checked inside the controller, same as buddy_pairings)

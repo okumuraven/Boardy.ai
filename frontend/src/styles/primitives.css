@@ -1,3 +1,18 @@
+/* Fills whichever avatar circle it's placed in (Avatar.jsx) - every
+   consumer (.profile-view-avatar, .rail-avatar, .directory-avatar,
+   .match-avatar, .call-avatar, ...) already sizes that outer element,
+   this just draws its own matching circle on top instead of relying on
+   the parent to clip it - .match-avatar's corner status-dot
+   deliberately overflows its own box, so clipping via the parent's
+   `overflow` isn't an option here. */
+.avatar-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
 /* Small pickable chips (e.g. decline reasons) */
 .chip {
   background: transparent;

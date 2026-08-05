@@ -1,10 +1,4 @@
-const initials = (name) =>
-  (name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+import Avatar from "../../components/Avatar";
 
 const timeLabel = (iso) => {
   if (!iso) return "";
@@ -63,10 +57,13 @@ export default function MatchesList({ matches, loading, selectedId, onSelect, hi
               className={`match-row ${selectedId === match.match_id ? "active" : ""} ${highlighted ? "highlighted" : ""}`}
               onClick={() => onSelect(match.match_id)}
             >
-              <div className="match-avatar">
-                {initials(match.other_user?.name)}
+              <Avatar
+                avatarUrl={match.other_user?.avatar_url}
+                name={match.other_user?.name}
+                className="match-avatar"
+              >
                 {match.status === "unlocked" && <span className="status-dot"></span>}
-              </div>
+              </Avatar>
               <div className="match-body">
                 <div className="match-top">
                   <span className="match-name">{match.other_user?.name || "Someone"}</span>

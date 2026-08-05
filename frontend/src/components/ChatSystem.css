@@ -75,6 +75,35 @@
 .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg-time { align-self: flex-end; font-size: 0.68rem; opacity: 0.6; }
 
+/* Who on the team actually sent this - a Bizi verification room has no
+   single fixed "other side" the way a match chat does (any active admin
+   can reply), so each new sender introduces themselves once, the same
+   way a real support inbox (or a Slack/WhatsApp group thread) attributes
+   messages instead of leaving everyone as one faceless "team" voice. */
+.msg-sender-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--brass);
+  margin-bottom: 0.15rem;
+}
+.msg-sender-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--brass-wash);
+  color: var(--brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.58rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.msg-sender-org { color: var(--muted); font-weight: 500; }
+
 /* Call log entries (ring/end/miss) are app events, not chat content - a
    full-size colored bubble the same weight as a real message is what
    made these look off. WhatsApp/Telegram show these as a small centered

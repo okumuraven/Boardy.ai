@@ -1,14 +1,7 @@
 import { tagLabel } from "../../constants/connectionTags";
 import { fundingTypeLabel } from "../../constants/fundingTypes";
 import { roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
-
-const initials = (name) =>
-  (name || "?")
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+import Avatar from "../../components/Avatar";
 
 const roleTitle = (role) => (role ? roleLabel(role) : "Member");
 
@@ -56,7 +49,11 @@ export default function MemberCard({ member, connecting, connectError, onConnect
   return (
     <div className="panel directory-card">
       <div className="directory-card-top">
-        <div className="match-avatar directory-avatar">{initials(member.name)}</div>
+        <Avatar
+          avatarUrl={member.avatar_url}
+          name={member.name}
+          className="match-avatar directory-avatar"
+        />
         <div className="directory-card-identity">
           <div className="directory-card-name">
             {member.name || "Someone"}
@@ -90,6 +87,14 @@ export default function MemberCard({ member, connecting, connectError, onConnect
             <span key={`ch-${tag}`} className="directory-tag directory-tag-can-help" title="Can help with">
               Offers {tagLabel(tag)}
             </span>
+          ))}
+        </div>
+      )}
+
+      {member.business_photos?.length > 0 && (
+        <div className="directory-card-photos">
+          {member.business_photos.map((photoUrl) => (
+            <Avatar key={photoUrl} avatarUrl={photoUrl} className="directory-card-photo" />
           ))}
         </div>
       )}

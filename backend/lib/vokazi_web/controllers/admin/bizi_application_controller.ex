@@ -16,6 +16,25 @@ defmodule VokaziWeb.Admin.BiziApplicationController do
     })
   end
 
+  @doc "Support+ - exact-string aggregate of board decision reasons on declined applications."
+  def decline_reasons(conn, _params) do
+    json(conn, %{reasons: BiziApplications.decline_reasons()})
+  end
+
+  @doc "Moderator+ - manually re-runs the AI screening (Phase E) for an application."
+  def ai_screen(conn, %{"id" => id}) do
+    if moderator_or_above?(conn) do
+      case BiziApplications.run_ai_screening(id) do
+        {:ok, _stage_event} -> json(conn, %{ok: true})
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Not found"})
+        {:error, reason} when is_binary(reason) -> conn |> put_status(422) |> json(%{error: reason})
+        {:error, changeset} -> conn |> put_status(422) |> json(%{error: VokaziWeb.ChangesetErrors.format(changeset)})
+      end
+    else
+      forbidden(conn)
+    end
+  end
+
   @doc "Support+ - full detail, including the stage timeline and reference list."
   def show(conn, %{"id" => id}) do
     case BiziApplications.get_application(id) do
@@ -69,6 +88,24 @@ defmodule VokaziWeb.Admin.BiziApplicationController do
         {:ok, reference} -> json(conn, %{id: reference.id, contacted: reference.contacted, verified: reference.verified})
         {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Not found"})
         {:error, changeset} -> conn |> put_status(422) |> json(%{error: VokaziWeb.ChangesetErrors.format(changeset)})
+      end
+    else
+      forbidden(conn)
+    end
+  end
+
+  @doc "Moderator+ - books a real Google Calendar call with the applicant, using the admin's own connected Calendar."
+  def schedule_call(conn, %{"id" => id, "start_time" => start_time, "end_time" => end_time}) do
+    if moderator_or_above?(conn) do
+      with {:ok, start_dt, _offset} <- DateTime.from_iso8601(start_time),
+           {:ok, end_dt, _offset} <- DateTime.from_iso8601(end_time),
+           {:ok, %{meet_link: meet_link}} <- BiziApplications.schedule_call(current_admin(conn).id, id, start_dt, end_dt) do
+        json(conn, %{meet_link: meet_link})
+      else
+        {:error, :not_found} -> conn |> put_status(:not_found) |> json(%{error: "Not found"})
+        {:error, :calendar_not_connected} -> conn |> put_status(422) |> json(%{error: "Connect your Google Calendar first."})
+        {:error, %Ecto.Changeset{} = changeset} -> conn |> put_status(422) |> json(%{error: VokaziWeb.ChangesetErrors.format(changeset)})
+        {:error, _reason} -> conn |> put_status(422) |> json(%{error: "Couldn't create the calendar event."})
       end
     else
       forbidden(conn)

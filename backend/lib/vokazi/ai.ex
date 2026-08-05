@@ -397,6 +397,86 @@ defmodule Vokazi.AI do
   end
 
   @doc """
+  Kuzana's real first-stage screening (bizi_verification.md), automated -
+  reviews a submitted application for completeness/consistency and, if
+  something's missing or contradictory, drafts a clarifying question for
+  staff to review and send. Never sent automatically - "AI drafts, human
+  sends" is the same boundary this app already holds for match intro
+  messages, just applied here too. Structured reasoning, same as
+  `validate_match/2`, never a bare verdict.
+  """
+  def screen_bizi_application(application) do
+    prompt = """
+      You are a careful, experienced screener for Kuzana's Bizi accelerator program,
+      reviewing a founder's application before a human screening call. Your job is to
+      catch what's incomplete, vague, or internally inconsistent - not to judge whether
+      the business itself is good, only whether the APPLICATION gives Kuzana's team
+      enough to work with.
+
+      Company: #{application.company_name}
+      What the business does: #{application.business_description}
+      Track(s): #{Enum.join(application.track || [], ", ")}
+      Heard about Kuzana via: #{application.heard_about_us}
+      Question for Kuzana: #{application.question_for_us || "(none)"}
+
+      Look specifically for:
+      1. A business description that's too vague to act on (buzzwords, no concrete
+         product/customer/revenue model described).
+      2. Any internal inconsistency (e.g. the track selected doesn't match what the
+         description actually says the business does).
+      3. Anything a screener would obviously need to ask about before a call, that
+         isn't already answered above.
+
+      Return ONLY a valid JSON object with these exact keys:
+      - "summary": one or two sentences, your overall read on this application's readiness
+        for a screening call.
+      - "concerns": a list of 0-4 short, specific strings - each a real, concrete issue you
+        found (e.g. "Business description doesn't say who the paying customer is"). Empty
+        list if there's genuinely nothing to flag - don't invent concerns to fill the list.
+      - "needs_clarification": boolean, true only if there's something concrete enough to
+        ask the applicant directly before proceeding.
+      - "drafted_message": if needs_clarification is true, a warm, professional 1-3
+        sentence message addressed directly to the applicant asking for exactly what's
+        missing - written as Kuzana's team would write it, specific to what's actually
+        missing above, never generic. If needs_clarification is false, an empty string.
+      """
+
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{
+        responseMimeType: "application/json"
+      }
+    }
+
+    case gemini_post("gemini-flash-latest:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
+
+          {:ok,
+           %{
+             summary: parsed["summary"] || "",
+             concerns: List.wrap(parsed["concerns"]),
+             needs_clarification: parsed["needs_clarification"] || false,
+             drafted_message: parsed["drafted_message"] || ""
+           }}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse Bizi screening JSON: #{inspect(e)}")
+            {:error, "Failed to parse JSON"}
+        end
+
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini Bizi screening call failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
+    end
+  end
+
+  @doc """
   Despite `responseMimeType: "application/json"`, Gemini's flash models
   sometimes append a stray extra "}" (or other trailing bytes) after an
   otherwise complete, valid JSON object - which makes `Jason.decode!`

@@ -17,6 +17,19 @@ defmodule Vokazi.Accounts.Profile do
     # free-text semantic matching pgvector already does.
     field :looking_for_tags, {:array, :string}, default: []
     field :can_help_tags, {:array, :string}, default: []
+    # Relative storage paths (Vokazi.Accounts.MediaStorage), never full
+    # URLs - resolved through ProfileMediaController's authenticated
+    # owner-or-public gate. Optional, capped at 3
+    # (Vokazi.Accounts.ProfileMedia.add_business_photo/2 enforces this;
+    # there's no DB-level array-length constraint since Ecto/Postgres
+    # array columns don't offer one cheaply). Never member-castable
+    # through changeset/2 below - only through ProfileMedia, same
+    # separation of concerns as avatar_path on User.
+    field :business_photos, {:array, :string}, default: []
+    # Off by default - a member must opt in before these photos are
+    # visible to anyone but themselves (see the visibility toggle in
+    # ProfilePhotos.jsx). Only castable through photos_visibility_changeset/2.
+    field :business_photos_public, :boolean, default: false
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -52,6 +65,16 @@ defmodule Vokazi.Accounts.Profile do
     |> validate_tags(:can_help_tags)
     |> unique_constraint(:user_id)
     |> unique_constraint(:phone_number, message: "is already registered to another account")
+  end
+
+  @doc """
+  The only path that can ever change business_photos/
+  business_photos_public - used exclusively by
+  `Vokazi.Accounts.ProfileMedia`, mirroring User.avatar_changeset/2's
+  same separation from the general-purpose changeset/2 above.
+  """
+  def photos_changeset(profile, attrs) do
+    cast(profile, attrs, [:business_photos, :business_photos_public])
   end
 
   defp validate_tags(changeset, field) do

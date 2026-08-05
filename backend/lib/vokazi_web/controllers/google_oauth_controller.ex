@@ -13,11 +13,18 @@ defmodule VokaziWeb.GoogleOAuthController do
   """
   def callback(conn, %{"code" => code, "state" => state}) do
     case Scheduling.handle_oauth_callback(code, state) do
-      {:ok, match_id} ->
+      {:ok, {:match, match_id}} ->
         redirect(conn, external: "#{frontend_url()}/?calendar_connected=1&match_id=#{match_id}")
 
-      {:error, reason} ->
-        Logger.error("GoogleOAuthController: callback failed: #{inspect(reason)}")
+      {:ok, {:admin, _user_id}} ->
+        redirect(conn, external: "#{frontend_url()}/admin?calendar_connected=1")
+
+      {:error, :admin, reason} ->
+        Logger.error("GoogleOAuthController: admin callback failed: #{inspect(reason)}")
+        redirect(conn, external: "#{frontend_url()}/admin?calendar_connect_error=1")
+
+      {:error, tag, reason} ->
+        Logger.error("GoogleOAuthController: #{tag} callback failed: #{inspect(reason)}")
         redirect(conn, external: "#{frontend_url()}/?calendar_connect_error=1")
     end
   end
