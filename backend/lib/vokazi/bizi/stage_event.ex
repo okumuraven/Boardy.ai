@@ -15,6 +15,11 @@ defmodule Vokazi.Bizi.StageEvent do
     field :from_status, :string
     field :to_status, :string
     field :comment, :string
+    # Structured data a human comment can't hold cleanly - the AI
+    # screening's concerns list + editable drafted message (Phase E),
+    # so the admin panel can render/edit them directly instead of
+    # re-parsing free text.
+    field :metadata, :map, default: %{}
 
     belongs_to :bizi_application, Vokazi.Bizi.Application
     # Nullable on purpose - null means system-generated (AI screening,
@@ -30,7 +35,7 @@ defmodule Vokazi.Bizi.StageEvent do
   @doc false
   def changeset(event, attrs) do
     event
-    |> cast(attrs, [:bizi_application_id, :kind, :from_status, :to_status, :performed_by_admin_id, :comment])
+    |> cast(attrs, [:bizi_application_id, :kind, :from_status, :to_status, :performed_by_admin_id, :comment, :metadata])
     |> validate_required([:bizi_application_id, :kind])
     |> validate_inclusion(:kind, @kinds)
   end

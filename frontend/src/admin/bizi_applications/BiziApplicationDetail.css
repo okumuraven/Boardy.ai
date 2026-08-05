@@ -1,0 +1,250 @@
+/* BiziApplicationDetailView.jsx - the verification pipeline stepper,
+   stage-history timeline, reference-check rows, decision panel, embedded
+   verification chat, and document-tagging controls. All specific to
+   this one view. */
+
+/* Bizi verification pipeline (bizi_verification_system.md) - a horizontal
+   stepper on desktop, horizontally scrollable on narrow screens (same
+   "scope the scroll, not the page" principle as .admin-table-wrap in
+   AdminPrimitives.css) rather than stacking vertically, which would lose
+   the "this is a linear process" read entirely. */
+.bizi-pipeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.5rem 0.1rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.bizi-pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 92px;
+  flex-shrink: 0;
+  text-align: center;
+  position: relative;
+}
+
+.bizi-pipeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 22px);
+  right: calc(-50% + 22px);
+  height: 2px;
+  background: var(--ink-line-strong);
+}
+
+.bizi-pipeline-step.done:not(:last-child)::after { background: var(--signal); }
+
+.bizi-pipeline-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--ink-line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  background: var(--ink-raised);
+  font-size: 0.78rem;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.bizi-pipeline-step.done .bizi-pipeline-dot { border-color: var(--signal); background: var(--signal-wash); color: var(--signal); }
+.bizi-pipeline-step.current .bizi-pipeline-dot { border-color: var(--brass); background: var(--brass-wash); color: var(--brass); }
+.bizi-pipeline-step.declined .bizi-pipeline-dot { border-color: var(--warn); background: var(--warn-wash); color: var(--warn); }
+
+.bizi-pipeline-label {
+  margin-top: 0.5rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  line-height: 1.3;
+  max-width: 90px;
+}
+
+.bizi-pipeline-step.current .bizi-pipeline-label,
+.bizi-pipeline-step.done .bizi-pipeline-label { color: var(--paper); font-weight: 600; }
+
+/* Stage-history timeline - the real case file (bizi_verification_system.md
+   §4). One entry per stage_event, newest first. */
+.bizi-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bizi-timeline-item {
+  display: flex;
+  gap: 0.85rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.bizi-timeline-item:last-child { border-bottom: none; }
+
+.bizi-timeline-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  background: var(--ink-line);
+  color: var(--muted);
+}
+
+.bizi-timeline-icon.system { background: var(--brass-wash); color: var(--brass); }
+.bizi-timeline-icon.decision { background: var(--signal-wash); color: var(--signal); }
+
+.bizi-timeline-body { flex: 1; min-width: 0; }
+.bizi-timeline-who { color: var(--paper); font-size: 0.88rem; font-weight: 600; }
+.bizi-timeline-who .tag { color: var(--muted); font-weight: 400; }
+.bizi-timeline-comment { color: var(--paper); font-size: 0.85rem; margin-top: 0.25rem; white-space: pre-wrap; }
+.bizi-timeline-time { color: var(--muted); font-size: 0.74rem; margin-top: 0.25rem; }
+
+/* Reference-check list (5 customers + 5 creditors, bizi_verification.md
+   stage 5) - each row a self-contained card, not a dense table, since
+   staff need room for notes and two independent checkboxes per row. */
+.bizi-reference-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--ink-line);
+  flex-wrap: wrap;
+}
+
+.bizi-reference-row:last-child { border-bottom: none; }
+
+.bizi-reference-checks {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.bizi-reference-checks label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.bizi-decision-panel {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.bizi-decision-panel .btn-primary.approve { background: var(--signal); color: #1a1a1a; }
+.bizi-decision-panel .btn-primary.decline { background: var(--warn); }
+
+/* Verification chat (Phase C) embedded inside the detail page's normal
+   scrolling column, not a full-height app-shell pane like Matches gets -
+   ChatRoomView's own height:100% needs an explicit box to fill here. */
+.bizi-verification-chat {
+  height: 560px;
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bizi-tag-control { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
+.bizi-tag-control select {
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line-strong);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.78rem;
+}
+.bizi-tag-badge { display: inline-block; margin-top: 0.4rem; }
+
+/* Schedule Call panel (Phase D) - a real datetime picker + duration
+   sitting inline with the "Book call" action, same row-of-controls
+   pattern the Reference add-form already uses. */
+.bizi-schedule-row { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.bizi-schedule-input,
+.bizi-schedule-select {
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line-strong);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.bizi-schedule-hint { color: var(--muted); font-size: 0.8rem; margin: 0.6rem 0 0; }
+.bizi-schedule-error { color: var(--warn); font-size: 0.82rem; margin: 0.5rem 0 0; }
+.bizi-schedule-success { color: var(--signal); font-size: 0.85rem; margin-top: 0.75rem; }
+.bizi-schedule-success a { color: var(--signal); word-break: break-all; }
+
+/* AI screening panel (Phase E) - structured reasoning, never a bare
+   verdict: a summary line, a concerns list, and (when there's something
+   concrete enough to ask about) a drafted message that's shown as
+   plainly editable-elsewhere text, not sent from here. */
+.bizi-ai-summary { color: var(--paper); font-size: 0.9rem; margin: 0 0 0.75rem; }
+.bizi-ai-concerns { margin: 0 0 0.75rem; padding-left: 1.1rem; }
+.bizi-ai-concerns li { color: var(--muted); font-size: 0.85rem; margin-bottom: 0.3rem; }
+.bizi-ai-empty { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+.bizi-ai-draft {
+  background: var(--ink-line);
+  border: 1px solid var(--ink-line-strong);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.bizi-ai-draft-label {
+  color: var(--brass);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.4rem;
+}
+.bizi-ai-draft-text { color: var(--paper); font-size: 0.88rem; margin: 0 0 0.7rem; line-height: 1.5; }
+.bizi-ai-rerun { margin-top: 0.25rem; }
+
+@media (max-width: 720px) {
+  .bizi-pipeline-step {
+    min-width: 76px;
+  }
+
+  .bizi-pipeline-dot {
+    width: 26px;
+    height: 26px;
+  }
+
+  .bizi-pipeline-step:not(:last-child)::after {
+    top: 13px;
+  }
+
+  .bizi-pipeline-label {
+    font-size: 0.68rem;
+    max-width: 76px;
+  }
+
+  .bizi-reference-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bizi-decision-panel {
+    flex-direction: column;
+  }
+
+  .bizi-schedule-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

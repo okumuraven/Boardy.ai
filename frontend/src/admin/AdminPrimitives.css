@@ -1,0 +1,155 @@
+/* Shared admin atoms used across nearly every list/detail view (table,
+   toolbar, pill, pagination, back-link, detail grid, empty state) -
+   imported once from AdminShell.jsx, the root every admin view mounts
+   under, the same way the member app's own styles/primitives.css is
+   pulled in once via index.css rather than re-imported per component. */
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+  align-items: center;
+}
+
+.admin-toolbar input,
+.admin-toolbar select {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  color: var(--paper);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.admin-toolbar input:focus,
+.admin-toolbar select:focus {
+  outline: none;
+  border-color: var(--brass-dim);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.87rem;
+}
+
+.admin-table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.admin-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--ink-line);
+  color: var(--paper);
+}
+
+.admin-table tr.clickable { cursor: pointer; }
+.admin-table tr.clickable:hover td { background: var(--ink-line); }
+
+/* Every list view wraps its <table> in this instead of leaving it bare -
+   without it, a wide table (Members, Matches, Audit log especially) forces
+   the ENTIRE page to scroll sideways on a narrow screen, dragging the
+   fixed topbar/nav along with it. Scoping the scroll to just the table
+   keeps the rest of the layout stable. */
+.admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
+.admin-pill {
+  display: inline-block;
+  border-radius: 20px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  background: var(--brass-wash);
+  color: var(--brass);
+}
+
+.admin-pill.warn { background: var(--warn-wash); color: var(--warn); }
+.admin-pill.signal { background: var(--signal-wash); color: var(--signal); }
+.admin-pill.muted { background: var(--ink-line); color: var(--muted); }
+
+.admin-pagination {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.admin-back-link {
+  background: none;
+  border: none;
+  color: var(--brass);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.admin-detail-field-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.2rem;
+}
+
+.admin-detail-field-value {
+  color: var(--paper);
+  font-size: 0.9rem;
+}
+
+.admin-empty-state {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .admin-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-toolbar input,
+  .admin-toolbar select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .admin-table {
+    font-size: 0.82rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 0.55rem 0.6rem;
+  }
+
+  .admin-detail-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.7rem;
+  }
+}

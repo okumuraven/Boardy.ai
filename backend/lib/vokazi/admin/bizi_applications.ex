@@ -15,6 +15,8 @@ defmodule Vokazi.Admin.BiziApplications do
   alias Vokazi.Accounts.User
   alias Vokazi.Bizi.{Application, StageEvent, Reference, Document}
   alias Vokazi.Chat.ChatRoom
+  alias Vokazi.Scheduling.{CredentialStore, GoogleCalendarClient}
+  alias Vokazi.Notifications
   alias Vokazi.Admin.AuditLog
 
   @per_page 25
@@ -99,8 +101,56 @@ defmodule Vokazi.Admin.BiziApplications do
         end)
         |> Repo.transaction()
         |> case do
-          {:ok, %{application: updated}} -> {:ok, updated}
-          {:error, _step, changeset, _changes} -> {:error, changeset}
+          {:ok, %{application: updated}} ->
+            # Fire-and-forget: a real Gemini call shouldn't make the
+            # admin who just clicked "Move to Screening" sit and wait
+            # for it, and a screening failure should never undo (or
+            # block) the stage transition that already succeeded.
+            if from_status != "screening" and new_status == "screening" do
+              Task.start(fn -> run_ai_screening(updated.id) end)
+            end
+
+            {:ok, updated}
+
+          {:error, _step, changeset, _changes} ->
+            {:error, changeset}
+        end
+    end
+  end
+
+  @doc """
+  Runs (or re-runs) Kuzana's automated first-stage screening (Phase E,
+  bizi_verification_build_plan.md) - auto-triggered by `advance_stage/5`
+  the moment an application reaches "screening", and exposed as a
+  manual re-run action for staff too. Never sends anything to the
+  applicant itself - the drafted message is staff-reviewed-and-sent-by-
+  hand data, same "AI drafts, human sends" boundary this app already
+  holds for match intro messages.
+  """
+  def run_ai_screening(application_id) do
+    case Repo.get(Application, application_id) do
+      nil ->
+        {:error, :not_found}
+
+      application ->
+        case Vokazi.AI.screen_bizi_application(application) do
+          {:ok, result} ->
+            %StageEvent{}
+            |> StageEvent.changeset(%{
+              bizi_application_id: application_id,
+              kind: "ai_screening",
+              performed_by_admin_id: nil,
+              comment: result.summary,
+              metadata: %{
+                "concerns" => result.concerns,
+                "needs_clarification" => result.needs_clarification,
+                "drafted_message" => result.drafted_message
+              }
+            })
+            |> Repo.insert()
+
+          {:error, reason} ->
+            {:error, reason}
         end
     end
   end
@@ -190,6 +240,94 @@ defmodule Vokazi.Admin.BiziApplications do
       room ->
         {:ok, room}
     end
+  end
+
+  @doc "Whether `admin_id` has a connected Google Calendar to book a call with - the detail view's Schedule Call panel switches between a connect prompt and the booking form based on this."
+  def calendar_connected?(admin_id) do
+    case CredentialStore.token_for(admin_id) do
+      {:ok, _token} -> true
+      {:error, _reason} -> false
+    end
+  end
+
+  @doc """
+  Moderator+ - books a real Google Calendar event (Meet link
+  auto-generated) with the applicant, using the *admin's own* connected
+  Calendar (Phase D, bizi_verification_build_plan.md) - deliberately not
+  the mutual-availability matcher `Vokazi.Scheduling` already has for
+  matched members; the applicant needs no Calendar connection of their
+  own, just a real invite emailed to them as an attendee.
+  """
+  def schedule_call(admin_id, application_id, start_time, end_time) do
+    with %Application{} = application <- Repo.get(Application, application_id) || {:error, :not_found},
+         %User{} = applicant <- Repo.get(User, application.user_id) || {:error, :not_found},
+         %User{} = admin <- Repo.get(User, admin_id) || {:error, :not_found},
+         {:ok, access_token} <- CredentialStore.token_for(admin_id),
+         {:ok, %{meet_link: meet_link}} <-
+           GoogleCalendarClient.insert_event(access_token, %{
+             summary: "Kuzana Bizi verification call - #{application.company_name}",
+             description: "Verification call with #{admin.full_name || admin.email} from the Kuzana team.",
+             start_time: start_time,
+             end_time: end_time,
+             attendee_emails: [applicant.email]
+           }) do
+      comment = "Booked a verification call for #{format_call_time(start_time)}. Meet link: #{meet_link}"
+
+      Ecto.Multi.new()
+      |> Ecto.Multi.update(:application, Application.admin_changeset(application, %{
+        scheduled_call_at: start_time,
+        scheduled_call_meet_link: meet_link
+      }))
+      |> Ecto.Multi.insert(:stage_event, fn _ ->
+        StageEvent.changeset(%StageEvent{}, %{
+          bizi_application_id: application_id,
+          kind: "note",
+          performed_by_admin_id: admin_id,
+          comment: comment
+        })
+      end)
+      |> Ecto.Multi.insert(:audit_log, fn _ ->
+        AuditLog.changeset(%AuditLog{}, %{
+          admin_user_id: admin_id,
+          action: "bizi_application.schedule_call",
+          target_type: "bizi_application",
+          target_id: application_id,
+          metadata: %{"start_time" => DateTime.to_iso8601(start_time), "meet_link" => meet_link}
+        })
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, _changes} ->
+          Notifications.notify(
+            application.user_id,
+            "bizi_call_scheduled",
+            "Kuzana scheduled a verification call for #{format_call_time(start_time)}. Check your email for the invite."
+          )
+
+          {:ok, %{meet_link: meet_link}}
+
+        {:error, _step, changeset, _changes} ->
+          {:error, changeset}
+      end
+    else
+      {:error, :not_found} -> {:error, :not_found}
+      {:error, :not_connected} -> {:error, :calendar_not_connected}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp format_call_time(%DateTime{} = dt), do: Calendar.strftime(dt, "%b %d, %Y at %H:%M UTC")
+
+  @doc "Support+ - exact-string aggregate of board decision reasons on declined applications, same shape as Vokazi.Admin.Matches.decline_reasons/0 - board_decision_reason is free text, so this is a real grouping, not keyword extraction."
+  def decline_reasons do
+    from(a in Application,
+      where: a.status == "declined" and not is_nil(a.board_decision_reason),
+      group_by: a.board_decision_reason,
+      select: {a.board_decision_reason, count(a.id)},
+      order_by: [desc: count(a.id)]
+    )
+    |> Repo.all()
+    |> Enum.map(fn {reason, count} -> %{reason: reason, count: count} end)
   end
 
   @doc "Moderator+ - tags an attachment already sitting in the verification chat as one of Kuzana's real document types."
@@ -390,6 +528,7 @@ defmodule Vokazi.Admin.BiziApplications do
         to_status: e.to_status,
         performed_by: admin_summary(e.performed_by_admin_id),
         comment: e.comment,
+        metadata: e.metadata,
         inserted_at: e.inserted_at
       }
     end)

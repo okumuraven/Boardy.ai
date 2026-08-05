@@ -94,6 +94,14 @@ defmodule Vokazi.Bizi.Application do
     field :revenue_verified, :boolean, default: false
     field :board_decision_reason, :string
     field :decided_at, :utc_datetime
+    # The current booked verification call (Phase D) - overwritten on
+    # rebooking, same "most recent only" choice as the interview
+    # transcript. Vokazi.Bizi.StageEvent still carries the permanent
+    # audit trail of every booking; these two exist purely so the
+    # applicant's own Bizi tab and the Calendar tab have real,
+    # queryable data instead of a staff-only comment string to parse.
+    field :scheduled_call_at, :utc_datetime
+    field :scheduled_call_meet_link, :string
     belongs_to :assigned_to_admin, Vokazi.Accounts.User, foreign_key: :assigned_to_admin_id
     belongs_to :decided_by_admin, Vokazi.Accounts.User, foreign_key: :decided_by_admin_id
 
@@ -191,7 +199,9 @@ defmodule Vokazi.Bizi.Application do
       :revenue_verified,
       :board_decision_reason,
       :decided_by_admin_id,
-      :decided_at
+      :decided_at,
+      :scheduled_call_at,
+      :scheduled_call_meet_link
     ])
     |> validate_inclusion(:status, @statuses)
   end

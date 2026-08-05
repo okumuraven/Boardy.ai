@@ -49,6 +49,29 @@ defmodule Vokazi.Bizi do
   end
 
   @doc """
+  This user's own upcoming Bizi verification calls, across every
+  application they've submitted - the Calendar tab's Bizi source
+  (Phase D, bizi_verification_build_plan.md). Merged client-side with
+  `Vokazi.Scheduling.CalendarOverview`'s match schedules, the same way
+  personal events already merge in - Bizi calls aren't match-scoped, so
+  they don't belong inside that module's own aggregation.
+  """
+  def list_scheduled_calls(user_id) do
+    Application
+    |> where([a], a.user_id == ^user_id and not is_nil(a.scheduled_call_at))
+    |> order_by([a], asc: a.scheduled_call_at)
+    |> Repo.all()
+    |> Enum.map(fn a ->
+      %{
+        application_id: a.id,
+        company_name: a.company_name,
+        scheduled_call_at: a.scheduled_call_at,
+        meet_link: a.scheduled_call_meet_link
+      }
+    end)
+  end
+
+  @doc """
   Creates the application, then notifies every active Superadmin through
   the same in-app Bell they already use for a new match or chat message
   (bizi_flow.md §6) - no new admin screen. The notification is

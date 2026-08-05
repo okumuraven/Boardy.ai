@@ -64,13 +64,46 @@ defmodule Vokazi.Scheduling do
   end
 
   @doc """
-  Stores the credential and marks Calendar consent granted - only
-  unlocks the assisted day-picker (`my_free_days/2`); slot proposal
-  doesn't run until days are actually offered.
+  Same consent screen, but for a staff member connecting their own
+  Calendar to book Bizi verification calls (bizi_verification_build_plan.md
+  Phase D) - not tied to any match, so `match_id` in the signed state is
+  simply nil. `handle_oauth_callback/2` below branches on exactly that.
+  """
+  def connect_admin_calendar_url(user_id) do
+    {:ok, Vokazi.Scheduling.GoogleOAuth.authorize_url(user_id, nil)}
+  end
+
+  @doc """
+  Stores the credential from Google's callback. Both the match-scoped
+  flow (also marks Calendar consent granted for that intro - only
+  unlocks the assisted day-picker, `my_free_days/2`; slot proposal
+  doesn't run until days are actually offered) and the admin-generic
+  flow share this one entry point, since both land on the same fixed
+  `GOOGLE_CALENDAR_REDIRECT_URI` - Google's OAuth app only allows
+  registering one. The state's `match_id` (nil for the admin flow) is
+  what tells them apart.
   """
   def handle_oauth_callback(code, state) do
-    with {:ok, %{user_id: user_id, match_id: match_id}} <- Vokazi.Scheduling.GoogleOAuth.verify_state(state),
-         {:ok, match} <- get_unlocked_match(match_id, user_id),
+    case Vokazi.Scheduling.GoogleOAuth.verify_state(state) do
+      {:ok, %{user_id: user_id, match_id: nil}} -> handle_admin_oauth_callback(code, user_id)
+      {:ok, %{user_id: user_id, match_id: match_id}} -> handle_match_oauth_callback(code, user_id, match_id)
+      {:error, reason} -> {:error, :unknown, reason}
+    end
+  end
+
+  defp handle_admin_oauth_callback(code, user_id) do
+    case Vokazi.Scheduling.GoogleOAuth.exchange_code(code) do
+      {:ok, tokens} ->
+        CredentialStore.upsert(user_id, tokens)
+        {:ok, {:admin, user_id}}
+
+      {:error, reason} ->
+        {:error, :admin, reason}
+    end
+  end
+
+  defp handle_match_oauth_callback(code, user_id, match_id) do
+    with {:ok, match} <- get_unlocked_match(match_id, user_id),
          {:ok, schedule} <- fetch_schedule(match_id),
          {:ok, tokens} <- Vokazi.Scheduling.GoogleOAuth.exchange_code(code) do
       CredentialStore.upsert(user_id, tokens)
@@ -78,7 +111,9 @@ defmodule Vokazi.Scheduling do
       side = side_of(match, user_id)
       {:ok, _updated} = update_schedule(schedule, %{consent_field(side) => true})
 
-      {:ok, match_id}
+      {:ok, {:match, match_id}}
+    else
+      {:error, reason} -> {:error, :match, reason}
     end
   end
 

@@ -79,6 +79,10 @@
   border-radius: 3px;
   cursor: pointer;
   transition: filter 0.2s ease, opacity 0.2s ease;
+  /* Both classes get applied to real <a> tags in a few places (a
+     "button" that's actually a link) - underlined-by-default anchor
+     text reading as a broken button is a real bug, not a style choice. */
+  text-decoration: none;
 }
 
 .btn-primary {

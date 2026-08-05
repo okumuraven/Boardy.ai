@@ -17,7 +17,9 @@ defmodule VokaziWeb.CallHistoryController do
     %{
       id: call_log.id,
       match_id: call_log.match_id,
+      other_user_id: other && other.id,
       other_user_name: other && other.full_name,
+      other_user_avatar_url: other && other.avatar_path && "/api/profiles/#{other.id}/avatar",
       direction: if(is_caller, do: "outgoing", else: "incoming"),
       status: call_log.status,
       duration_seconds: call_log.duration_seconds,

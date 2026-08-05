@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
+import './BiziApplicationDetail.css';
 import { ELIGIBILITY_GROUPS } from '../../constants/biziEligibility';
 import { BIZI_STATUSES, BIZI_TERMINAL_STATUSES, biziStatusLabel } from '../../constants/biziStatuses';
 import { BIZI_DOCUMENT_TYPES, biziDocumentTypeLabel } from '../../constants/biziDocumentTypes';
@@ -29,6 +30,7 @@ export default function BiziApplicationDetailView({ applicationId, admin, onBack
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [chatPrefill, setChatPrefill] = useState('');
 
   const isModerator = admin && ['moderator', 'superadmin'].includes(admin.admin_role);
   const isSuperadmin = admin && admin.admin_role === 'superadmin';
@@ -154,9 +156,18 @@ export default function BiziApplicationDetailView({ applicationId, admin, onBack
         <DecisionPanel application={application} onDecided={load} />
       )}
 
+      {isModerator && <ScheduleCallPanel application={application} />}
+
       <Section label="Documents">
         <DocumentList documents={application.documents || []} />
       </Section>
+
+      <AiScreeningPanel
+        application={application}
+        isModerator={isModerator}
+        onRerun={load}
+        onLoadDraft={(text) => setChatPrefill(text)}
+      />
 
       {application.chat_room_id && (
         <Section label="Verification chat">
@@ -166,6 +177,7 @@ export default function BiziApplicationDetailView({ applicationId, admin, onBack
               matchId={null}
               profile={{ id: admin.id }}
               partnerName={application.applicant?.name || application.applicant?.email}
+              prefillMessage={chatPrefill}
               attachmentActions={
                 isModerator
                   ? (msg) => (
@@ -450,6 +462,173 @@ function DecisionPanel({ application, onDecided }) {
         </button>
       </div>
     </div>
+  );
+}
+
+// Books a real Google Calendar event (Meet link auto-generated) on the
+// *admin's own* calendar, with the applicant as the sole attendee - see
+// bizi_verification_build_plan.md Phase D. Deliberately not the
+// mutual-availability matcher matched members get: the applicant needs
+// no Calendar connection of their own, just a real invite emailed to
+// them once the admin picks a time.
+function ScheduleCallPanel({ application }) {
+  const [connected, setConnected] = useState(null); // null = still checking
+  const [startTime, setStartTime] = useState('');
+  const [duration, setDuration] = useState(30);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [meetLink, setMeetLink] = useState('');
+
+  useEffect(() => {
+    apiFetch('/api/admin/calendar/status')
+      .then((res) => res.json())
+      .then((data) => setConnected(!!data.connected))
+      .catch(() => setConnected(false));
+  }, []);
+
+  const connectCalendar = async () => {
+    // The OAuth round-trip is a full browser redirect to Google and
+    // back - nothing in React survives that, so AdminShell restores
+    // which application this was for via this same key on return.
+    sessionStorage.setItem('kuzana_admin_return_bizi_id', String(application.id));
+    const res = await apiFetch('/api/admin/calendar/connect_url');
+    const data = await res.json();
+    if (data.url) window.location.href = data.url;
+  };
+
+  const book = async () => {
+    if (!startTime) return;
+    setSaving(true);
+    setError('');
+    try {
+      const start = new Date(startTime);
+      const end = new Date(start.getTime() + duration * 60_000);
+      const res = await apiFetch(`/api/admin/bizi_applications/${application.id}/schedule_call`, {
+        method: 'POST',
+        body: JSON.stringify({ start_time: start.toISOString(), end_time: end.toISOString() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : "Couldn't book the call.");
+      setMeetLink(data.meet_link);
+      setStartTime('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (connected === null) return null;
+
+  return (
+    <Section label="Schedule a call">
+      {connected ? (
+        <>
+          <div className="bizi-schedule-row">
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="bizi-schedule-input"
+            />
+            <select value={duration} onChange={(e) => setDuration(Number(e.target.value))} className="bizi-schedule-select">
+              <option value={30}>30 min</option>
+              <option value={45}>45 min</option>
+              <option value={60}>60 min</option>
+            </select>
+            <button className="btn-primary" onClick={book} disabled={saving || !startTime}>
+              {saving ? 'Booking...' : 'Book call'}
+            </button>
+          </div>
+          <p className="bizi-schedule-hint">
+            Creates a real Google Calendar event on your own calendar with a Meet link, and emails {application.applicant?.email} a real invite.
+          </p>
+          {error && <p className="bizi-schedule-error">{error}</p>}
+          {meetLink && (
+            <p className="bizi-schedule-success">
+              Booked - <a href={meetLink} target="_blank" rel="noreferrer">{meetLink}</a>
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="bizi-schedule-hint" style={{ marginBottom: '0.75rem' }}>
+            Connect your Google Calendar to book a real call with the applicant - they get a genuine Calendar invite with a Meet link, no connection needed on their side.
+          </p>
+          <button className="btn-ghost" onClick={connectCalendar}>Connect Google Calendar</button>
+        </>
+      )}
+    </Section>
+  );
+}
+
+// Kuzana's automated first-stage screening (Phase E) - shows the
+// latest ai_screening stage_event's structured metadata (never a bare
+// verdict). The drafted message is editable/sendable by loading it into
+// the real chat compose box below, not a parallel send path here - "AI
+// drafts, human sends" means the human's own click is what actually
+// posts it, attributed to them, not the AI.
+function AiScreeningPanel({ application, isModerator, onRerun, onLoadDraft }) {
+  const [rerunning, setRerunning] = useState(false);
+  const [error, setError] = useState('');
+
+  const latest = (application.stage_events || []).find((e) => e.kind === 'ai_screening');
+  const metadata = latest?.metadata || {};
+
+  const rerun = async () => {
+    setRerunning(true);
+    setError('');
+    try {
+      const res = await apiFetch(`/api/admin/bizi_applications/${application.id}/ai_screen`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data.error === 'string' ? data.error : "Couldn't run the AI screening.");
+      onRerun();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setRerunning(false);
+    }
+  };
+
+  return (
+    <Section label="AI screening">
+      {latest ? (
+        <>
+          <p className="bizi-ai-summary">{latest.comment}</p>
+
+          {metadata.concerns?.length > 0 && (
+            <ul className="bizi-ai-concerns">
+              {metadata.concerns.map((concern, i) => (
+                <li key={i}>{concern}</li>
+              ))}
+            </ul>
+          )}
+
+          {metadata.needs_clarification && metadata.drafted_message && (
+            <div className="bizi-ai-draft">
+              <p className="bizi-ai-draft-label">Drafted clarifying message</p>
+              <p className="bizi-ai-draft-text">{metadata.drafted_message}</p>
+              {isModerator && (
+                <button className="btn-ghost btn-sm" onClick={() => onLoadDraft(metadata.drafted_message)}>
+                  Load into chat to send
+                </button>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="bizi-ai-empty">No AI screening run yet - runs automatically once the application reaches Screening.</p>
+      )}
+
+      {isModerator && (
+        <>
+          <button className="btn-ghost btn-sm bizi-ai-rerun" onClick={rerun} disabled={rerunning}>
+            {rerunning ? 'Screening...' : latest ? 'Re-run AI screening' : 'Run AI screening now'}
+          </button>
+          {error && <p className="bizi-schedule-error">{error}</p>}
+        </>
+      )}
+    </Section>
   );
 }
 

@@ -25,6 +25,16 @@
   color: var(--muted); margin: 0.6rem 0 0.4rem;
 }
 
+/* Only rendered when a member has opted in (business_photos_public) -
+   a quiet strip, not the card's main focus, since the offer/need text
+   is still what Directory browsing is primarily about. */
+.directory-card-photos { display: flex; gap: 0.4rem; }
+.directory-card-photo {
+  width: 52px; height: 52px; border-radius: 6px; flex-shrink: 0;
+  border: 1px solid var(--ink-line); overflow: hidden;
+}
+.directory-card-photo .avatar-photo { border-radius: inherit; }
+
 .directory-card-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .directory-tag {
   font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 100px;

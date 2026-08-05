@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
+import './Stats.css';
 
 export default function StatsView() {
   const [stats, setStats] = useState(null);

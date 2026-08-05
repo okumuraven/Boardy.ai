@@ -22,6 +22,15 @@ defmodule Vokazi.Accounts.User do
     field :location, :string
     field :company, :string
     field :bio, :string
+    # Relative storage path under Vokazi.Accounts.MediaStorage's uploads
+    # root (e.g. "avatars/42/ab3f-photo.jpg"), never a full URL - the
+    # frontend always resolves it through the authenticated
+    # ProfileMediaController.avatar/2 endpoint (see AttachmentBubble.jsx's
+    # same blob-fetch pattern for chat attachments). Optional and
+    # member-set only through Vokazi.Accounts.ProfileMedia.set_avatar/2,
+    # never through changeset/2 below - it needs its own image-type/size
+    # validation, not a plain cast.
+    field :avatar_path, :string
 
     # Kuzana staff identity, layered on top of the same Google-verified
     # account every member has - never a second auth system. nil means
@@ -142,6 +151,18 @@ defmodule Vokazi.Accounts.User do
     |> validate_inclusion(:role, @roles)
     |> validate_inclusion(:industry, @industries, message: "must be one of the listed industries")
     |> unique_constraint(:email)
+  end
+
+  @doc """
+  The only path that can ever set/clear avatar_path - used exclusively
+  by `Vokazi.Accounts.ProfileMedia`, after that module has already
+  validated the upload's image type/size and written the file to disk
+  (or, for removal, deleted it). Deliberately its own changeset so
+  neither `changeset/2`'s full profile-edit validations nor a stray
+  client-supplied path can ever touch this field directly.
+  """
+  def avatar_changeset(user, attrs) do
+    cast(user, attrs, [:avatar_path])
   end
 
   @doc """

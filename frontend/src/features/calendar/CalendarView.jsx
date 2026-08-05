@@ -12,7 +12,7 @@ import { dateKeyFromDate } from "./dateKey";
 // one per personal event. Matches with no date yet (nothing proposed,
 // nobody's connected Calendar) have nothing to anchor a day to, so they
 // don't belong in a day-by-day agenda - callers surface those separately.
-const toAgendaItems = (schedules, personalEvents) => {
+const toAgendaItems = (schedules, personalEvents, biziCalls) => {
   const items = [];
 
   schedules.forEach((schedule) => {
@@ -26,6 +26,10 @@ const toAgendaItems = (schedules, personalEvents) => {
 
   personalEvents.forEach((event) => {
     items.push({ kind: "personal", date: event.date, time: `${event.date}T${event.start_time}`, ...event });
+  });
+
+  biziCalls.forEach((call) => {
+    items.push({ kind: "bizi_call", date: dateKeyFromDate(new Date(call.scheduled_call_at)), time: call.scheduled_call_at, ...call });
   });
 
   return items;
@@ -47,9 +51,10 @@ const groupByDate = (items) => {
 // itself still happens per-match inside the Matches tab. Merged with
 // the user's own personal events into one chronological "what's on my
 // plate" agenda - the thing someone in a hurry actually wants to read.
-export default function CalendarView({ profile, onOpenMatch }) {
+export default function CalendarView({ profile, onOpenMatch, onOpenBizi }) {
   const [schedules, setSchedules] = useState([]);
   const [personalEvents, setPersonalEvents] = useState([]);
+  const [biziCalls, setBiziCalls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
   const [addingEvent, setAddingEvent] = useState(false);
@@ -61,9 +66,11 @@ export default function CalendarView({ profile, onOpenMatch }) {
     return Promise.all([
       apiFetch(`/api/schedules`).then((res) => res.json()),
       apiFetch(`/api/personal_events`).then((res) => res.json()),
-    ]).then(([schedulesData, eventsData]) => {
+      apiFetch(`/api/bizi_applications/calendar`).then((res) => res.json()),
+    ]).then(([schedulesData, eventsData, biziData]) => {
       setSchedules(schedulesData.schedules || []);
       setPersonalEvents(eventsData.events || []);
+      setBiziCalls(biziData.calls || []);
     });
   }, [userId]);
 
@@ -98,7 +105,7 @@ export default function CalendarView({ profile, onOpenMatch }) {
   }
 
   const notStarted = schedules.filter((s) => s.status === "not_started" || s.status === "in_progress");
-  const agendaItems = toAgendaItems(schedules, personalEvents);
+  const agendaItems = toAgendaItems(schedules, personalEvents, biziCalls);
   const isEmpty = agendaItems.length === 0 && notStarted.length === 0;
 
   const eventDates = new Set(agendaItems.map((item) => item.date));
@@ -139,7 +146,7 @@ export default function CalendarView({ profile, onOpenMatch }) {
         )}
 
         {groupedDays.map(([date, items]) => (
-          <AgendaDay key={date} dateKey={date} items={items} onOpenMatch={onOpenMatch} onDeletePersonalEvent={deletePersonalEvent} />
+          <AgendaDay key={date} dateKey={date} items={items} onOpenMatch={onOpenMatch} onOpenBizi={onOpenBizi} onDeletePersonalEvent={deletePersonalEvent} />
         ))}
 
         {!selectedDate && notStarted.length > 0 && (

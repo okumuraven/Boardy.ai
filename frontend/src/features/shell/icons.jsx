@@ -51,6 +51,18 @@ export function CallHistoryIcon() {
   );
 }
 
+// A shield-check, not a rocket/growth glyph - this tab is where a founder
+// tracks their own verification progress, not where the Bizi pitch lives
+// (that's still EntryCard's job inside the tab itself).
+export function BiziIcon() {
+  return (
+    <svg {...base}>
+      <path d="M12 3.5l6.5 2.7v5.3c0 4.3-2.8 7.3-6.5 8.7-3.7-1.4-6.5-4.4-6.5-8.7V6.2L12 3.5z" />
+      <path d="M9 12l2.2 2.2L15.5 9.5" />
+    </svg>
+  );
+}
+
 export function DirectoryIcon() {
   return (
     <svg {...base}>

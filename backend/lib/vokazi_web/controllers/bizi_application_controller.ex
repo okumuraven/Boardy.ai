@@ -27,6 +27,11 @@ defmodule VokaziWeb.BiziApplicationController do
     end
   end
 
+  @doc "This member's own upcoming Bizi verification calls - the Calendar tab's Bizi source (Phase D)."
+  def calendar(conn, _params) do
+    json(conn, %{calls: Bizi.list_scheduled_calls(conn.assigns.current_user_id)})
+  end
+
   @doc "Get-or-create this member's own verification chat room - 'not found' for any id that isn't their own application, same as a stranger's id would get."
   def chat_room(conn, %{"id" => id}) do
     case Bizi.get_own_application(conn.assigns.current_user_id, id) do
@@ -62,6 +67,8 @@ defmodule VokaziWeb.BiziApplicationController do
       question_for_us: application.question_for_us,
       batch_target: application.batch_target,
       status: application.status,
+      scheduled_call_at: application.scheduled_call_at,
+      scheduled_call_meet_link: application.scheduled_call_meet_link,
       inserted_at: application.inserted_at
     }
   end

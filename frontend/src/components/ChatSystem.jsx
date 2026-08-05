@@ -7,6 +7,7 @@ import MatchProfilePanel from "../features/matches/MatchProfilePanel";
 import FlagConcernPanel from "../features/matches/FlagConcernPanel";
 import CallPanel from "./CallPanel";
 import AttachmentBubble from "./AttachmentBubble";
+import Avatar from "./Avatar";
 
 const HISTORY_PAGE_SIZE = 50;
 
@@ -18,7 +19,7 @@ const formatBytes = (bytes) => {
 
 const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack, attachmentActions }) {
+export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack, attachmentActions, prefillMessage }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
   // notification click asked for it (`startInScheduling`), or when we're
@@ -66,6 +67,16 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
     }
     shouldScrollRef.current = true;
   }, [messages]);
+
+  // Lets a caller (the Bizi AI Assessment panel's "Load draft into
+  // chat") drop text straight into the real compose box - "editable
+  // text and a send button" per bizi_verification_build_plan.md
+  // Phase E means literally reusing the existing send path below, not
+  // building a second one, so attribution to whichever admin actually
+  // clicks send stays automatic rather than something to get wrong.
+  useEffect(() => {
+    if (prefillMessage) setNewMessage(prefillMessage);
+  }, [prefillMessage]);
 
   const updatePresence = useCallback(() => {
     const online = Presence.list(presenceStateRef.current).some((p) => p.id !== String(profile.id));
@@ -302,7 +313,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
             <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--paper)' }}>You're connected</p>
               <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
-                Say hello to {partnerName || "your match"} - this is a real, private conversation between the two of you.
+                {matchId
+                  ? `Say hello to ${partnerName || "your match"} - this is a real, private conversation between the two of you.`
+                  : `Say hello to ${partnerName || "the team"} - a real, private conversation, visible only to you and them.`}
               </p>
             </div>
           ) : (
@@ -312,7 +325,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                   {loadingMore ? "Loading..." : "Load earlier messages"}
                 </button>
               )}
-              {messages.map((msg) => {
+              {messages.map((msg, i) => {
                 const time = new Date(msg.inserted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 // Ring/end/miss events are app-level, not chat content -
                 // rendered as a compact centered pill, not a full bubble.
@@ -324,8 +337,20 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                   );
                 }
                 const isMe = msg.sender_id === profile.id;
+                // No single fixed "other side" on a Bizi room (matchId
+                // null) - any active admin can reply, so the applicant
+                // needs to know WHICH one, not just "Kuzana team".
+                // Collapsed like a real group thread: the label only
+                // repeats when the sender actually changes.
+                const showSenderLabel = !isMe && !matchId && msg.sender_name && messages[i - 1]?.sender_id !== msg.sender_id;
                 return (
                   <div key={msg.id} className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
+                    {showSenderLabel && (
+                      <span className="msg-sender-label">
+                        <Avatar userId={msg.sender_id} name={msg.sender_name} className="msg-sender-avatar" />
+                        {msg.sender_name} <span className="msg-sender-org">· Kuzana team</span>
+                      </span>
+                    )}
                     {msg.attachment && <AttachmentBubble attachment={msg.attachment} />}
                     {msg.attachment && attachmentActions?.(msg)}
                     {msg.content && <span className="msg-text">{msg.content}</span>}

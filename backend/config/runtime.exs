@@ -45,22 +45,25 @@ config :web_push_elixir,
 
 # Durable retryable delivery jobs for Web Push and transactional email
 # (free, open-source Oban core only - no Oban Web/Pro). Cron plugin
-# drives three scheduled sweeps: the Bizi Buddy System's weekly check-in
+# drives four scheduled sweeps: the Bizi Buddy System's weekly check-in
 # reminder (kuzana_playbook.md §6) at Monday 9am UTC, the one-shot
-# interview reminder daily at 8am UTC, and the one-shot feedback
-# reminder hourly (its own @delay_hours is only a few hours right now,
-# during active hackathon testing, so a daily cron would be too coarse -
-# switch this to daily once that delay moves to days post-hackathon).
+# interview reminder daily at 8am UTC, the one-shot feedback reminder
+# hourly (its own @delay_hours is only a few hours right now, during
+# active hackathon testing, so a daily cron would be too coarse - switch
+# this to daily once that delay moves to days post-hackathon), and the
+# Bizi verification "documents still outstanding" nudge daily at 10am UTC
+# (Phase E, bizi_verification_build_plan.md).
 config :vokazi, Oban,
   engine: Oban.Engines.Basic,
   repo: Vokazi.Repo,
-  queues: [push: 5, buddy_checkins: 1, mailers: 5],
+  queues: [push: 5, buddy_checkins: 1, mailers: 5, bizi_reminders: 1],
   plugins: [
     {Oban.Plugins.Cron,
      crontab: [
        {"0 9 * * 1", Vokazi.BuddyPairings.CheckInReminderWorker},
        {"0 8 * * *", Vokazi.Accounts.InterviewReminderWorker},
-       {"0 * * * *", Vokazi.Accounts.FeedbackReminderWorker}
+       {"0 * * * *", Vokazi.Accounts.FeedbackReminderWorker},
+       {"0 10 * * *", Vokazi.Admin.BiziApplications.ReminderWorker}
      ]}
   ]
 

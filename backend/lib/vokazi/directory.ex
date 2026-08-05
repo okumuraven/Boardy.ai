@@ -96,8 +96,23 @@ defmodule Vokazi.Directory do
       verified: !!(social && social.github_username),
       portfolio_url: social && social.portfolio_url,
       match: Map.get(match_by_user_id, u.id),
-      investment: investment_summary(ip)
+      investment: investment_summary(ip),
+      avatar_url: if(u.avatar_path, do: "/api/profiles/#{u.id}/avatar", else: nil),
+      business_photos: business_photo_urls(u.id, p)
     }
+  end
+
+  # Only shown to other members once the owner has explicitly opted in
+  # (Profile.business_photos_public) - the same gate
+  # ProfileMediaController.show_business_photo/2 enforces server-side, so
+  # a card can never link to a photo the backend would then refuse to
+  # actually serve.
+  defp business_photo_urls(_user_id, %Profile{business_photos_public: false}), do: []
+
+  defp business_photo_urls(user_id, %Profile{business_photos_public: true, business_photos: photos}) do
+    photos
+    |> Enum.with_index()
+    |> Enum.map(fn {_path, index} -> "/api/profiles/#{user_id}/business_photos/#{index}" end)
   end
 
   # nil when the member has no investment_profiles row at all (never
