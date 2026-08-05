@@ -10,6 +10,11 @@ primary_region = "jnb"
   PHX_SERVER = "true"
   PORT = "4000"
   PHX_HOST = "kuzana-connect-api.fly.dev"
+  UPLOADS_DIR = "/data/uploads"
+
+[[mounts]]
+  source = "kuzana_uploads"
+  destination = "/data"
 
 [http_service]
   internal_port = 4000

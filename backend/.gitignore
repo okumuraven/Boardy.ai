@@ -29,3 +29,7 @@ vokazi-*.tar
 # build output, but they don't belong in version control either.
 /priv/chat_attachments/
 
+# User-uploaded avatars/business photos (Vokazi.Accounts.MediaStorage) -
+# same reasoning as chat_attachments above.
+/priv/uploads/
+
