@@ -36,6 +36,15 @@ config :vokazi, VokaziWeb.Endpoint,
     "http://localhost:5173"
   ]
 
+# Root directory for user-uploaded files (chat attachments, avatars,
+# business photos) - see Vokazi.Chat.Storage and
+# Vokazi.Accounts.MediaStorage. Points at the mounted Fly volume in
+# production (see fly.toml's [[mounts]]); left unset in dev, where each
+# storage module falls back to an ephemeral dir under priv/.
+if uploads_dir = System.get_env("UPLOADS_DIR") do
+  config :vokazi, :uploads_dir, uploads_dir
+end
+
 # Web Push (VAPID) - notification_system.md Phase 2. Keys are generated
 # once via `mix generate.vapid.keys`, free, no third-party account.
 config :web_push_elixir,
