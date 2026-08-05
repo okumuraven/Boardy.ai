@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { apiFetch } from "../../lib/api";
 import Avatar from "../../components/Avatar";
+import PhotoPreviewModal from "../../components/PhotoPreviewModal";
 import "./ProfilePhotos.css";
 
 const PHOTO_ACCEPT = "image/jpeg,image/png,image/webp";
@@ -15,6 +16,7 @@ export default function ProfilePhotos({ profile, onProfileUpdated }) {
   const [removingIndex, setRemovingIndex] = useState(null);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [error, setError] = useState("");
+  const [pendingFile, setPendingFile] = useState(null);
   const fileInputRef = useRef(null);
   const targetIndexRef = useRef(null);
 
@@ -28,10 +30,12 @@ export default function ProfilePhotos({ profile, onProfileUpdated }) {
 
   const handleFileChosen = (e) => {
     const file = e.target.files?.[0];
-    const index = targetIndexRef.current;
     e.target.value = "";
-    if (!file) return;
+    if (file) setPendingFile(file);
+  };
 
+  const uploadPhoto = (file) => {
+    const index = targetIndexRef.current;
     setError("");
     setUploadingIndex(index);
     const body = new FormData();
@@ -44,7 +48,10 @@ export default function ProfilePhotos({ profile, onProfileUpdated }) {
         else onProfileUpdated?.();
       })
       .catch(() => setError("Couldn't reach the server. Please try again."))
-      .finally(() => setUploadingIndex(null));
+      .finally(() => {
+        setUploadingIndex(null);
+        setPendingFile(null);
+      });
   };
 
   const removePhoto = (index) => {
@@ -122,6 +129,15 @@ export default function ProfilePhotos({ profile, onProfileUpdated }) {
         accept={PHOTO_ACCEPT}
         style={{ display: "none" }}
         onChange={handleFileChosen}
+      />
+
+      <PhotoPreviewModal
+        file={pendingFile}
+        shape="square"
+        confirming={uploadingIndex !== null}
+        onConfirm={uploadPhoto}
+        onCancel={() => setPendingFile(null)}
+        hint="A clear photo of your product, workspace, or team works best."
       />
 
       {photos.length > 0 && (

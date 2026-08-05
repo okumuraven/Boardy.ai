@@ -3,6 +3,7 @@ import { apiFetch } from "../../lib/api";
 import SocialProfileSection from "./SocialProfileSection";
 import ProfilePhotos from "./ProfilePhotos";
 import Avatar from "../../components/Avatar";
+import PhotoPreviewModal from "../../components/PhotoPreviewModal";
 import "./Profile.css";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
@@ -26,6 +27,7 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   const [form, setForm] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
   const avatarInputRef = useRef(null);
 
   const uploadAvatar = (file) => {
@@ -41,7 +43,10 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
         else onProfileUpdated?.();
       })
       .catch(() => setAvatarError("Couldn't reach the server. Please try again."))
-      .finally(() => setUploadingAvatar(false));
+      .finally(() => {
+        setUploadingAvatar(false);
+        setPendingAvatarFile(null);
+      });
   };
 
   const removeAvatar = () => {
@@ -112,11 +117,19 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             style={{ display: "none" }}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) uploadAvatar(file);
+              if (file) setPendingAvatarFile(file);
               e.target.value = "";
             }}
           />
         </div>
+
+        <PhotoPreviewModal
+          file={pendingAvatarFile}
+          shape="circle"
+          confirming={uploadingAvatar}
+          onConfirm={uploadAvatar}
+          onCancel={() => setPendingAvatarFile(null)}
+        />
         <div>
           <h2>{profile?.name || "Your profile"}</h2>
           <span className="role">{roleTitle(profile?.role)}</span>
