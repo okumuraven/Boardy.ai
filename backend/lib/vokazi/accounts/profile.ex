@@ -30,6 +30,16 @@ defmodule Vokazi.Accounts.Profile do
     # visible to anyone but themselves (see the visibility toggle in
     # ProfilePhotos.jsx). Only castable through photos_visibility_changeset/2.
     field :business_photos_public, :boolean, default: false
+    # Service/advisory-specific (profile.md §4.2) - only meaningful for
+    # consultant/service_provider roles, but not role-validated here
+    # (same reasoning as InvestmentProfile: whichever half doesn't apply
+    # to a given user is simply left blank). Only castable through
+    # service_details_changeset/2 below.
+    field :rate_types, {:array, :string}, default: []
+    # Nullable, not default-true/false - nil means "never set" (no pill
+    # shown at all), distinct from an explicit false ("not taking
+    # clients right now").
+    field :available_for_hire, :boolean
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -43,6 +53,13 @@ defmodule Vokazi.Accounts.Profile do
   @connection_tags ["funding", "customers", "partners", "mentors", "hiring"]
 
   def connection_tags, do: @connection_tags
+
+  # Closed set - how a consultant/service provider actually gets paid,
+  # not a free-text field (profile.md §4.2). Same "hourly, retainer, or
+  # project-based" shape called out in that doc.
+  @rate_types ["hourly", "retainer", "project"]
+
+  def rate_types, do: @rate_types
 
   @doc false
   def changeset(profile, attrs) do
@@ -61,8 +78,8 @@ defmodule Vokazi.Accounts.Profile do
     ])
     |> validate_required([:user_id, :phone_number])
     |> validate_inclusion(:contact_preference, ["call", "video", "chat"])
-    |> validate_tags(:looking_for_tags)
-    |> validate_tags(:can_help_tags)
+    |> validate_tags(:looking_for_tags, @connection_tags)
+    |> validate_tags(:can_help_tags, @connection_tags)
     |> unique_constraint(:user_id)
     |> unique_constraint(:phone_number, message: "is already registered to another account")
   end
@@ -77,9 +94,21 @@ defmodule Vokazi.Accounts.Profile do
     cast(profile, attrs, [:business_photos, :business_photos_public])
   end
 
-  defp validate_tags(changeset, field) do
+  @doc """
+  The only path that can ever change rate_types/available_for_hire -
+  same separation-of-concerns pattern as photos_changeset/2 above, kept
+  out of the general changeset/2 since these two fields are meaningless
+  for most roles.
+  """
+  def service_details_changeset(profile, attrs) do
+    profile
+    |> cast(attrs, [:rate_types, :available_for_hire])
+    |> validate_tags(:rate_types, @rate_types)
+  end
+
+  defp validate_tags(changeset, field, allowed) do
     validate_change(changeset, field, fn ^field, tags ->
-      invalid = Enum.reject(tags, &(&1 in @connection_tags))
+      invalid = Enum.reject(tags, &(&1 in allowed))
       if invalid == [], do: [], else: [{field, "contains invalid tags: #{Enum.join(invalid, ", ")}"}]
     end)
   end

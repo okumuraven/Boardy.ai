@@ -12,6 +12,8 @@ const EMPTY = {
   key_financials: "",
   check_size: "",
   sectors_of_interest: [],
+  traction: "",
+  team_composition: "",
 };
 
 const toggle = (list, value) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
@@ -145,6 +147,28 @@ export default function InvestmentDetailsForm({ profile }) {
             value={form.key_financials || ""}
             onChange={(e) => setForm({ ...form, key_financials: e.target.value })}
             rows={3}
+            style={{ marginBottom: "1rem" }}
+          />
+
+          <label className="investment-field-label">
+            Traction — customers, growth rate, retention, whatever tells the story best
+          </label>
+          <textarea
+            className="premium-input investment-textarea"
+            placeholder="e.g. 150 customers, 3x YoY growth, 60% repeat rate"
+            value={form.traction || ""}
+            onChange={(e) => setForm({ ...form, traction: e.target.value })}
+            rows={2}
+            style={{ marginBottom: "1rem" }}
+          />
+
+          <label className="investment-field-label">Team composition</label>
+          <textarea
+            className="premium-input investment-textarea"
+            placeholder="e.g. 2 co-founders (CEO, CTO), 5 full-time staff"
+            value={form.team_composition || ""}
+            onChange={(e) => setForm({ ...form, team_composition: e.target.value })}
+            rows={2}
           />
         </>
       )}

@@ -43,6 +43,18 @@ export function ProfileIcon() {
   );
 }
 
+// A megaphone, not a chat bubble - MatchesIcon already owns the bubble
+// shape for 1:1 chat, and this tab is a one-way, admin-to-member prompt,
+// not a conversation.
+export function DiscussionIcon() {
+  return (
+    <svg {...base}>
+      <path d="M3.5 9v6h3l7 4V5l-7 4h-3z" />
+      <path d="M17.5 9.5c1.3 1 1.3 4.5 0 5.5" />
+    </svg>
+  );
+}
+
 export function CallHistoryIcon() {
   return (
     <svg {...base}>

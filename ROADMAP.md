@@ -45,6 +45,36 @@ community's own members told Kuzana they wanted.
 
 ---
 
+## 🔀 Deviations from the Official Technical Brief (and why)
+
+**Written 2026-08-06.** `Kuzana_boardy.ai.md` is our own copy of the requirements Kuzana/MiniHack
+gave us, and it describes a specific baseline stack: outbound Vapi/Synthflow phone calls, OpenAI
+embeddings, Airtable/HubSpot as the database, Make.com/Zapier cron orchestration, and — the biggest
+one — **Whapi.cloud/Zoko-driven WhatsApp double opt-in and automated group creation**. What's
+actually running today deviates from that baseline in five places. Every one of these was a
+deliberate, cost/practicality call made during the build, not something that drifted unnoticed —
+but until now that reasoning lived only in internal working notes, not in a document a judge would
+actually read. This section fixes that. **None of these substitutions change what capability is
+being demonstrated** — voice discovery → structured extraction → semantic vector matching → a
+gated, mutual-consent introduction is fully implemented; only the concrete tool behind each step
+differs from the brief's suggested baseline.
+
+| Brief's baseline | What's built instead | Why |
+|---|---|---|
+| **WhatsApp double opt-in + automated group creation** (Whapi.cloud/Zoko) | In-app mutual-consent screen (`MatchReview.jsx`) + a persistent Phoenix Channels chat room, unlocked the moment both sides accept | Whapi/Zoko are paid gateways billed per message/API call — real recurring cost for a feature the brief itself frames as a mechanism (double opt-in), not a specific vendor requirement. A first-party chat room also does more than a WhatsApp group link ever could here: it's the same surface our calling and mutual-availability scheduling features are built on, so an unlocked match gets messaging, voice/video calls, and calendar coordination in one place instead of handing the user off to a separate app after the intro. |
+| **Outbound Voice AI phone call** (dial out to the member's number) | In-browser Vapi Web SDK call (WebRTC), user-initiated from the app | Zero per-minute telephony cost vs. outbound calling; no phone-number collection/consent step needed since the member is already signed in and in the app. The brief's own Phase 1 spec allows the call to be "inbound when requested" — this satisfies that reading directly, and fits a web product where Google Sign-In is already the identity layer. |
+| **OpenAI `text-embedding-3-small`** | Google Gemini embeddings (`gemini-embedding-2`) | Free tier during the build (real cost difference at this stage), and Gemini is already the model doing match validation/scoring and tag extraction elsewhere in the same pipeline — one AI vendor instead of two reduces integration surface and key management for no loss of matching quality. |
+| **Airtable/HubSpot + Make.com/Zapier cron orchestration** | PostgreSQL + `pgvector`, Elixir/Phoenix (Oban for background jobs) | Postgres+pgvector does real cosine-similarity search natively — a spreadsheet-backed CRM can't run the actual semantic-matching requirement the brief asks for; Make.com/Zapier would just be gluing that same gap over with per-automation SaaS billing. This is a strictly more capable substrate for the literal Phase 2 requirement, not just a preference. |
+| **Async matching cron, every 24–48 hours** | On-demand, synchronous matching (`POST /matchmaking/find_match`, `Matchmaking.find_match!/1`) — pgvector shortlist + Gemini validation run immediately when triggered | A batch cron makes sense at Boardy's scale (thousands of users, matches trickling in continuously); at Kuzana's actual community size — low hundreds, per `kuzana_playbook.md` §7's own growth targets — a 24–48h delay just adds latency with no batching benefit. Immediate feedback is better UX for a small, high-touch community, and the *scoring logic itself* (pgvector floor + Gemini validation threshold) is identical either way — only the trigger cadence differs. |
+
+**What did *not* deviate**: the required data model (user records, embeddings, call history, match
+states), the matching engine's actual logic (pgvector similarity + LLM validation, threshold-gated),
+and the core requirement — voice call → structured needs/offers → vector match → gated introduction
+— all match the brief's intent. The 60-day no-repeat-match constraint (brief §4.2) has **not been
+independently re-verified as part of this pass** and should be checked before being cited as done.
+
+---
+
 ## 🛠️ Phase 1: The Frictionless Core (Weeks 1 – 3) — Done
 *Objective: Get the first users through the door, testing the Voice AI, and proving the UX.*
 

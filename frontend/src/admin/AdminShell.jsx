@@ -15,6 +15,7 @@ import BuddyPairingsView from './buddy_pairings/BuddyPairingsView';
 import BuddyConcernsView from './buddy_pairings/BuddyConcernsView';
 import FeedbackListView from './feedback/FeedbackListView';
 import AnnouncementsView from './announcements/AnnouncementsView';
+import DiscussionTopicsView from './discussion_topics/DiscussionTopicsView';
 import BiziApplicationsListView from './bizi_applications/BiziApplicationsListView';
 import BiziApplicationDetailView from './bizi_applications/BiziApplicationDetailView';
 
@@ -28,6 +29,7 @@ const TABS = [
   { key: 'bizi_applications', label: 'Bizi Applications' },
   { key: 'feedback', label: 'Feedback' },
   { key: 'announcements', label: 'Announcements' },
+  { key: 'discussion_topics', label: 'Discussion Topics' },
   { key: 'stats', label: 'Stats' },
 ];
 
@@ -156,6 +158,7 @@ export default function AdminShell({ admin, onLogout }) {
 
         {tab === 'feedback' && <FeedbackListView />}
         {tab === 'announcements' && <AnnouncementsView admin={admin} />}
+        {tab === 'discussion_topics' && <DiscussionTopicsView admin={admin} />}
 
         {tab === 'stats' && <StatsView />}
 

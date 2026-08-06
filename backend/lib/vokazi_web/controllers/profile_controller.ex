@@ -29,7 +29,9 @@ defmodule VokaziWeb.ProfileController do
           can_help_tags: if(user.profile, do: user.profile.can_help_tags, else: []),
           avatar_url: if(user.avatar_path, do: "/api/profiles/#{user.id}/avatar", else: nil),
           business_photos: business_photo_urls(user),
-          business_photos_public: if(user.profile, do: user.profile.business_photos_public, else: false)
+          business_photos_public: if(user.profile, do: user.profile.business_photos_public, else: false),
+          rate_types: if(user.profile, do: user.profile.rate_types, else: []),
+          available_for_hire: if(user.profile, do: user.profile.available_for_hire, else: nil)
         })
     end
   end
@@ -106,6 +108,44 @@ defmodule VokaziWeb.ProfileController do
         IO.inspect(reason, label: "DB_ERROR")
         conn |> put_status(500) |> json(%{error: "Database error", details: inspect(reason)})
     end
+  end
+
+  @doc """
+  Upserts the signed-in user's service/advisory fields
+  (rate_types/available_for_hire, profile.md §4.2) - only meaningful for
+  consultant/service_provider roles, but not role-gated here (same
+  "whichever half doesn't apply is just left blank" reasoning as
+  `Vokazi.Investment`). Kept out of the general `update/2` above since
+  those two fields are meaningless for most users - own dedicated
+  changeset (`Profile.service_details_changeset/2`), own endpoint.
+  """
+  def update_service_details(conn, params) do
+    user_id = conn.assigns.current_user_id
+    profile = Vokazi.Repo.get_by(Profile, user_id: user_id) || %Profile{user_id: user_id}
+
+    attrs = Map.take(params, ["rate_types", "available_for_hire"])
+    changeset = Profile.service_details_changeset(profile, attrs)
+
+    case Vokazi.Repo.insert_or_update(changeset) do
+      {:ok, profile} ->
+        json(conn, %{rate_types: profile.rate_types, available_for_hire: profile.available_for_hire})
+
+      {:error, changeset} ->
+        error_msg =
+          Enum.reduce(changeset.errors, "Validation failed", fn {field, {msg, _}}, _acc -> "#{field} #{msg}" end)
+
+        conn |> put_status(:unprocessable_entity) |> json(%{error: error_msg})
+    end
+  end
+
+  @doc """
+  This user's own card, shaped exactly like a Directory row (profile.md
+  §5's "preview as public" feature) - delegates to
+  `Vokazi.Directory.preview_for_user/1` so this can never drift out of
+  sync with what a real Directory card actually looks like.
+  """
+  def preview_card(conn, _params) do
+    json(conn, Vokazi.Directory.preview_for_user(conn.assigns.current_user_id))
   end
 
   # A member always sees the full list of their own business photos here

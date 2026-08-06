@@ -35,6 +35,11 @@ export const rolePlural = (role) => ROLE_LABELS_PLURAL[role] || "peers";
 // signal - revenue threshold - differs from an equity investor's).
 export const isCapitalSideRole = (role) => role === "investor" || role === "lender";
 
+// Consultants/advisors and service providers - the two roles that get
+// the rate/availability fields (profile.md §4.2) instead of the
+// founder/capital-side funding fields.
+export const isServiceRole = (role) => role === "consultant" || role === "service_provider";
+
 // Mirrors backend/lib/vokazi/bizi.ex's `eligible_role?/1` exactly - the
 // Bizi application feature (bizi_flow.md §1) is only ever shown to
 // founders, since Kuzana's real application form outright rejects
