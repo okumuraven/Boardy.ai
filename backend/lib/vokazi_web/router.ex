@@ -49,9 +49,18 @@ defmodule VokaziWeb.Router do
     pipe_through :authenticated_api
 
     get "/profiles/me", ProfileController, :show
+
+    # "Preview as public" (profile.md §5) - this user's own card, shaped
+    # exactly like a real Directory row.
+    get "/profiles/me/preview_card", ProfileController, :preview_card
     post "/profiles/sync_mock", ProfileController, :sync_mock
     post "/profiles/sync_real_transcript", ProfileController, :sync_real_transcript
     post "/profiles", ProfileController, :update
+
+    # Service/advisory-specific fields (profile.md §4.2) - own endpoint,
+    # own changeset, kept out of the general profile update above since
+    # rate_types/available_for_hire are meaningless for most roles.
+    post "/profiles/service_details", ProfileController, :update_service_details
 
     # Profile photos - optional avatar + up to 3 "show your work"
     # business photos, gated behind a per-member visibility toggle.
@@ -130,6 +139,9 @@ defmodule VokaziWeb.Router do
     # In-app tester feedback - see "things to add.md"
     get "/feedback/status", FeedbackController, :status
     post "/feedback", FeedbackController, :create
+
+    # Discussion Topics - read-only feed, admin-authored (see Vokazi.Admin.DiscussionTopics)
+    get "/discussion_topics", DiscussionTopicController, :index
 
     # Bizi application - Apply + Rulebook only, see bizi_flow.md
     get "/bizi_applications", BiziApplicationController, :index
@@ -212,6 +224,11 @@ defmodule VokaziWeb.Router do
     get "/feedback", FeedbackController, :index
     get "/feature_announcements", FeatureAnnouncementController, :index
     post "/feature_announcements", FeatureAnnouncementController, :create
+
+    # Discussion Topics - admin-authored, member-browsable prompts (no
+    # replies, no broadcast email - see Vokazi.Admin.DiscussionTopics)
+    get "/discussion_topics", DiscussionTopicController, :index
+    post "/discussion_topics", DiscussionTopicController, :create
 
     # Bizi Buddy System (kuzana_playbook.md §6) - see "things to add.md" #2
     get "/buddy_pairings", BuddyPairingController, :index

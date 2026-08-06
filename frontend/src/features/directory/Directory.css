@@ -55,6 +55,53 @@
 .directory-card-name { display: flex; align-items: center; gap: 0.35rem; font-size: 0.95rem; color: var(--paper); font-weight: 600; }
 .directory-card-meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
 
+/* Role-category signal, take 2 (profile.md §3.1 - corner-ticks read as
+   too subtle at a glance, so this replaces them with a bolder wax-seal
+   stamp on the avatar itself, the one spot every card guarantees eyes
+   land on first). */
+.directory-avatar-ring { position: relative; display: inline-flex; flex-shrink: 0; border-radius: 50%; }
+.directory-avatar-ring-founder { box-shadow: 0 0 0 2px var(--warn); }
+.directory-avatar-ring-capital { box-shadow: 0 0 0 2px var(--brass); }
+.directory-avatar-ring-service { box-shadow: 0 0 0 2px var(--signal); }
+
+.directory-card-stamp {
+  position: absolute; top: -6px; right: -6px; z-index: 1;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(-12deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: #fff;
+}
+.directory-card-stamp svg { width: 12px; height: 12px; }
+.directory-card-stamp-founder { background: var(--warn); }
+.directory-card-stamp-capital { background: var(--brass); }
+.directory-card-stamp-service { background: var(--signal); }
+
+/* Service/advisory's promoted portfolio link (profile.md §3.2) - a case
+   study/site is that category's strongest credibility signal, so it
+   moves above the fold instead of sitting in the footer like everyone
+   else's. */
+.directory-card-link-featured {
+  display: inline-flex; align-self: flex-start; font-size: 0.8rem; font-weight: 600;
+  color: var(--signal); text-decoration: none; padding: 0.3rem 0.65rem;
+  border-radius: 100px; background: var(--signal-wash);
+}
+.directory-card-link-featured:hover { text-decoration: underline; }
+
+.directory-card-service-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+
+/* available_for_hire (profile.md §4.2) - "open" reuses --signal, same
+   verified/online semantic already established elsewhere on this card;
+   "closed" is deliberately neutral (--muted), not --warn, since being
+   fully booked isn't a bad thing worth flagging as urgent. */
+.directory-availability-pill {
+  font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 100px;
+}
+.directory-availability-pill.is-open { background: var(--signal-wash); color: var(--signal); }
+.directory-availability-pill.is-closed { background: var(--ink-line); color: var(--muted); }
+
+.directory-card-rate { font-size: 0.78rem; color: var(--muted); margin: 0; }
+
 .directory-verified-badge {
   display: inline-flex; align-items: center; justify-content: center;
   width: 16px; height: 16px; border-radius: 50%; background: var(--signal-wash);
@@ -63,6 +110,15 @@
 
 .directory-card-investment {
   font-size: 0.8rem; color: var(--brass); font-weight: 600; margin: 0;
+}
+
+/* One-line headline (profile.md §5) - reuses the existing `bio` field,
+   truncated hard to one line since a card is meant to be skimmed, not
+   read. Italic distinguishes it from the offer text below (a
+   self-written tagline vs. the AI-extracted pitch). */
+.directory-card-headline {
+  font-size: 0.85rem; color: var(--paper); font-style: italic; margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .directory-card-offer {

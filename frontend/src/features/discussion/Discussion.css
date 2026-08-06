@@ -1,0 +1,28 @@
+/* ---- Discussion (read-only feed of admin-posted topics) ---- */
+
+.discussion-view { flex: 1; min-width: 0; overflow-y: auto; padding: 2rem 2.25rem 3rem; }
+
+.discussion-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem; }
+.discussion-header h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 0; color: var(--paper); }
+.discussion-header .count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
+
+.discussion-list { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.discussion-card {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--ink-line);
+  border-radius: 10px;
+  background: var(--ink);
+}
+
+.discussion-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.discussion-title { font-size: 0.95rem; color: var(--paper); font-weight: 500; }
+.discussion-time { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
+
+.discussion-body { font-size: 0.85rem; line-height: 1.5; color: var(--paper); margin: 0.5rem 0 0.6rem; white-space: pre-wrap; }
+
+.discussion-by { font-size: 0.75rem; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .discussion-view { padding: 1.25rem 1.25rem 2rem; }
+}

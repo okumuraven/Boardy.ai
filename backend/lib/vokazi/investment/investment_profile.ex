@@ -18,6 +18,12 @@ defmodule Vokazi.Investment.InvestmentProfile do
     field :key_financials, :string
     field :check_size, :string
     field :sectors_of_interest, {:array, :string}, default: []
+    # The gap kuzana_connect_discovery.md §3 named for investor
+    # evaluation ("traction, team composition") that this schema never
+    # had (profile.md §4.3) - founder-side only, free text like
+    # key_financials since neither reduces to a closed set.
+    field :traction, :string
+    field :team_composition, :string
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -37,6 +43,8 @@ defmodule Vokazi.Investment.InvestmentProfile do
       :key_financials,
       :check_size,
       :sectors_of_interest,
+      :traction,
+      :team_composition,
       :user_id
     ])
     |> validate_required([:user_id])

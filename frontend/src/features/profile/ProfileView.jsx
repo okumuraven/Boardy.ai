@@ -7,9 +7,11 @@ import PhotoPreviewModal from "../../components/PhotoPreviewModal";
 import "./Profile.css";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
+import ServiceDetailsForm from "./ServiceDetailsForm";
+import CardPreviewModal from "./CardPreviewModal";
 import ThemeToggle from "../shell/ThemeToggle";
 import { INDUSTRIES } from "../../constants/industries";
-import { ROLES, roleTitle as roleLabel, isCapitalSideRole } from "../../constants/roles";
+import { ROLES, roleTitle as roleLabel, isCapitalSideRole, isServiceRole } from "../../constants/roles";
 
 const AVATAR_ACCEPT = "image/jpeg,image/png,image/webp";
 
@@ -28,6 +30,7 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState("");
   const [pendingAvatarFile, setPendingAvatarFile] = useState(null);
+  const [previewingCard, setPreviewingCard] = useState(false);
   const avatarInputRef = useRef(null);
 
   const uploadAvatar = (file) => {
@@ -137,7 +140,7 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <span
               className="chip selected"
               style={{ marginLeft: "0.6rem", fontSize: "0.72rem", padding: "0.25rem 0.65rem", cursor: "default" }}
-              title="Approved into the Kuzana Bizi program"
+              title="Approved into the Kuzana Bizi accelerator"
             >
               Verified Bizi
             </span>
@@ -266,6 +269,10 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <ThemeToggle />
           </div>
 
+          <button onClick={() => setPreviewingCard(true)} className="btn-ghost btn-sm">
+            Preview my card
+          </button>
+
           <button onClick={onLogout} className="btn-ghost btn-sm profile-view-disconnect">
             Log out
           </button>
@@ -284,7 +291,12 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <div className="profile-view-copy">{profile?.need_text || "Complete your voice interview from Home to fill this in."}</div>
           </div>
 
-          <ProfilePhotos profile={profile} onProfileUpdated={onProfileUpdated} />
+          {/* Investors/lenders have no product to show - the "show your
+              work" prompt (profile.md §4.1) only makes sense for members
+              who actually have a product/workspace/team to photograph. */}
+          {!isCapitalSideRole(profile?.role) && (
+            <ProfilePhotos profile={profile} onProfileUpdated={onProfileUpdated} />
+          )}
 
           <div className="panel">
             <SocialProfileSection profile={profile} />
@@ -293,8 +305,12 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
           {(isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding")) && (
             <InvestmentDetailsForm profile={profile} />
           )}
+
+          {isServiceRole(profile?.role) && <ServiceDetailsForm profile={profile} />}
         </div>
       </div>
+
+      {previewingCard && <CardPreviewModal onClose={() => setPreviewingCard(false)} />}
     </div>
   );
 }

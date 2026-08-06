@@ -17,7 +17,9 @@ defmodule VokaziWeb.InvestmentController do
         "funding_types",
         "key_financials",
         "check_size",
-        "sectors_of_interest"
+        "sectors_of_interest",
+        "traction",
+        "team_composition"
       ])
 
     case Investment.upsert(conn.assigns.current_user_id, attrs) do
@@ -39,7 +41,9 @@ defmodule VokaziWeb.InvestmentController do
       funding_types: profile.funding_types,
       key_financials: profile.key_financials,
       check_size: profile.check_size,
-      sectors_of_interest: profile.sectors_of_interest
+      sectors_of_interest: profile.sectors_of_interest,
+      traction: profile.traction,
+      team_composition: profile.team_composition
     }
   end
 end

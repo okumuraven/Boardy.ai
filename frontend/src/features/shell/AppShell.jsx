@@ -10,10 +10,11 @@ import CallHistoryView from "../calls";
 import CalendarView from "../calendar/CalendarView";
 import BiziSection from "../bizi/BiziSection";
 import ProfileView from "../profile/ProfileView";
+import DiscussionView from "../discussion/DiscussionView";
 import ThemeToggle from "./ThemeToggle";
 import KuzanaMark from "../../components/KuzanaMark";
 import Avatar from "../../components/Avatar";
-import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, BiziIcon, ProfileIcon } from "./icons";
+import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, BiziIcon, ProfileIcon, DiscussionIcon } from "./icons";
 
 const TABS = [
   { key: "home", label: "Home", Icon: HomeIcon },
@@ -22,6 +23,7 @@ const TABS = [
   { key: "calls", label: "Calls", Icon: CallHistoryIcon },
   { key: "calendar", label: "Calendar", Icon: CalendarIcon },
   { key: "bizi", label: "Bizi", Icon: BiziIcon },
+  { key: "discussion", label: "Discussion", Icon: DiscussionIcon },
   { key: "profile", label: "Profile", Icon: ProfileIcon },
 ];
 
@@ -156,6 +158,9 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
         </div>
         <div className={`shell-view ${activeTab === "bizi" ? "active" : ""}`}>
           <BiziSection profile={profile} openRequest={biziOpenRequest} onConsumeOpenRequest={() => setBiziOpenRequest(null)} />
+        </div>
+        <div className={`shell-view ${activeTab === "discussion" ? "active" : ""}`}>
+          <DiscussionView />
         </div>
         <div className={`shell-view ${activeTab === "profile" ? "active" : ""}`}>
           <ProfileView profile={profile} onProfileUpdated={onProfileUpdated} onLogout={onLogout} />

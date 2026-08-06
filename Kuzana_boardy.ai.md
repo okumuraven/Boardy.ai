@@ -2,6 +2,13 @@
 
 *This document serves as the absolute source of truth for the requirements provided by Kuzana for Bounty 3. It consolidates both the high-level programme brief and the detailed technical system requirements to ensure alignment throughout the build process.*
 
+> **2026-08-06:** the shipped product deviates from this brief's suggested baseline stack in five
+> places — most visibly, there is no WhatsApp integration anywhere (Phase 3/4 below describe a
+> Whapi.cloud/Zoko-driven double opt-in and group creator). Every deviation was a deliberate
+> cost/practicality substitution made during the build, not scope drift, and none of them change the
+> underlying capability being demonstrated. See `ROADMAP.md`'s "🔀 Deviations from the Official
+> Technical Brief" section for the full list and reasoning behind each one.
+
 ---
 
 ## 1. Programme Context

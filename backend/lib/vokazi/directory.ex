@@ -80,6 +80,25 @@ defmodule Vokazi.Directory do
     }
   end
 
+  @doc """
+  The card exactly as this user's own Directory row would render for
+  someone else - the "preview as public" feature (profile.md §5),
+  reusing the same `to_member/3` shaping rather than a second,
+  parallel serialization that could quietly drift out of sync with the
+  real one. Works even before a member has completed onboarding
+  (defaults to an empty `%Profile{}` for whatever `to_member/3` reads)
+  since the point is letting someone see the effect of filling
+  something in *before* they've filled it in, not just after.
+  """
+  def preview_for_user(user_id) do
+    user = Repo.get!(User, user_id)
+    profile = Repo.get_by(Profile, user_id: user_id) || %Profile{user_id: user_id}
+    investment = Repo.get_by(InvestmentProfile, user_id: user_id)
+
+    %{user: user, profile: profile, investment: investment}
+    |> to_member(social_profiles_by_user_id([user_id]), %{})
+  end
+
   defp to_member(%{user: u, profile: p, investment: ip}, social_by_user_id, match_by_user_id) do
     social = Map.get(social_by_user_id, u.id)
 
@@ -90,9 +109,16 @@ defmodule Vokazi.Directory do
       industry: u.industry,
       company: u.company,
       location: u.location,
+      # A one-line headline (profile.md §5) - reuses the existing `bio`
+      # field rather than adding a second, competing "who are you" field.
+      # bio was already collected on Profile but never actually shown
+      # anywhere before this; the card truncates it to one line via CSS.
+      bio: u.bio,
       offer_text: p.offer_text,
       looking_for_tags: p.looking_for_tags,
       can_help_tags: p.can_help_tags,
+      rate_types: p.rate_types,
+      available_for_hire: p.available_for_hire,
       verified: !!(social && social.github_username),
       portfolio_url: social && social.portfolio_url,
       match: Map.get(match_by_user_id, u.id),
