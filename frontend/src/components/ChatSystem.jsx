@@ -19,7 +19,7 @@ const formatBytes = (bytes) => {
 
 const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, startInScheduling, onBack, attachmentActions, prefillMessage }) {
+export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, partnerAvatarUrl, startInScheduling, onBack, attachmentActions, prefillMessage }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
   // notification click asked for it (`startInScheduling`), or when we're
@@ -264,6 +264,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 ←
               </button>
             )}
+            <Avatar avatarUrl={partnerAvatarUrl} name={partnerName} className="chat-header-avatar" />
             <div>
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
               <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
