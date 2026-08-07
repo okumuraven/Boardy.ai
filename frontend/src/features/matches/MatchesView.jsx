@@ -113,6 +113,7 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
             pairingKind={selectedDetail.pairing_kind}
             profile={profile}
             partnerName={selectedDetail.other_user?.name}
+            partnerAvatarUrl={selectedDetail.other_user?.avatar_url}
             startInScheduling={startInScheduling}
             onBack={clearSelection}
           />

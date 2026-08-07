@@ -26,9 +26,15 @@
   padding-bottom: 1rem;
 }
 
-.chat-header-identity { display: flex; align-items: center; min-width: 0; }
-.chat-header-back { flex-shrink: 0; font-size: 1.2rem; margin-right: 1rem; }
+.chat-header-identity { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.chat-header-back { flex-shrink: 0; font-size: 1.2rem; margin-right: 0.25rem; }
 .chat-header-identity h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-header-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  background: var(--ink); border: 1.5px solid var(--ink-line-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem; color: var(--paper);
+}
 
 .chat-header-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
@@ -124,6 +130,14 @@
 
 .chat-input {
   flex: 1;
+  /* A flex item's default minimum width is its own content size, and a
+     plain <input> doesn't shrink below a browser-assigned baseline
+     (commonly 170-200px) without this - on a narrow phone that's wider
+     than the input actually had room for once the two 42px attach/mic
+     buttons and the send button also claimed their space, so the row
+     overflowed and the parent's `overflow: hidden` silently clipped
+     the send button clean off the screen. */
+  min-width: 0;
   background: var(--ink);
   border: 1px solid var(--ink-line);
   border-radius: 999px;
@@ -209,7 +223,6 @@
 .chat-side-panel-inner { width: 320px; height: 100%; overflow-y: auto; }
 
 @media (max-width: 768px) {
-  .chat-panel { padding: 1rem; }
   .msg-bubble { max-width: 88%; }
 }
 
@@ -231,4 +244,16 @@
   .chat-column { padding: 0.85rem; }
   .chat-messages { gap: 0.5rem; padding: 0.75rem; }
   .msg-bubble { padding: 0.6rem 0.8rem; font-size: 0.92rem; }
+
+  /* Three circular buttons (attach, mic, send) plus the input pill is a
+     lot to fit next to each other on a phone even with `min-width: 0`
+     fixing the overflow - trimming their footprint here buys real
+     breathing room for the input text on narrow screens instead of it
+     just barely squeezing in. 40px still clears the ~40-44px minimum
+     comfortable tap target. */
+  .chat-input-row { gap: 0.4rem; }
+  .chat-attach-btn, .chat-send-btn { width: 40px; height: 40px; }
+  .chat-input { padding: 0.65rem 1rem; font-size: 0.92rem; }
+
+  .chat-header-avatar { width: 34px; height: 34px; font-size: 0.78rem; }
 }

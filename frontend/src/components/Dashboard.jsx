@@ -149,9 +149,28 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
         // Vapi echoes this back untouched on every server event for this call,
         // including `call.assistantOverrides.metadata` in the end-of-call-report
         // webhook, so the backend never has to parse it out of the transcript.
+        //
+        // transcriber override - real tester feedback (a Kenyan-accented
+        // speaker) found the interview frequently mis-heard them, forcing
+        // repeats. The assistant's transcriber has never been explicitly
+        // configured anywhere in this codebase, so it's been running on
+        // whatever Vapi's dashboard default is. Deepgram's nova-2 model
+        // with the generic "en" language code (not a region-locked tag
+        // like "en-US") is Deepgram's own recommendation for the widest,
+        // most accent-robust English coverage - explicitly setting it
+        // here removes the guesswork regardless of what the dashboard
+        // currently has. This is the most direct lever available without
+        // Vapi dashboard access; it hasn't been verified against a live
+        // accented speaker from this environment (no real microphone to
+        // test with here), so re-test with a real call after deploying.
         await vapiInstance?.start(assistantId, {
           metadata: {
             kuzana_user_id: profile.id,
+          },
+          transcriber: {
+            provider: "deepgram",
+            model: "nova-2",
+            language: "en",
           },
         });
       } catch (err) {
