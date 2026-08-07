@@ -3,7 +3,14 @@
    old full-screen-swap pattern. See ROADMAP.md's UI/UX redesign phase.
    ========================================================================== */
 
-.app-shell { height: 100vh; display: flex; overflow: hidden; }
+/* `height: 100dvh` (with a plain `vh` fallback for older browsers) -
+   see the matching note in index.css's `.app-container`. This is the
+   fix for the bottom tab bar intermittently disappearing while
+   scrolling on mobile: a static `100vh` doesn't track the address
+   bar showing/hiding, so the shell could render taller than the
+   actually-visible screen and push the tab bar (the flex column's
+   last item) below the fold until the browser's own UI caught up. */
+.app-shell { height: 100vh; height: 100dvh; display: flex; overflow: hidden; }
 
 .shell-rail {
   width: 68px;
