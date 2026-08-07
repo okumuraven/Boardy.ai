@@ -10,6 +10,11 @@
 .directory-chip-row {
   display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.6rem; margin-bottom: 0.4rem;
   scrollbar-width: none;
+  /* The scrollbar is hidden below, so without this the row just looks
+     cut off at the edge instead of reading as swipeable - most visible
+     on mobile, where the chip list reliably overflows the viewport. */
+  mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
 }
 .directory-chip-row::-webkit-scrollbar { display: none; }
 .directory-chip-row .chip { flex-shrink: 0; white-space: nowrap; }

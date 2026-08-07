@@ -14,7 +14,7 @@ import DiscussionView from "../discussion/DiscussionView";
 import ThemeToggle from "./ThemeToggle";
 import KuzanaMark from "../../components/KuzanaMark";
 import Avatar from "../../components/Avatar";
-import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, BiziIcon, ProfileIcon, DiscussionIcon } from "./icons";
+import { HomeIcon, DirectoryIcon, MatchesIcon, CallHistoryIcon, CalendarIcon, BiziIcon, ProfileIcon, DiscussionIcon, MoreIcon } from "./icons";
 
 const TABS = [
   { key: "home", label: "Home", Icon: HomeIcon },
@@ -26,6 +26,20 @@ const TABS = [
   { key: "discussion", label: "Discussion", Icon: DiscussionIcon },
   { key: "profile", label: "Profile", Icon: ProfileIcon },
 ];
+
+// The desktop rail has vertical room for all of TABS - the mobile tab
+// bar doesn't (8 items in one fixed-height row either overflows or
+// crushes every tap target below a usable size). Mobile instead shows
+// the highest-frequency destinations directly and tucks the rest behind
+// a "More" sheet. Calls is a passive history log (you place/answer
+// calls from inside a match's chat, not from this tab) so it's lower-
+// frequency than Profile, which is where people fix their offer/need
+// text, manage photos, and log out - Profile stays primary, Calls moves
+// into More. Profile's tab also gets the user's real avatar instead of
+// a generic icon, same personal touch the desktop rail already has.
+const MOBILE_PRIMARY_KEYS = ["home", "directory", "matches", "profile"];
+const mobilePrimaryTabs = TABS.filter((t) => MOBILE_PRIMARY_KEYS.includes(t.key));
+const mobileMoreTabs = TABS.filter((t) => !MOBILE_PRIMARY_KEYS.includes(t.key));
 
 // The persistent shell (rail on desktop, bottom tab bar on mobile via CSS
 // alone - same markup, same state) that replaced the old full-screen-swap
@@ -55,6 +69,16 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
   // the bottom tab bar entirely, the same way WhatsApp/Telegram give a
   // conversation the whole screen instead of the app's main nav.
   const [matchChatOpen, setMatchChatOpen] = useState(false);
+  // Mobile-only overflow sheet for the tabs that don't fit in the primary
+  // row (see mobileMoreTabs above). Closes itself the moment the active
+  // tab changes for any reason - picking a row inside it, a notification
+  // navigating elsewhere, anything - so it never lingers open over the
+  // wrong screen.
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [activeTab]);
 
   useEffect(() => {
     if (pendingMatchOpen) {
@@ -167,7 +191,52 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
         </div>
       </div>
 
-      <nav className="shell-tabbar">{navButtons("tab-btn", "active")}</nav>
+      <nav className="shell-tabbar">
+        {mobilePrimaryTabs.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            className={`tab-btn ${activeTab === key ? "active" : ""}`}
+            title={label}
+            aria-label={label}
+            onClick={() => setActiveTab(key)}
+          >
+            {key === "profile" ? (
+              <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="tab-btn-avatar" />
+            ) : (
+              <Icon />
+            )}
+            <span className="lbl">{label}</span>
+          </button>
+        ))}
+        <button
+          className={`tab-btn ${mobileMoreTabs.some((t) => t.key === activeTab) ? "active" : ""}`}
+          title="More"
+          aria-label="More"
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen((v) => !v)}
+        >
+          <MoreIcon />
+          <span className="lbl">More</span>
+        </button>
+      </nav>
+
+      {moreOpen && (
+        <div className="mobile-more-backdrop" onClick={() => setMoreOpen(false)}>
+          <div className="mobile-more-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="mobile-more-handle"></div>
+            {mobileMoreTabs.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                className={`mobile-more-row ${activeTab === key ? "active" : ""}`}
+                onClick={() => setActiveTab(key)}
+              >
+                <Icon />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

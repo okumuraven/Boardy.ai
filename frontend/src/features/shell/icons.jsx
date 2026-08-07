@@ -85,3 +85,15 @@ export function DirectoryIcon() {
     </svg>
   );
 }
+
+// Three stacked bars, not dots - reads as "more sections" rather than a
+// generic overflow-menu glyph, and stays legible at the small tab-bar size.
+export function MoreIcon() {
+  return (
+    <svg {...base}>
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
+    </svg>
+  );
+}
