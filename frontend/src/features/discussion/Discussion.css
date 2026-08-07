@@ -1,28 +1,67 @@
 /* ---- Discussion (read-only feed of admin-posted topics) ---- */
 
-.discussion-view { flex: 1; min-width: 0; overflow-y: auto; padding: 2rem 2.25rem 3rem; }
+.discussion-view { flex: 1; min-width: 0; overflow-y: auto; }
+.discussion-view-content { padding: 2rem 2.25rem 2.5rem; max-width: 720px; }
 
-.discussion-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.25rem; }
+.discussion-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
 .discussion-header h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.5rem; margin: 0; color: var(--paper); }
-.discussion-header .count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); }
-
-.discussion-list { display: flex; flex-direction: column; gap: 0.9rem; }
-
-.discussion-card {
-  padding: 1rem 1.1rem;
-  border: 1px solid var(--ink-line);
-  border-radius: 10px;
-  background: var(--ink);
+.discussion-subhead { font-size: 0.85rem; color: var(--muted); margin: 0.3rem 0 0; }
+.discussion-header .count {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0; margin-top: 0.3rem;
 }
 
-.discussion-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
-.discussion-title { font-size: 0.95rem; color: var(--paper); font-weight: 500; }
-.discussion-time { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); flex-shrink: 0; }
+.discussion-list { display: flex; flex-direction: column; gap: 1.1rem; }
 
-.discussion-body { font-size: 0.85rem; line-height: 1.5; color: var(--paper); margin: 0.5rem 0 0.6rem; white-space: pre-wrap; }
+.discussion-card {
+  padding: 1.4rem 1.5rem;
+  border: 1px solid var(--ink-line);
+  border-radius: 4px;
+  background: var(--ink-raised);
+}
 
-.discussion-by { font-size: 0.75rem; color: var(--muted); }
+.discussion-byline { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.9rem; }
+
+.discussion-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--ink); border: 1.5px solid var(--ink-line-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.72rem; color: var(--paper);
+  flex-shrink: 0;
+}
+
+.discussion-byline-text { display: flex; flex-direction: column; min-width: 0; }
+.discussion-by { font-size: 0.82rem; font-weight: 600; color: var(--paper); line-height: 1.25; }
+.discussion-role {
+  font-family: var(--font-mono); font-size: 0.66rem; color: var(--brass);
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+
+.discussion-time {
+  font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted);
+  margin-left: auto; flex-shrink: 0; white-space: nowrap;
+}
+
+.discussion-title {
+  font-family: var(--font-display); font-weight: 500; font-size: 1.08rem;
+  color: var(--paper); margin: 0 0 0.5rem; line-height: 1.35;
+}
+
+.discussion-body { font-size: 0.88rem; line-height: 1.65; color: var(--paper); opacity: 0.88; margin: 0; white-space: pre-wrap; }
+
+/* Empty state - the app-wide corner-tick motif reads too busy at this
+   scale, so this stays plain: the icon carries the brand instead. */
+.discussion-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  padding: 4rem 1rem 3rem;
+  border: 1px dashed var(--ink-line-strong);
+  border-radius: 6px;
+}
+.discussion-empty svg { width: 34px; height: 34px; color: var(--brass); opacity: 0.5; margin-bottom: 1rem; }
+.discussion-empty-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--paper); margin: 0 0 0.35rem; }
+.discussion-empty-sub { font-size: 0.85rem; color: var(--muted); margin: 0; }
 
 @media (max-width: 900px) {
-  .discussion-view { padding: 1.25rem 1.25rem 2rem; }
+  .discussion-view-content { padding: 1.25rem 1.25rem 2rem; }
+  .discussion-card { padding: 1.1rem 1.2rem; }
 }

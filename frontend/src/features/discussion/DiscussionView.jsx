@@ -1,10 +1,17 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import Avatar from "../../components/Avatar";
+import { DiscussionIcon } from "../shell/icons";
 import "./Discussion.css";
 
 const dateLabel = (iso) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
+  const date = new Date(iso);
+  const startOf = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOf(new Date()) - startOf(date)) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
 };
 
 // Read-only feed of admin-posted prompts - no replies, no reactions, no
@@ -26,33 +33,46 @@ export default function DiscussionView() {
 
   return (
     <div className="discussion-view">
-      <header className="discussion-header">
-        <h2>Discussion</h2>
-        <span className="count">{topics.length} topics</span>
-      </header>
+      <div className="discussion-view-content">
+        <header className="discussion-header">
+          <div>
+            <h2>Discussion</h2>
+            <p className="discussion-subhead">Prompts from the Kuzana team - browse whenever you like.</p>
+          </div>
+          {!loading && topics.length > 0 && (
+            <span className="count">{topics.length} {topics.length === 1 ? "topic" : "topics"}</span>
+          )}
+        </header>
 
-      {loading ? (
-        <div style={{ textAlign: "center", padding: "2rem", color: "var(--muted)" }}>
-          <div className="spinner" style={{ width: "22px", height: "22px", margin: "0 auto" }}></div>
-        </div>
-      ) : topics.length === 0 ? (
-        <p style={{ padding: "0 1.1rem", color: "var(--muted)", fontSize: "0.85rem" }}>
-          Nothing posted yet — check back for topics from the Kuzana team.
-        </p>
-      ) : (
-        <div className="discussion-list">
-          {topics.map((topic) => (
-            <div key={topic.id} className="discussion-card">
-              <div className="discussion-top">
-                <span className="discussion-title">{topic.title}</span>
-                <span className="discussion-time">{dateLabel(topic.inserted_at)}</span>
-              </div>
-              <p className="discussion-body">{topic.body}</p>
-              {topic.posted_by && <span className="discussion-by">Posted by {topic.posted_by}</span>}
-            </div>
-          ))}
-        </div>
-      )}
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "3rem 0", color: "var(--muted)" }}>
+            <div className="spinner" style={{ width: "22px", height: "22px", margin: "0 auto" }}></div>
+          </div>
+        ) : topics.length === 0 ? (
+          <div className="discussion-empty">
+            <DiscussionIcon />
+            <p className="discussion-empty-title">Nothing posted yet</p>
+            <p className="discussion-empty-sub">Check back soon for a topic from the Kuzana team.</p>
+          </div>
+        ) : (
+          <div className="discussion-list">
+            {topics.map((topic) => (
+              <article key={topic.id} className="discussion-card corner-tick">
+                <div className="discussion-byline">
+                  <Avatar name={topic.posted_by} className="discussion-avatar" />
+                  <div className="discussion-byline-text">
+                    <span className="discussion-by">{topic.posted_by || "Kuzana team"}</span>
+                    <span className="discussion-role">Kuzana team</span>
+                  </div>
+                  <span className="discussion-time">{dateLabel(topic.inserted_at)}</span>
+                </div>
+                <h3 className="discussion-title">{topic.title}</h3>
+                <p className="discussion-body">{topic.body}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

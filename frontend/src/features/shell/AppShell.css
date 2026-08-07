@@ -66,21 +66,72 @@
     display: flex; align-items: center; justify-content: space-around;
     height: 64px; flex-shrink: 0; order: 2;
     background: var(--ink-raised); border-top: 1px solid var(--ink-line);
+    /* iPhone home-indicator clearance - without this the bar sits flush
+       against it on notched devices instead of resting comfortably above. */
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .app-shell { flex-direction: column; }
   .shell-content { order: 1; }
   .tab-btn {
     background: none; border: none; color: var(--muted); display: flex; flex-direction: column;
-    align-items: center; gap: 0.2rem; cursor: pointer; padding: 0.3rem 0.6rem; position: relative;
+    align-items: center; justify-content: center; gap: 0.2rem; cursor: pointer;
+    padding: 0.3rem 0.6rem; min-width: 56px; min-height: 44px; position: relative;
   }
   .tab-btn.active { color: var(--brass); }
+  /* Same small top indicator the desktop rail gives its active item
+     (`.rail-btn.active::before`), just rotated onto the tab bar's own
+     axis - keeps the "how do you know what's selected" language
+     consistent between the two nav shapes instead of relying on color
+     change alone. */
+  .tab-btn.active::before {
+    content: ''; position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    width: 18px; height: 3px; border-radius: 0 0 2px 2px; background: var(--brass);
+  }
   .tab-btn .lbl { font-size: 0.63rem; }
   .tab-btn svg { width: 19px; height: 19px; }
   .tab-btn .badge-dot { position: absolute; top: 0; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  .tab-btn-avatar {
+    width: 21px; height: 21px; border-radius: 50%;
+    background: var(--ink); border: 1.5px solid var(--ink-line-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-size: 0.56rem; color: var(--paper);
+  }
+  .tab-btn.active .tab-btn-avatar { border-color: var(--brass); }
 
   /* A conversation takes the whole screen while it's open, the way
      WhatsApp/Telegram do - the app's own tab bar has no reason to
      compete with the chat's header/input for the same few rows of
      height. The back arrow already in the chat header is the way out. */
   .app-shell.chat-open .shell-tabbar { display: none; }
+
+  /* "More" overflow sheet - the tabs that don't fit in the primary row
+     (see mobileMoreTabs in AppShell.jsx). A real bottom sheet, not a
+     cramped popover, since that's the pattern mobile users already
+     know from Maps/Photos/etc. for "there's more below the fold." */
+  .mobile-more-backdrop {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45);
+    z-index: 40; display: flex; align-items: flex-end;
+    animation: mobile-more-fade 0.15s ease;
+  }
+  .mobile-more-sheet {
+    width: 100%; background: var(--ink-raised); border-top: 1px solid var(--ink-line);
+    border-radius: 16px 16px 0 0; padding: 0.5rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
+    animation: mobile-more-slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mobile-more-handle {
+    width: 36px; height: 4px; border-radius: 2px; background: var(--ink-line-strong);
+    margin: 0.5rem auto 0.75rem;
+  }
+  .mobile-more-row {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem;
+    background: none; border: none; color: var(--paper);
+    padding: 0.85rem 1rem; border-radius: 8px; font-size: 0.92rem;
+    cursor: pointer; text-align: left;
+  }
+  .mobile-more-row:active { background: var(--ink-line); }
+  .mobile-more-row.active { color: var(--brass); }
+  .mobile-more-row svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  @keyframes mobile-more-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes mobile-more-slide-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
 }
