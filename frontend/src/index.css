@@ -3,6 +3,15 @@
 
 .app-container {
   min-height: 100vh;
+  /* `dvh` tracks the viewport mobile browsers actually show right now,
+     not the "address bar retracted" maximum `vh` assumes - without this,
+     `.app-container` (and the `.app-shell` it wraps) can render taller
+     than what's currently visible whenever the address bar is showing,
+     letting the outer page scroll and re-trigger the bar's own
+     show/hide, which is what made the bottom tab bar intermittently
+     disappear while scrolling. Older browsers that don't know `dvh`
+     just ignore this line and keep the `vh` value above. */
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
