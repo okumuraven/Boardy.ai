@@ -52,7 +52,6 @@ export default function MembersListView({ onSelect }) {
                   <th>Batch</th>
                   <th>Onboarded</th>
                   <th>Interview</th>
-                  <th>Phone</th>
                   <th>Verified</th>
                 </tr>
               </thead>
@@ -65,7 +64,6 @@ export default function MembersListView({ onSelect }) {
                     <td>{m.batch || '-'}</td>
                     <td><span className={`admin-pill ${m.onboarding_completed ? 'signal' : 'muted'}`}>{m.onboarding_completed ? 'Yes' : 'No'}</span></td>
                     <td><span className={`admin-pill ${m.has_completed_interview ? 'signal' : 'muted'}`}>{m.has_completed_interview ? 'Yes' : 'No'}</span></td>
-                    <td><span className={`admin-pill ${m.phone_confirmed ? 'signal' : 'muted'}`}>{m.phone_confirmed ? 'Confirmed' : 'Unconfirmed'}</span></td>
                     <td><span className={`admin-pill ${m.is_verified ? 'signal' : 'muted'}`}>{m.is_verified ? 'Yes' : 'Not verified'}</span></td>
                   </tr>
                 ))}

@@ -1,7 +1,6 @@
 const CRITERIA = [
   { key: "photo", label: "Profile photo" },
   { key: "interview", label: "Voice interview completed" },
-  { key: "phone_confirmed", label: "Phone number confirmed by our team" },
 ];
 
 // Self-serve nudge toward the "Verified" checkmark
@@ -42,7 +41,7 @@ export default function ProfileCompletion({ completion }) {
       </ul>
 
       <p style={{ fontSize: "0.78rem", color: "var(--muted)", marginTop: "0.75rem" }}>
-        Complete all three to earn the Verified checkmark. We confirm phone numbers ourselves when we reach out - no action needed on your end for that one.
+        Complete both to earn the Verified checkmark.
       </p>
     </div>
   );

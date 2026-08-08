@@ -173,8 +173,7 @@ defmodule Vokazi.Accounts.Profile do
   def completion_checklist(user, profile) do
     %{
       photo: !!(user && user.avatar_path),
-      interview: !!(profile && profile.offer_text && profile.need_text),
-      phone_confirmed: !!(profile && profile.phone_confirmed)
+      interview: !!(profile && profile.offer_text && profile.need_text)
     }
   end
 
@@ -184,11 +183,12 @@ defmodule Vokazi.Accounts.Profile do
   `Vokazi.Accounts.User`'s `is_verified` field, which is Felicity's
   staff-reviewed Applications screening judgment (Admin panel.md §5).
   This one requires no staff judgment call at all: every criterion in
-  completion_checklist/2 (a profile picture, a finished voice
-  interview, and a phone number staff has actually confirmed reachable
-  - not just well-formed, since the whole point is it can't be earned
-  with a guessed number). Any member can earn it purely by finishing
-  their own profile.
+  completion_checklist/2 (a profile picture and a finished voice
+  interview). Any member can earn it purely by finishing their own
+  profile. Phone confirmation and WhatsApp reachability are tracked
+  separately (phone_confirmed/on_whatsapp) but deliberately excluded
+  from this checklist - manually confirming phone numbers doesn't
+  scale on the admin side yet.
   """
   def complete?(user, profile) do
     user
