@@ -16,16 +16,24 @@ export default function AdminMinimalOnboarding({ initialName, onSaved }) {
     if (!fullName.trim()) return;
     setSaving(true);
     setError('');
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 20_000);
     try {
       const res = await apiFetch('/api/admin/me', {
         method: 'PATCH',
         body: JSON.stringify({ full_name: fullName.trim(), location: location.trim() }),
+        signal: timeoutController.signal,
       });
       if (!res.ok) throw new Error('failed');
       onSaved();
-    } catch {
-      setError("Couldn't save. Please try again.");
+    } catch (err) {
+      setError(
+        err.name === 'AbortError'
+          ? 'This is taking longer than expected. Check your connection and try again.'
+          : "Couldn't save. Please try again.",
+      );
     } finally {
+      clearTimeout(timeoutId);
       setSaving(false);
     }
   };

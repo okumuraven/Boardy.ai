@@ -180,6 +180,7 @@ defmodule VokaziWeb.Router do
     get "/members/:id", MemberController, :show
     patch "/members/:id/verify", MemberController, :set_verified
     post "/members/:id/reveal_phone", MemberController, :reveal_phone
+    patch "/members/:id/confirm_phone", MemberController, :confirm_phone
     patch "/members/:id/batch", MemberController, :set_batch
 
     get "/matches", MatchController, :index

@@ -66,6 +66,7 @@ defmodule Vokazi.Admin.Members do
       is_verified: u.is_verified,
       batch: u.batch,
       has_completed_interview: !!(p && p.offer_text && p.need_text),
+      phone_confirmed: !!(p && p.phone_confirmed),
       inserted_at: u.inserted_at
     }
   end
@@ -182,6 +183,39 @@ defmodule Vokazi.Admin.Members do
 
           {:error, changeset} ->
             {:error, changeset}
+        end
+    end
+  end
+
+  @doc """
+  Moderator+ only (checked by the controller) - marks whether staff has
+  actually reached this member on their stored phone_number, distinct
+  from format validation done at signup (Profile.changeset/2). Never
+  the number itself, so unlike reveal_phone/2 this doesn't need its own
+  audit row per kuzana_playbook.md §10 - it's audit-logged the same way
+  as set_verified/2 and set_batch/3 above.
+  """
+  def confirm_phone(member_id, admin_id, confirmed?) when is_boolean(confirmed?) do
+    case Repo.get_by(Profile, user_id: member_id) do
+      nil ->
+        {:error, :not_found}
+
+      profile ->
+        Ecto.Multi.new()
+        |> Ecto.Multi.update(:profile, Profile.confirm_phone_changeset(profile, %{phone_confirmed: confirmed?}))
+        |> Ecto.Multi.insert(:audit_log, fn %{profile: updated} ->
+          AuditLog.changeset(%AuditLog{}, %{
+            admin_user_id: admin_id,
+            action: "member.confirm_phone",
+            target_type: "user",
+            target_id: updated.user_id,
+            metadata: %{"phone_confirmed" => confirmed?}
+          })
+        end)
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{profile: updated}} -> {:ok, updated}
+          {:error, _step, changeset, _changes} -> {:error, changeset}
         end
     end
   end

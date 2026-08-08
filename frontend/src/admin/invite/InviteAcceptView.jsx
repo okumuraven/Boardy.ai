@@ -34,10 +34,20 @@ export default function InviteAcceptView({ token, onAccepted }) {
   const handleGoogleSuccess = async (credentialResponse) => {
     setError('');
     setStatus('accepting');
+    // No fetch has a default timeout - without this, a slow response (a
+    // Workspace account's own sign-in friction, a network hiccup, a
+    // momentarily slow backend) leaves someone staring at a screen with
+    // no way to tell "still working" from "silently broken," and no way
+    // to recover other than blindly reloading and hoping. This is the
+    // exact failure mode that made a real invite take ~20 hours to land
+    // even though it eventually succeeded on its own.
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 20_000);
     try {
       const res = await apiFetch(`/api/admin/invites/${token}/accept`, {
         method: 'POST',
         body: JSON.stringify({ id_token: credentialResponse.credential }),
+        signal: timeoutController.signal,
       });
       const data = await res.json();
       if (!res.ok) {
@@ -52,9 +62,15 @@ export default function InviteAcceptView({ token, onAccepted }) {
       } else {
         onAccepted();
       }
-    } catch {
-      setError("Couldn't accept this invite. Please try again.");
+    } catch (err) {
+      setError(
+        err.name === 'AbortError'
+          ? "This is taking longer than expected. Check your connection and try again - your invite is still valid."
+          : "Couldn't accept this invite. Please try again.",
+      );
       setStatus('valid');
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
@@ -97,16 +113,28 @@ export default function InviteAcceptView({ token, onAccepted }) {
         Sign in with <strong>{preview.email}</strong> to accept. This invite expires{' '}
         {new Date(preview.expires_at).toLocaleString()}.
       </p>
-      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => setError("Couldn't sign in. Please try again.")}
-          theme="outline"
-          size="large"
-          text="continue_with"
-        />
-      </div>
-      {status === 'accepting' && <p style={{ color: 'var(--muted)', fontSize: '0.85rem', marginTop: '0.75rem' }}>Accepting...</p>}
+      {status === 'accepting' ? (
+        // Swapped in for the Google button entirely, not just a small
+        // note alongside it left clickable - a slow-but-working request
+        // needs to be unmistakable, not something you'd second-guess and
+        // click through again.
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 0' }}>
+          <div className="spinner" style={{ width: '18px', height: '18px' }}></div>
+          <p style={{ color: 'var(--paper)', fontSize: '0.9rem', margin: 0 }}>
+            Verifying your Google account and setting up your admin access...
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Couldn't sign in. Please try again.")}
+            theme="outline"
+            size="large"
+            text="continue_with"
+          />
+        </div>
+      )}
       {error && <p style={{ color: 'var(--warn)', fontSize: '0.85rem', marginTop: '0.75rem' }}>{error}</p>}
     </div>
   );

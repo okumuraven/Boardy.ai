@@ -116,6 +116,27 @@ defmodule VokaziWeb.Admin.MemberController do
     end
   end
 
+  @doc """
+  Moderator+ - marks whether staff has actually reached this member on
+  their stored phone number (never the number itself - see
+  Vokazi.Admin.Members.confirm_phone/3). Feeds any outreach tooling
+  (e.g. a click-to-WhatsApp link) that needs to skip numbers no one has
+  verified are real.
+  """
+  def confirm_phone(conn, %{"id" => id} = params) do
+    if conn.assigns.current_admin.admin_role in ["moderator", "superadmin"] do
+      admin = conn.assigns.current_admin
+
+      case Members.confirm_phone(id, admin.id, !!params["phone_confirmed"]) do
+        {:ok, profile} -> json(conn, %{id: profile.user_id, phone_confirmed: profile.phone_confirmed})
+        {:error, :not_found} -> conn |> put_status(404) |> json(%{error: "Not found"})
+        {:error, _changeset} -> conn |> put_status(422) |> json(%{error: "Invalid data"})
+      end
+    else
+      conn |> put_status(403) |> json(%{error: "Forbidden - requires moderator or higher"})
+    end
+  end
+
   @doc "Moderator+ - assigns a staff-set cohort label, the Bizi Buddy System's same-batch pairing input. Audit-logged."
   def set_batch(conn, %{"id" => id} = params) do
     if conn.assigns.current_admin.admin_role in ["moderator", "superadmin"] do
@@ -154,6 +175,7 @@ defmodule VokaziWeb.Admin.MemberController do
       onboarding_completed: user.onboarding_completed,
       is_verified: user.is_verified,
       batch: user.batch,
+      phone_confirmed: !!(profile && profile.phone_confirmed),
       inserted_at: user.inserted_at
     }
 

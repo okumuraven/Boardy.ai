@@ -2,9 +2,23 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 import { roleTitle } from '../../constants/roles';
 
-// Phone number never appears here - the backend deliberately never
-// includes it in this response (Tier 4, "never shared" per
-// kuzana_playbook.md §10 - see Vokazi.Admin.Members moduledoc).
+// The phone NUMBER never appears in the initial fetch below - the
+// backend deliberately excludes it (Tier 4, "never shared" per
+// kuzana_playbook.md §10 - see Vokazi.Admin.Members moduledoc). Only
+// `member.phone_confirmed` (a boolean, not the number) comes with it.
+
+// wa.me needs the full number, digits only, no leading 0 or "+" -
+// covers both stored shapes Profile.changeset/2 accepts (0712345678 /
+// +254712345678). Only ever called with a phone_confirmed number - see
+// the render gate below - so a mistyped/guessed digit string never
+// reaches this.
+function whatsappReminderLink(phoneNumber, fullName) {
+  const digits = phoneNumber.replace(/\D/g, '').replace(/^0/, '254');
+  const firstName = (fullName || '').trim().split(' ')[0] || 'there';
+  const message = `Hi ${firstName}, it's the Kuzana Connect team - you haven't finished your voice interview yet, it's the one thing standing between you and your first introduction. Got a few minutes today? https://www.kuzanaconnect.tech`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 export default function MemberDetailView({ memberId, admin, onBack }) {
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,6 +28,8 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
   const [revealedPhone, setRevealedPhone] = useState(null);
   const [revealing, setRevealing] = useState(false);
   const [revealError, setRevealError] = useState('');
+  const [confirmingPhone, setConfirmingPhone] = useState(false);
+  const [confirmPhoneError, setConfirmPhoneError] = useState('');
   const [batchInput, setBatchInput] = useState('');
   const [savingBatch, setSavingBatch] = useState(false);
   const [batchError, setBatchError] = useState('');
@@ -89,6 +105,24 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
     }
   };
 
+  const togglePhoneConfirmed = async () => {
+    setConfirmingPhone(true);
+    setConfirmPhoneError('');
+    try {
+      const res = await apiFetch(`/api/admin/members/${memberId}/confirm_phone`, {
+        method: 'PATCH',
+        body: JSON.stringify({ phone_confirmed: !member.phone_confirmed }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      setMember((prev) => ({ ...prev, phone_confirmed: data.phone_confirmed }));
+    } catch {
+      setConfirmPhoneError("Couldn't update phone confirmation.");
+    } finally {
+      setConfirmingPhone(false);
+    }
+  };
+
   return (
     <div>
       <button className="admin-back-link" onClick={onBack}>&larr; Back to members</button>
@@ -143,7 +177,7 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
             {canRevealPhone && (
               <div>
                 <div className="admin-detail-field-label">Phone</div>
-                <div className="admin-detail-field-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="admin-detail-field-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {revealedPhone !== null ? (
                     revealedPhone
                   ) : (
@@ -154,7 +188,29 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
                       </button>
                     </>
                   )}
+                  <span className={`admin-pill ${member.phone_confirmed ? 'signal' : 'muted'}`}>
+                    {member.phone_confirmed ? 'Confirmed reachable' : 'Unconfirmed'}
+                  </span>
+                  <button className="btn-ghost btn-sm" onClick={togglePhoneConfirmed} disabled={confirmingPhone}>
+                    {confirmingPhone ? '...' : member.phone_confirmed ? 'Mark unconfirmed' : 'Mark confirmed'}
+                  </button>
+                  {member.phone_confirmed && revealedPhone && revealedPhone !== 'Not on file' && (
+                    <a
+                      className="btn-ghost btn-sm"
+                      href={whatsappReminderLink(revealedPhone, member.full_name)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Message on WhatsApp
+                    </a>
+                  )}
                 </div>
+                {confirmPhoneError && <p style={{ color: 'var(--warn)', fontSize: '0.82rem', marginTop: '0.35rem' }}>{confirmPhoneError}</p>}
+                {!member.phone_confirmed && (
+                  <p style={{ color: 'var(--muted)', fontSize: '0.78rem', marginTop: '0.35rem' }}>
+                    Confirm this number after reaching them to enable a WhatsApp reminder link.
+                  </p>
+                )}
               </div>
             )}
           </div>
