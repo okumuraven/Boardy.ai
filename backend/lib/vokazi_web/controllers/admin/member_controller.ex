@@ -137,6 +137,26 @@ defmodule VokaziWeb.Admin.MemberController do
     end
   end
 
+  @doc """
+  Moderator+ - records whether staff actually reached this member on
+  WhatsApp specifically (distinct from confirm_phone/2 above, which
+  only proves the number is real). See
+  Vokazi.Admin.Members.set_whatsapp_status/3.
+  """
+  def set_whatsapp_status(conn, %{"id" => id} = params) do
+    if conn.assigns.current_admin.admin_role in ["moderator", "superadmin"] do
+      admin = conn.assigns.current_admin
+
+      case Members.set_whatsapp_status(id, admin.id, !!params["on_whatsapp"]) do
+        {:ok, profile} -> json(conn, %{id: profile.user_id, on_whatsapp: profile.on_whatsapp})
+        {:error, :not_found} -> conn |> put_status(404) |> json(%{error: "Not found"})
+        {:error, _changeset} -> conn |> put_status(422) |> json(%{error: "Invalid data"})
+      end
+    else
+      conn |> put_status(403) |> json(%{error: "Forbidden - requires moderator or higher"})
+    end
+  end
+
   @doc "Moderator+ - assigns a staff-set cohort label, the Bizi Buddy System's same-batch pairing input. Audit-logged."
   def set_batch(conn, %{"id" => id} = params) do
     if conn.assigns.current_admin.admin_role in ["moderator", "superadmin"] do
@@ -176,6 +196,7 @@ defmodule VokaziWeb.Admin.MemberController do
       is_verified: user.is_verified,
       batch: user.batch,
       phone_confirmed: !!(profile && profile.phone_confirmed),
+      on_whatsapp: profile && profile.on_whatsapp,
       inserted_at: user.inserted_at
     }
 

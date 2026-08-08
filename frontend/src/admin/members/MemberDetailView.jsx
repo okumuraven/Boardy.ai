@@ -30,6 +30,8 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
   const [revealError, setRevealError] = useState('');
   const [confirmingPhone, setConfirmingPhone] = useState(false);
   const [confirmPhoneError, setConfirmPhoneError] = useState('');
+  const [settingWhatsapp, setSettingWhatsapp] = useState(false);
+  const [whatsappStatusError, setWhatsappStatusError] = useState('');
   const [batchInput, setBatchInput] = useState('');
   const [savingBatch, setSavingBatch] = useState(false);
   const [batchError, setBatchError] = useState('');
@@ -123,6 +125,24 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
     }
   };
 
+  const setWhatsappStatus = async (onWhatsapp) => {
+    setSettingWhatsapp(true);
+    setWhatsappStatusError('');
+    try {
+      const res = await apiFetch(`/api/admin/members/${memberId}/whatsapp_status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ on_whatsapp: onWhatsapp }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const data = await res.json();
+      setMember((prev) => ({ ...prev, on_whatsapp: data.on_whatsapp }));
+    } catch {
+      setWhatsappStatusError("Couldn't record the WhatsApp outcome.");
+    } finally {
+      setSettingWhatsapp(false);
+    }
+  };
+
   return (
     <div>
       <button className="admin-back-link" onClick={onBack}>&larr; Back to members</button>
@@ -194,7 +214,7 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
                   <button className="btn-ghost btn-sm" onClick={togglePhoneConfirmed} disabled={confirmingPhone}>
                     {confirmingPhone ? '...' : member.phone_confirmed ? 'Mark unconfirmed' : 'Mark confirmed'}
                   </button>
-                  {member.phone_confirmed && revealedPhone && revealedPhone !== 'Not on file' && (
+                  {member.phone_confirmed && member.on_whatsapp !== false && revealedPhone && revealedPhone !== 'Not on file' && (
                     <a
                       className="btn-ghost btn-sm"
                       href={whatsappReminderLink(revealedPhone, member.full_name)}
@@ -211,6 +231,42 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
                     Confirm this number after reaching them to enable a WhatsApp reminder link.
                   </p>
                 )}
+                {/* WhatsApp itself is the real test - it refuses to open a
+                    chat for a number that isn't registered, so staff finds
+                    out the moment they click the link above. This just
+                    records what they saw, so the button above stops
+                    offering a dead end once it's known not to work. */}
+                {member.phone_confirmed && revealedPhone && revealedPhone !== 'Not on file' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                    <span className={`admin-pill ${member.on_whatsapp === true ? 'signal' : member.on_whatsapp === false ? 'warn' : 'muted'}`}>
+                      {member.on_whatsapp === true ? 'On WhatsApp' : member.on_whatsapp === false ? 'Not on WhatsApp' : 'WhatsApp not tried yet'}
+                    </span>
+                    {member.on_whatsapp === false ? (
+                      <button className="btn-ghost btn-sm" onClick={() => setWhatsappStatus(true)} disabled={settingWhatsapp}>
+                        {settingWhatsapp ? '...' : 'Actually on WhatsApp now?'}
+                      </button>
+                    ) : member.on_whatsapp === true ? (
+                      <button className="btn-ghost btn-sm" onClick={() => setWhatsappStatus(false)} disabled={settingWhatsapp}>
+                        {settingWhatsapp ? '...' : 'Mark not on WhatsApp'}
+                      </button>
+                    ) : (
+                      <>
+                        <button className="btn-ghost btn-sm" onClick={() => setWhatsappStatus(true)} disabled={settingWhatsapp}>
+                          {settingWhatsapp ? '...' : 'Mark on WhatsApp'}
+                        </button>
+                        <button className="btn-ghost btn-sm" onClick={() => setWhatsappStatus(false)} disabled={settingWhatsapp}>
+                          {settingWhatsapp ? '...' : 'Mark not on WhatsApp'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+                {member.on_whatsapp === false && (
+                  <p style={{ color: 'var(--muted)', fontSize: '0.78rem', marginTop: '0.35rem' }}>
+                    Not on WhatsApp - use a call or SMS instead.
+                  </p>
+                )}
+                {whatsappStatusError && <p style={{ color: 'var(--warn)', fontSize: '0.82rem', marginTop: '0.35rem' }}>{whatsappStatusError}</p>}
               </div>
             )}
           </div>
