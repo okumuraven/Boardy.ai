@@ -8,6 +8,12 @@ import AdminPagination from '../AdminPagination';
 const STATUSES = ['pending_consent', 'pending', 'declined', 'unlocked', 'slashed'];
 const OUTCOMES = ['confirmed_valuable', 'attempted_no_result', 'unresponsive'];
 
+// Not "correct" vs "wrong" - just enough visual weight to tell "this
+// worked" from "this is stuck/dead" apart at a glance in a long list.
+const STATUS_VARIANT = { unlocked: 'signal', declined: 'warn', slashed: 'warn' };
+const statusVariant = (status) => STATUS_VARIANT[status] || '';
+const outcomeVariant = (outcome) => (outcome === 'confirmed_valuable' ? 'signal' : outcome ? 'muted' : '');
+
 export default function MatchesListView({ onSelect }) {
   const [status, setStatus] = useState('');
   const [outcomeStatus, setOutcomeStatus] = useState('');
@@ -54,10 +60,14 @@ export default function MatchesListView({ onSelect }) {
                 {items.map((m) => (
                   <tr key={m.id} className="clickable" onClick={() => onSelect(m.id)}>
                     <td>{m.user_a?.name || '?'} &harr; {m.user_b?.name || '?'}</td>
-                    <td>{m.status}</td>
+                    <td><span className={`admin-pill ${statusVariant(m.status)}`}>{m.status.replace(/_/g, ' ')}</span></td>
                     <td>{m.ai_score != null ? m.ai_score : '-'}</td>
                     <td>{m.message_count != null ? m.message_count : '-'}</td>
-                    <td>{m.outcome_status ? m.outcome_status.replace(/_/g, ' ') : '-'}</td>
+                    <td>
+                      {m.outcome_status ? (
+                        <span className={`admin-pill ${outcomeVariant(m.outcome_status)}`}>{m.outcome_status.replace(/_/g, ' ')}</span>
+                      ) : '-'}
+                    </td>
                     <td>
                       {m.dormant && <span className="admin-pill warn">dormant</span>}
                       {m.created_by_admin_id && <span className="admin-pill muted">manual</span>}

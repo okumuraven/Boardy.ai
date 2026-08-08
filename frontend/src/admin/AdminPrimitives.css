@@ -32,36 +32,44 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.87rem;
+  font-variant-numeric: tabular-nums;
 }
+
+.admin-table thead tr { background: var(--ink); }
 
 .admin-table th {
   text-align: left;
   color: var(--muted);
-  font-weight: 500;
-  font-size: 0.78rem;
+  font-weight: 600;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--ink-line);
+  letter-spacing: 0.05em;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--ink-line-strong);
 }
 
 .admin-table td {
-  padding: 0.65rem 0.75rem;
+  padding: 0.75rem 0.9rem;
   border-bottom: 1px solid var(--ink-line);
   color: var(--paper);
 }
 
-.admin-table tr.clickable { cursor: pointer; }
-.admin-table tr.clickable:hover td { background: var(--ink-line); }
+.admin-table tbody tr:last-child td { border-bottom: none; }
+.admin-table tr.clickable { cursor: pointer; transition: background 0.12s ease; }
+.admin-table tr.clickable:hover td { background: var(--brass-wash); }
 
 /* Every list view wraps its <table> in this instead of leaving it bare -
    without it, a wide table (Members, Matches, Audit log especially) forces
    the ENTIRE page to scroll sideways on a narrow screen, dragging the
    fixed topbar/nav along with it. Scoping the scroll to just the table
-   keeps the rest of the layout stable. */
+   keeps the rest of the layout stable. A real bordered edge (matching
+   the member app's own `.panel` treatment) instead of a table bleeding
+   straight into the page background is what actually makes this read
+   as a designed surface rather than raw HTML markup. */
 .admin-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--ink-line);
   border-radius: 8px;
 }
 

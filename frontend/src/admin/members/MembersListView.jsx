@@ -62,9 +62,9 @@ export default function MembersListView({ onSelect }) {
                     <td>{m.role || '-'}</td>
                     <td>{m.company || '-'}</td>
                     <td>{m.batch || '-'}</td>
-                    <td>{m.onboarding_completed ? 'Yes' : 'No'}</td>
-                    <td>{m.has_completed_interview ? 'Yes' : 'No'}</td>
-                    <td>{m.is_verified ? 'Yes' : '-'}</td>
+                    <td><span className={`admin-pill ${m.onboarding_completed ? 'signal' : 'muted'}`}>{m.onboarding_completed ? 'Yes' : 'No'}</span></td>
+                    <td><span className={`admin-pill ${m.has_completed_interview ? 'signal' : 'muted'}`}>{m.has_completed_interview ? 'Yes' : 'No'}</span></td>
+                    <td><span className={`admin-pill ${m.is_verified ? 'signal' : 'muted'}`}>{m.is_verified ? 'Yes' : 'Not verified'}</span></td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import KuzanaMark from '../components/KuzanaMark';
 import './AdminShell.css';
 import './AdminPrimitives.css';
 import MembersListView from './members/MembersListView';
@@ -90,7 +91,10 @@ export default function AdminShell({ admin, onLogout }) {
   return (
     <div className="admin-shell">
       <div className="admin-topbar">
-        <span className="admin-topbar-title">Kuzana Connect <span className="accent-text">Admin</span></span>
+        <span className="admin-topbar-title">
+          <KuzanaMark />
+          Kuzana Connect <span className="accent-text">Admin</span>
+        </span>
         <div className="admin-topbar-who">
           <span>{admin.full_name || admin.email}</span>
           <span className="admin-role-pill">{admin.admin_role}</span>

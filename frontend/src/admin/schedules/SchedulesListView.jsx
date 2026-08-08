@@ -3,6 +3,7 @@ import { useAdminList } from '../useAdminList';
 import AdminPagination from '../AdminPagination';
 
 const STATUSES = ['awaiting_consent', 'awaiting_availability', 'slot_proposed', 'confirmed', 'declined'];
+const STATUS_VARIANT = { confirmed: 'signal', declined: 'warn' };
 
 export default function SchedulesListView({ onSelect }) {
   const [status, setStatus] = useState('');
@@ -43,7 +44,7 @@ export default function SchedulesListView({ onSelect }) {
                 {items.map((s) => (
                   <tr key={s.id} className="clickable" onClick={() => onSelect(s.id)}>
                     <td>{s.user_a?.name || '?'} &harr; {s.user_b?.name || '?'}</td>
-                    <td>{s.status.replace(/_/g, ' ')}</td>
+                    <td><span className={`admin-pill ${STATUS_VARIANT[s.status] || ''}`}>{s.status.replace(/_/g, ' ')}</span></td>
                     <td>{new Date(s.updated_at).toLocaleDateString()}</td>
                     <td>{s.stuck && <span className="admin-pill warn">stuck</span>}</td>
                   </tr>
