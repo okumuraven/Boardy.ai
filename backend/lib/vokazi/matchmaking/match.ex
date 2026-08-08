@@ -97,6 +97,16 @@ defmodule Vokazi.Matchmaking.Match do
   end
 
   @doc """
+  The only path that can ever change opener_a/opener_b after creation -
+  used exclusively by `Vokazi.Matchmaking.get_or_generate_opener/2` to
+  cache an on-demand-generated opener onto the match so it's only ever
+  drafted once per side, not regenerated on every request.
+  """
+  def opener_changeset(match, attrs) do
+    cast(match, attrs, [:opener_a, :opener_b])
+  end
+
+  @doc """
   The ONLY path that touches the admin-only fields (manual match creation
   metadata, outcome verification) - used exclusively by `Vokazi.Admin.*`
   context modules, never by any member-facing controller. See

@@ -45,6 +45,63 @@ defmodule Vokazi.Matchmaking do
 
   def get_match!(id), do: Repo.get!(Match, id)
 
+  @doc """
+  Returns the caller's own ready-to-send opener for this match - the
+  cached one if it's already been generated, or generates and caches
+  both sides' openers on first request (Vokazi.AI.generate_openers/2)
+  otherwise. Powers the chat's "Suggest something to say" button, which
+  works just as well for a match created before this feature shipped
+  as it does for a brand new one.
+  """
+  def get_or_generate_opener(match_id, user_id) do
+    match = get_match!(match_id)
+
+    cond do
+      match.user_a_id != user_id and match.user_b_id != user_id ->
+        {:error, :not_a_participant}
+
+      match.user_a_id == user_id and not blank?(match.opener_a) ->
+        {:ok, match.opener_a}
+
+      match.user_b_id == user_id and not blank?(match.opener_b) ->
+        {:ok, match.opener_b}
+
+      true ->
+        with {:ok, profile_a} <- fetch_complete_profile(match.user_a_id),
+             {:ok, profile_b} <- fetch_complete_profile(match.user_b_id) do
+          user_a_record = Repo.get(User, match.user_a_id)
+          user_b_record = Repo.get(User, match.user_b_id)
+
+          user_a = %{
+            name: user_a_record && user_a_record.full_name,
+            offer_text: profile_a.offer_text,
+            need_text: profile_a.need_text,
+            role: user_a_record && user_a_record.role
+          }
+
+          user_b = %{
+            name: user_b_record && user_b_record.full_name,
+            offer_text: profile_b.offer_text,
+            need_text: profile_b.need_text,
+            role: user_b_record && user_b_record.role
+          }
+
+          case Vokazi.AI.generate_openers(user_a, user_b) do
+            {:ok, %{opener_a: opener_a, opener_b: opener_b}} ->
+              {:ok, updated} =
+                match
+                |> Match.opener_changeset(%{opener_a: opener_a, opener_b: opener_b})
+                |> Repo.update()
+
+              {:ok, if(updated.user_a_id == user_id, do: updated.opener_a, else: updated.opener_b)}
+
+            {:error, reason} ->
+              {:error, reason}
+          end
+        end
+    end
+  end
+
   @doc "Is this match unlocked, and is this user actually a participant - see `Vokazi.Matchmaking.UnlockGate`."
   defdelegate unlocked_match_for(match_id, user_id), to: Vokazi.Matchmaking.UnlockGate
 
