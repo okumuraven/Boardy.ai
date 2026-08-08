@@ -300,7 +300,9 @@ defmodule Vokazi.Matchmaking do
       ai_gaps: ai_result.gaps,
       intro_message: ai_result.intro_message,
       pitch_a: ai_result.pitch_a,
-      pitch_b: ai_result.pitch_b
+      pitch_b: ai_result.pitch_b,
+      opener_a: ai_result.opener_a,
+      opener_b: ai_result.opener_b
     })
     |> Repo.insert()
     |> case do
@@ -454,7 +456,9 @@ defmodule Vokazi.Matchmaking do
       ai_gaps: ai_result.gaps,
       intro_message: ai_result.intro_message,
       pitch_a: ai_result.pitch_a,
-      pitch_b: ai_result.pitch_b
+      pitch_b: ai_result.pitch_b,
+      opener_a: ai_result.opener_a,
+      opener_b: ai_result.opener_b
     })
     |> Repo.insert()
     |> case do

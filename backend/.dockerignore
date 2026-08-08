@@ -1,0 +1,21 @@
+# Compiled/fetched fresh inside the image (see Dockerfile.fly) - shipping
+# the host's own _build/deps as context is pure dead weight, and on a slow
+# uplink turns every deploy's context transfer into the actual bottleneck.
+/_build/
+/deps/
+/cover/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+/tmp/
+vokazi-*.tar
+
+# Local dev upload data (Vokazi.Chat.Storage / Vokazi.Accounts.MediaStorage)
+# - real files, gitignored already, never belongs in a build context.
+/priv/chat_attachments/
+/priv/uploads/
+
+.git
+.env
+*.env

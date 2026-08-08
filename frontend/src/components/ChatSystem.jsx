@@ -19,7 +19,7 @@ const formatBytes = (bytes) => {
 
 const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, partnerAvatarUrl, startInScheduling, onBack, attachmentActions, prefillMessage }) {
+export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, partnerAvatarUrl, introMessage, myOpener, startInScheduling, onBack, attachmentActions, prefillMessage }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
   // notification click asked for it (`startInScheduling`), or when we're
@@ -311,13 +311,33 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
           {connectionState === "error" ? (
             <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
           ) : messages.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto' }}>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.5rem', color: 'var(--paper)' }}>You're connected</p>
-              <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
-                {matchId
-                  ? `Say hello to ${partnerName || "your match"} - this is a real, private conversation between the two of you.`
-                  : `Say hello to ${partnerName || "the team"} - a real, private conversation, visible only to you and them.`}
-              </p>
+            <div style={{ textAlign: 'center', color: 'var(--muted)', margin: 'auto', maxWidth: '460px', padding: '0 1rem' }}>
+              <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', marginBottom: '0.75rem', color: 'var(--paper)' }}>You're connected</p>
+              {matchId && introMessage ? (
+                <>
+                  <div style={{ background: 'var(--brass-wash)', border: '1px solid var(--ink-line-strong)', borderRadius: '14px', padding: '1rem 1.1rem', textAlign: 'left' }}>
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--brass)', margin: '0 0 0.5rem' }}>
+                      ✨ Introduced by Kuzana AI
+                    </p>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--paper)', margin: 0, lineHeight: 1.5 }}>{introMessage}</p>
+                  </div>
+                  {myOpener && (
+                    <div style={{ marginTop: '0.85rem', textAlign: 'left' }}>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '0 0 0.4rem' }}>Not sure how to start? Here's a draft:</p>
+                      <p style={{ fontSize: '0.88rem', color: 'var(--paper)', fontStyle: 'italic', margin: '0 0 0.6rem', lineHeight: 1.5 }}>"{myOpener}"</p>
+                      <button type="button" className="btn-ghost btn-sm" onClick={() => setNewMessage(myOpener)}>
+                        Use this opener
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto' }}>
+                  {matchId
+                    ? `Say hello to ${partnerName || "your match"} - this is a real, private conversation between the two of you.`
+                    : `Say hello to ${partnerName || "the team"} - a real, private conversation, visible only to you and them.`}
+                </p>
+              )}
             </div>
           ) : (
             <>

@@ -165,11 +165,11 @@ defmodule VokaziWeb.MatchController do
   end
 
   defp match_detail(match, user_id) do
-    {my_response, other_response, other_user_id, my_pitch} =
+    {my_response, other_response, other_user_id, my_pitch, my_opener} =
       if match.user_a_id == user_id do
-        {match.user_a_response, match.user_b_response, match.user_b_id, match.pitch_a}
+        {match.user_a_response, match.user_b_response, match.user_b_id, match.pitch_a, match.opener_a}
       else
-        {match.user_b_response, match.user_a_response, match.user_a_id, match.pitch_b}
+        {match.user_b_response, match.user_a_response, match.user_a_id, match.pitch_b, match.opener_b}
       end
 
     other_user = Repo.get(User, other_user_id)
@@ -185,6 +185,7 @@ defmodule VokaziWeb.MatchController do
       ai_gaps: match.ai_gaps,
       intro_message: match.intro_message,
       my_pitch: my_pitch,
+      my_opener: my_opener,
       my_response: my_response,
       other_response: other_response,
       other_user: %{

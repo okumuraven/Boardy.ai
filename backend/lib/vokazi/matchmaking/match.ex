@@ -35,6 +35,14 @@ defmodule Vokazi.Matchmaking.Match do
     # above - %{"headline" => .., "strengths" => [..], "gaps" => [..]}.
     field :pitch_a, :map
     field :pitch_b, :map
+    # A ready-to-send first message for each side - first person, names
+    # the other person, grounded in why they actually matched. Replaces
+    # the chat's generic "say hello" empty state (ChatSystem.jsx), which
+    # is what was producing dead "hi... [silence]" conversations - a
+    # blank room with zero context gives neither person anywhere to
+    # start from.
+    field :opener_a, :string
+    field :opener_b, :string
 
     # Each side's independent decision on whether to proceed, reviewed
     # before either party is asked to commit to anything further.
@@ -75,6 +83,8 @@ defmodule Vokazi.Matchmaking.Match do
       :intro_message,
       :pitch_a,
       :pitch_b,
+      :opener_a,
+      :opener_b,
       :user_a_response,
       :user_b_response,
       :decline_reason
