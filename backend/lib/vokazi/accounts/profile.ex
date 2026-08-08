@@ -40,6 +40,11 @@ defmodule Vokazi.Accounts.Profile do
     # shown at all), distinct from an explicit false ("not taking
     # clients right now").
     field :available_for_hire, :boolean
+    # Whether a human on staff has actually reached this member on
+    # phone_number - never the member's own claim. Only castable through
+    # confirm_phone_changeset/2 below, set exclusively by
+    # Vokazi.Admin.Members.confirm_phone/3.
+    field :phone_confirmed, :boolean, default: false
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -61,6 +66,11 @@ defmodule Vokazi.Accounts.Profile do
 
   def rate_types, do: @rate_types
 
+  # Kenyan mobile numbers only, after normalize_phone/1 has stripped
+  # spaces/dashes: 07XXXXXXXX or +2547XXXXXXXX (Safaricom/Airtel, prefix
+  # 7) and the same shapes with a leading 1 (Telkom/Equitel).
+  @phone_format ~r/^(?:\+254|0)(?:7|1)\d{8}$/
+
   @doc false
   def changeset(profile, attrs) do
     profile
@@ -76,12 +86,33 @@ defmodule Vokazi.Accounts.Profile do
       :can_help_tags,
       :user_id
     ])
-    |> validate_required([:user_id, :phone_number])
+    # phone_number is genuinely optional (ProfileSetup.jsx labels it so) -
+    # it used to be in validate_required here too, which silently forced
+    # anyone submitting a blank field to fail the whole profile save,
+    # pushing people who didn't want to share a real number toward typing
+    # a guessed one just to get past the form. Format is still enforced
+    # below whenever a value IS present.
+    |> update_change(:phone_number, &normalize_phone/1)
+    |> validate_change(:phone_number, fn :phone_number, value ->
+      if value == nil or Regex.match?(@phone_format, value) do
+        []
+      else
+        [phone_number: "must be a valid Kenyan phone number, e.g. 0712345678 or +254712345678"]
+      end
+    end)
+    |> validate_required([:user_id])
     |> validate_inclusion(:contact_preference, ["call", "video", "chat"])
     |> validate_tags(:looking_for_tags, @connection_tags)
     |> validate_tags(:can_help_tags, @connection_tags)
     |> unique_constraint(:user_id)
     |> unique_constraint(:phone_number, message: "is already registered to another account")
+  end
+
+  defp normalize_phone(nil), do: nil
+
+  defp normalize_phone(value) do
+    trimmed = value |> String.replace(~r/[\s\-]/, "") |> String.trim()
+    if trimmed == "", do: nil, else: trimmed
   end
 
   @doc """
@@ -104,6 +135,16 @@ defmodule Vokazi.Accounts.Profile do
     profile
     |> cast(attrs, [:rate_types, :available_for_hire])
     |> validate_tags(:rate_types, @rate_types)
+  end
+
+  @doc """
+  The only path that can ever change phone_confirmed - exclusively used
+  by `Vokazi.Admin.Members.confirm_phone/3`, same separation-of-concerns
+  pattern as photos_changeset/2 and service_details_changeset/2 above. A
+  member can never set this on themselves through changeset/2.
+  """
+  def confirm_phone_changeset(profile, attrs) do
+    cast(profile, attrs, [:phone_confirmed])
   end
 
   defp validate_tags(changeset, field, allowed) do

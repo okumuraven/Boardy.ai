@@ -5,6 +5,11 @@ import '../styles/SharedFormFields.css';
 import { INDUSTRIES } from "../constants/industries";
 import { ROLES, roleTitle } from "../constants/roles";
 
+// Kenyan mobile numbers only, matching the backend's own check
+// (Vokazi.Accounts.Profile.changeset/2) - spaces/dashes are stripped
+// before testing since the placeholder ("07XX XXX XXX") invites them.
+const PHONE_FORMAT = /^(?:\+254|0)(?:7|1)\d{8}$/;
+
 export default function ProfileSetup({ onComplete }) {
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
@@ -14,10 +19,18 @@ export default function ProfileSetup({ onComplete }) {
   const [industry, setIndustry] = useState(INDUSTRIES[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (name.length < 2) return alert("Please enter your name");
+
+    const trimmedPhone = phoneNumber.replace(/[\s-]/g, '');
+    if (trimmedPhone && !PHONE_FORMAT.test(trimmedPhone)) {
+      setPhoneError('Enter a valid Kenyan number, e.g. 0712345678, or leave this blank.');
+      return;
+    }
+    setPhoneError('');
 
     setIsSubmitting(true);
     setSubmitError('');
@@ -27,7 +40,7 @@ export default function ProfileSetup({ onComplete }) {
         method: 'POST',
         body: JSON.stringify({
           full_name: name,
-          phone_number: phoneNumber,
+          phone_number: trimmedPhone,
           role: role,
           industry: industry,
           company: company,
@@ -114,9 +127,12 @@ export default function ProfileSetup({ onComplete }) {
                   type="tel"
                   placeholder="e.g. 07XX XXX XXX"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onChange={(e) => { setPhoneNumber(e.target.value); setPhoneError(''); }}
                 />
               </div>
+              {phoneError && (
+                <p style={{ color: 'var(--warn)', fontSize: '0.82rem', margin: '0.4rem 0 0' }}>{phoneError}</p>
+              )}
             </label>
 
             {/* Company Field */}

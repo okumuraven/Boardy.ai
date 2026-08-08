@@ -5,6 +5,7 @@ import AdminPagination from '../AdminPagination';
 const ACTIONS = [
   'member.verify',
   'member.reveal_phone',
+  'member.confirm_phone',
   'match.create',
   'match.record_outcome',
   'admin.invite',
