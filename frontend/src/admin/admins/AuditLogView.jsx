@@ -6,6 +6,7 @@ const ACTIONS = [
   'member.verify',
   'member.reveal_phone',
   'member.confirm_phone',
+  'member.set_whatsapp_status',
   'match.create',
   'match.record_outcome',
   'admin.invite',

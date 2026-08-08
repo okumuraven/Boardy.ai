@@ -181,6 +181,7 @@ defmodule VokaziWeb.Router do
     patch "/members/:id/verify", MemberController, :set_verified
     post "/members/:id/reveal_phone", MemberController, :reveal_phone
     patch "/members/:id/confirm_phone", MemberController, :confirm_phone
+    patch "/members/:id/whatsapp_status", MemberController, :set_whatsapp_status
     patch "/members/:id/batch", MemberController, :set_batch
 
     get "/matches", MatchController, :index

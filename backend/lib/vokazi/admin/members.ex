@@ -220,6 +220,39 @@ defmodule Vokazi.Admin.Members do
     end
   end
 
+  @doc """
+  Moderator+ only (checked by the controller) - records what actually
+  happened when staff tried the click-to-WhatsApp reminder link:
+  `true` if a real chat opened, `false` if WhatsApp itself reported the
+  number isn't registered. Independent of confirm_phone/3 above - see
+  Profile.on_whatsapp moduledoc. Audit-logged the same way as
+  confirm_phone/3.
+  """
+  def set_whatsapp_status(member_id, admin_id, on_whatsapp) when is_boolean(on_whatsapp) do
+    case Repo.get_by(Profile, user_id: member_id) do
+      nil ->
+        {:error, :not_found}
+
+      profile ->
+        Ecto.Multi.new()
+        |> Ecto.Multi.update(:profile, Profile.whatsapp_status_changeset(profile, %{on_whatsapp: on_whatsapp}))
+        |> Ecto.Multi.insert(:audit_log, fn %{profile: updated} ->
+          AuditLog.changeset(%AuditLog{}, %{
+            admin_user_id: admin_id,
+            action: "member.set_whatsapp_status",
+            target_type: "user",
+            target_id: updated.user_id,
+            metadata: %{"on_whatsapp" => on_whatsapp}
+          })
+        end)
+        |> Repo.transaction()
+        |> case do
+          {:ok, %{profile: updated}} -> {:ok, updated}
+          {:error, _step, changeset, _changes} -> {:error, changeset}
+        end
+    end
+  end
+
   defp blank_to_nil(nil), do: nil
   defp blank_to_nil(""), do: nil
   defp blank_to_nil(value), do: value

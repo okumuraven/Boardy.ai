@@ -45,6 +45,13 @@ defmodule Vokazi.Accounts.Profile do
     # confirm_phone_changeset/2 below, set exclusively by
     # Vokazi.Admin.Members.confirm_phone/3.
     field :phone_confirmed, :boolean, default: false
+    # nil = never tried, true = staff opened a real WhatsApp chat with
+    # this number, false = staff tried and WhatsApp itself reported the
+    # number isn't registered. Independent of phone_confirmed above - a
+    # real, reachable number can still have no WhatsApp account. Only
+    # castable through whatsapp_status_changeset/2 below, set
+    # exclusively by Vokazi.Admin.Members.set_whatsapp_status/3.
+    field :on_whatsapp, :boolean
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -145,6 +152,15 @@ defmodule Vokazi.Accounts.Profile do
   """
   def confirm_phone_changeset(profile, attrs) do
     cast(profile, attrs, [:phone_confirmed])
+  end
+
+  @doc """
+  The only path that can ever change on_whatsapp - exclusively used by
+  `Vokazi.Admin.Members.set_whatsapp_status/3`, same
+  separation-of-concerns pattern as confirm_phone_changeset/2 above.
+  """
+  def whatsapp_status_changeset(profile, attrs) do
+    cast(profile, attrs, [:on_whatsapp])
   end
 
   @doc """
