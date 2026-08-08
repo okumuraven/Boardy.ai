@@ -285,7 +285,7 @@ defmodule Vokazi.AI do
   introduction copy so we don't need a second LLM call for that later.
 
   `user_a` and `user_b` are maps with `:offer_text`, `:need_text`, `:role`.
-  Returns `{:ok, %{score:, is_valid:, reasoning:, strengths:, gaps:, intro_message:, pitch_a:, pitch_b:}}`.
+  Returns `{:ok, %{score:, is_valid:, reasoning:, strengths:, gaps:, intro_message:, pitch_a:, pitch_b:, opener_a:, opener_b:}}`.
 
   `reasoning`/`strengths`/`gaps` are the shared, third-person analyst
   verdict (kept for internal/logging use). `pitch_a` and `pitch_b` are
@@ -352,9 +352,20 @@ defmodule Vokazi.AI do
             check size matches what you're raising").
       - "pitch_b": the mirror of "pitch_a" - shown only to #{name_b}, speaking to them as
         "you", explaining why #{name_a} answers THEIR need. Same object shape.
+      - "opener_a": a single ready-to-send first message #{name_a} could actually send
+        #{name_b} to kick off their conversation - written in #{name_a}'s own voice
+        (first person: "I"/"my", never third person), addressed to #{name_b} by name,
+        naming the specific, concrete reason this match makes sense (grounded in the
+        real Offer/Need text above - never generic small talk like "Hi, how are you" or
+        "Excited to connect"). One to three sentences, ending in a real, specific
+        question #{name_b} can actually answer. If is_valid is false, an empty string.
+      - "opener_b": the mirror of "opener_a" - #{name_b}'s own ready-to-send first
+        message to #{name_a}, same rules, same voice.
       Both pitches must be grounded in the actual Offer/Need text above - never invent
       details, and keep the same honesty bar as "gaps": a 90% match still has real
-      caveats worth naming.
+      caveats worth naming. The openers must be specific enough that neither person
+      could mistake them for a template - if you couldn't tell #{name_a} and #{name_b}
+      apart from the message alone, rewrite it.
       """
 
     body = %{
@@ -379,7 +390,9 @@ defmodule Vokazi.AI do
              gaps: List.wrap(parsed["gaps"]),
              intro_message: parsed["intro_message"] || "",
              pitch_a: parse_pitch(parsed["pitch_a"]),
-             pitch_b: parse_pitch(parsed["pitch_b"])
+             pitch_b: parse_pitch(parsed["pitch_b"]),
+             opener_a: parsed["opener_a"] || "",
+             opener_b: parsed["opener_b"] || ""
            }}
         rescue
           e ->
