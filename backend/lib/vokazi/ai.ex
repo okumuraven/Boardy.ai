@@ -410,6 +410,84 @@ defmodule Vokazi.AI do
   end
 
   @doc """
+  Drafts opener_a/opener_b on demand for a match that already exists and
+  was already judged valid - used by `Vokazi.Matchmaking.get_or_generate_opener/2`
+  for the chat's "Suggest something to say" button (covers both matches
+  created before this feature shipped, and a conversation that's gone
+  quiet after starting - not just the very first message). Deliberately
+  a separate, smaller call from validate_match/2 rather than re-running
+  the whole thing: the score/validity verdict is already settled, and
+  redoing it risks a different, inconsistent answer for no reason.
+
+  `user_a`/`user_b` are the same `%{:name, :offer_text, :need_text,
+  :role}` shape validate_match/2 takes. Returns `{:ok, %{opener_a:,
+  opener_b:}}`.
+  """
+  def generate_openers(user_a, user_b) do
+    name_a = user_a[:name] || "Person A"
+    name_b = user_b[:name] || "Person B"
+
+    prompt = """
+      #{name_a} and #{name_b} are two Kuzana Connect members who've already matched and can
+      already message each other - but their conversation hasn't really started yet, or has
+      gone quiet. Based on what each is offering and looking for, write one ready-to-send
+      message each of them could send right now to actually get the conversation going.
+
+      #{name_a} (role: #{user_a[:role] || "unspecified"}):
+        Offer: #{user_a[:offer_text]}
+        Need: #{user_a[:need_text]}
+
+      #{name_b} (role: #{user_b[:role] || "unspecified"}):
+        Offer: #{user_b[:offer_text]}
+        Need: #{user_b[:need_text]}
+
+      Return ONLY a valid JSON object with these exact keys:
+      - "opener_a": a single ready-to-send message #{name_a} could actually send #{name_b} -
+        written in #{name_a}'s own voice (first person: "I"/"my", never third person),
+        addressed to #{name_b} by name, naming the specific, concrete reason this match makes
+        sense (grounded in the real Offer/Need text above - never generic small talk like
+        "Hi, how are you" or "Excited to connect"). One to three sentences, ending in a real,
+        specific question #{name_b} can actually answer.
+      - "opener_b": the mirror of "opener_a" - #{name_b}'s own ready-to-send message to
+        #{name_a}, same rules, same voice.
+      Both must be grounded in the actual Offer/Need text above - never invent details, and
+      specific enough that neither person could mistake it for a template.
+      """
+
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{
+        responseMimeType: "application/json"
+      }
+    }
+
+    case gemini_post("gemini-flash-latest:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
+
+          {:ok,
+           %{
+             opener_a: parsed["opener_a"] || "",
+             opener_b: parsed["opener_b"] || ""
+           }}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse opener generation JSON: #{inspect(e)}")
+            {:error, "Failed to parse JSON"}
+        end
+
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini opener generation call failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
+    end
+  end
+
+  @doc """
   Kuzana's real first-stage screening (bizi_verification.md), automated -
   reviews a submitted application for completeness/consistency and, if
   something's missing or contradictory, drafts a clarifying question for

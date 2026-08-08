@@ -45,6 +45,8 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const [pendingAttachment, setPendingAttachment] = useState(null);
   const [uploadState, setUploadState] = useState("idle"); // idle | uploading | error
   const [uploadError, setUploadError] = useState("");
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const fileInputRef = useRef(null);
@@ -150,6 +152,28 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
       .receive("timeout", () => alert("Message timed out - please try again."));
 
     setNewMessage("");
+  };
+
+  // Covers both a brand new empty chat and one that's already gone
+  // quiet after a message or two - unlike the empty-state intro card
+  // (which only ever shows once, before any real message exists), this
+  // is available any time. Caches server-side after the first call
+  // (Vokazi.Matchmaking.get_or_generate_opener/2), so re-clicking later
+  // in the same match doesn't re-spend an AI call.
+  const suggestOpener = async () => {
+    if (!matchId) return;
+    setSuggesting(true);
+    setSuggestError("");
+    try {
+      const res = await apiFetch(`/api/matches/${matchId}/generate_opener`, { method: "POST" });
+      if (!res.ok) throw new Error("failed");
+      const data = await res.json();
+      if (data.opener) setNewMessage(data.opener);
+    } catch {
+      setSuggestError("Couldn't come up with a suggestion right now.");
+    } finally {
+      setSuggesting(false);
+    }
   };
 
   const uploadFile = async (file) => {
@@ -385,6 +409,11 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         </div>
 
         {/* Input Area */}
+        {suggestError && (
+          <div className="chat-pending-attachment error">
+            <span className="chat-pending-attachment-name">{suggestError}</span>
+          </div>
+        )}
         {(pendingAttachment || uploadState !== "idle" || isRecording) && (
           <div className={`chat-pending-attachment ${uploadState === "error" ? "error" : ""}`}>
             {isRecording ? (
@@ -431,6 +460,18 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
               <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
             </svg>
           </button>
+          {matchId && (
+            <button
+              type="button"
+              className="chat-attach-btn"
+              onClick={suggestOpener}
+              disabled={connectionState !== "joined" || suggesting}
+              title="Suggest something to say"
+              aria-label="Suggest something to say"
+            >
+              {suggesting ? "···" : "💡"}
+            </button>
+          )}
           <button
             type="button"
             className={`chat-attach-btn ${isRecording ? "recording" : ""}`}

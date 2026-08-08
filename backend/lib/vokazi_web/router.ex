@@ -78,6 +78,7 @@ defmodule VokaziWeb.Router do
     get "/matches/:id/status", MatchController, :status
     post "/matchmaking/find_match", MatchController, :find_match
     post "/matches/:id/flag_concern", MatchController, :flag_concern
+    post "/matches/:id/generate_opener", MatchController, :generate_opener
 
     # Searchable/filterable member directory (Phase 4)
     get "/directory", DirectoryController, :index

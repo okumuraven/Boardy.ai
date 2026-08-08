@@ -139,6 +139,31 @@ defmodule VokaziWeb.MatchController do
   end
 
   @doc """
+  Chat's "Suggest something to say" button - returns the caller's own
+  ready-to-send opener, generating and caching it on first request if
+  this match predates the feature (see
+  Vokazi.Matchmaking.get_or_generate_opener/2). Works on a brand new,
+  empty chat exactly the same as one that's already gone quiet.
+  """
+  def generate_opener(conn, %{"id" => match_id}) do
+    user_id = conn.assigns.current_user_id
+
+    case Matchmaking.get_or_generate_opener(to_int(match_id), user_id) do
+      {:ok, opener} ->
+        json(conn, %{opener: opener})
+
+      {:error, :not_a_participant} ->
+        conn |> put_status(:forbidden) |> json(%{error: "Not a participant in this match"})
+
+      {:error, :profile_incomplete} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "Couldn't generate a suggestion right now"})
+
+      {:error, _reason} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "Couldn't generate a suggestion right now"})
+    end
+  end
+
+  @doc """
   Bizi Buddy System early-warning flag (kuzana_playbook.md §6) - only
   works on the caller's own buddy-kind match, only ever visible to
   Moderator+ staff, never the other buddy.
