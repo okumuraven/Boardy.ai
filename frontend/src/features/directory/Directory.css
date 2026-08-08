@@ -107,12 +107,6 @@
 
 .directory-card-rate { font-size: 0.78rem; color: var(--muted); margin: 0; }
 
-.directory-verified-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; border-radius: 50%; background: var(--signal-wash);
-  color: var(--signal); font-size: 0.65rem; flex-shrink: 0;
-}
-
 .directory-card-investment {
   font-size: 0.8rem; color: var(--brass); font-weight: 600; margin: 0;
 }

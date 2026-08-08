@@ -147,6 +147,40 @@ defmodule Vokazi.Accounts.Profile do
     cast(profile, attrs, [:phone_confirmed])
   end
 
+  @doc """
+  The individual criteria behind complete?/2, broken out so
+  `VokaziWeb.ProfileController.show/2` can hand the frontend a
+  checklist/percentage (ProfileCompletion.jsx) instead of only a
+  pass/fail boolean - a member should see exactly what's left, not just
+  that something is.
+  """
+  def completion_checklist(user, profile) do
+    %{
+      photo: !!(user && user.avatar_path),
+      interview: !!(profile && profile.offer_text && profile.need_text),
+      phone_confirmed: !!(profile && profile.phone_confirmed)
+    }
+  end
+
+  @doc """
+  The public "profile complete" checkmark shown on directory cards
+  (Instagram-style) - deliberately NOT the same thing as
+  `Vokazi.Accounts.User`'s `is_verified` field, which is Felicity's
+  staff-reviewed Applications screening judgment (Admin panel.md §5).
+  This one requires no staff judgment call at all: every criterion in
+  completion_checklist/2 (a profile picture, a finished voice
+  interview, and a phone number staff has actually confirmed reachable
+  - not just well-formed, since the whole point is it can't be earned
+  with a guessed number). Any member can earn it purely by finishing
+  their own profile.
+  """
+  def complete?(user, profile) do
+    user
+    |> completion_checklist(profile)
+    |> Map.values()
+    |> Enum.all?()
+  end
+
   defp validate_tags(changeset, field, allowed) do
     validate_change(changeset, field, fn ^field, tags ->
       invalid = Enum.reject(tags, &(&1 in allowed))
