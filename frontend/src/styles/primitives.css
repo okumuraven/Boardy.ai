@@ -46,6 +46,15 @@
 }
 .nav-link:hover { color: var(--paper); }
 
+/* "Profile complete" checkmark (Vokazi.Accounts.Profile.complete?/2) -
+   shared by the directory card and a member's own profile view, not
+   owned by either feature alone. */
+.verified-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--signal-wash);
+  color: var(--signal); font-size: 0.65rem; flex-shrink: 0;
+}
+
 /* Presence dot */
 .dot {
   width: 7px;

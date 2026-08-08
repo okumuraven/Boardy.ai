@@ -9,6 +9,7 @@ import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
 import ServiceDetailsForm from "./ServiceDetailsForm";
 import CardPreviewModal from "./CardPreviewModal";
+import ProfileCompletion from "./ProfileCompletion";
 import ThemeToggle from "../shell/ThemeToggle";
 import { INDUSTRIES } from "../../constants/industries";
 import { ROLES, roleTitle as roleLabel, isCapitalSideRole, isServiceRole } from "../../constants/roles";
@@ -134,7 +135,14 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
           onCancel={() => setPendingAvatarFile(null)}
         />
         <div>
-          <h2>{profile?.name || "Your profile"}</h2>
+          <h2>
+            {profile?.name || "Your profile"}
+            {profile?.verified && (
+              <span className="verified-badge" style={{ marginLeft: "0.5rem" }} title="Verified: photo, interview, and phone confirmed">
+                ✓
+              </span>
+            )}
+          </h2>
           <span className="role">{roleTitle(profile?.role)}</span>
           {profile?.is_bizi && (
             <span
@@ -164,6 +172,8 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
 
       <div className="profile-view-grid">
         <div className="profile-view-col">
+          {!profile?.verified && <ProfileCompletion completion={profile?.profile_completion} />}
+
           <StatsCard profile={profile} />
 
           <div className="panel">

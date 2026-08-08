@@ -119,7 +119,11 @@ defmodule Vokazi.Directory do
       can_help_tags: p.can_help_tags,
       rate_types: p.rate_types,
       available_for_hire: p.available_for_hire,
-      verified: !!(social && social.github_username),
+      # "Profile complete" (photo + interview + staff-confirmed phone) -
+      # NOT Felicity's staff-reviewed User.is_verified. See
+      # Vokazi.Accounts.Profile.complete?/2 moduledoc for why these are
+      # deliberately kept separate.
+      verified: Profile.complete?(u, p),
       portfolio_url: social && social.portfolio_url,
       match: Map.get(match_by_user_id, u.id),
       investment: investment_summary(ip),

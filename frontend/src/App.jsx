@@ -63,6 +63,8 @@ export default function App() {
             looking_for_tags: data.looking_for_tags || [],
             can_help_tags: data.can_help_tags || [],
             avatar_url: data.avatar_url,
+            verified: data.verified,
+            profile_completion: data.profile_completion,
             business_photos: data.business_photos || [],
             business_photos_public: data.business_photos_public
           });

@@ -96,7 +96,7 @@ export default function MemberCard({ member, connecting, connectError, onConnect
           <div className="directory-card-name">
             {member.name || "Someone"}
             {member.verified && (
-              <span className="directory-verified-badge" title="GitHub verified">
+              <span className="verified-badge" title="Verified: photo, interview, and phone confirmed">
                 ✓
               </span>
             )}
