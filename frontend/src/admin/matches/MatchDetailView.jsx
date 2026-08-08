@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 
 const OUTCOMES = ['confirmed_valuable', 'attempted_no_result', 'unresponsive'];
+const STATUS_VARIANT = { unlocked: 'signal', declined: 'warn', slashed: 'warn' };
 
 export default function MatchDetailView({ matchId, admin, onBack }) {
   const [match, setMatch] = useState(null);
@@ -67,12 +68,19 @@ export default function MatchDetailView({ matchId, admin, onBack }) {
           </h2>
 
           <div className="admin-detail-grid">
-            <Field label="Status" value={match.status} />
+            <Field label="Status" value={<span className={`admin-pill ${STATUS_VARIANT[match.status] || ''}`}>{match.status.replace(/_/g, ' ')}</span>} />
             <Field label="AI score" value={match.ai_score != null ? match.ai_score : '-'} />
             <Field label="Decline reason" value={match.decline_reason || '-'} />
             <Field label="Created by admin" value={match.created_by_admin_id ? `Yes (#${match.created_by_admin_id})` : 'No'} />
             <Field label="Messages exchanged" value={match.engagement?.message_count ?? '-'} />
-            <Field label="Dormant" value={match.engagement?.dormant ? 'Yes' : match.engagement?.dormant === false ? 'No' : '-'} />
+            <Field
+              label="Dormant"
+              value={
+                match.engagement?.dormant == null ? '-' : (
+                  <span className={`admin-pill ${match.engagement.dormant ? 'warn' : 'signal'}`}>{match.engagement.dormant ? 'Yes' : 'No'}</span>
+                )
+              }
+            />
           </div>
 
           {match.creation_note && (
@@ -88,7 +96,9 @@ export default function MatchDetailView({ matchId, admin, onBack }) {
             {!canRecordOutcome ? (
               <div>
                 <p style={{ color: 'var(--paper)', fontSize: '0.9rem' }}>
-                  {match.outcome_status ? match.outcome_status.replace(/_/g, ' ') : 'Not yet recorded.'}
+                  {match.outcome_status ? (
+                    <span className={`admin-pill ${match.outcome_status === 'confirmed_valuable' ? 'signal' : 'muted'}`}>{match.outcome_status.replace(/_/g, ' ')}</span>
+                  ) : 'Not yet recorded.'}
                 </p>
                 {match.outcome_notes && <p style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>{match.outcome_notes}</p>}
                 <p style={{ color: 'var(--muted)', fontSize: '0.8rem', marginTop: '0.5rem' }}>

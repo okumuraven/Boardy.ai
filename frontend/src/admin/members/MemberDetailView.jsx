@@ -106,11 +106,11 @@ export default function MemberDetailView({ memberId, admin, onBack }) {
             <Field label="Industry" value={member.industry || '-'} />
             <Field label="Company" value={member.company || '-'} />
             <Field label="Location" value={member.location || '-'} />
-            <Field label="Onboarded" value={member.onboarding_completed ? 'Yes' : 'No'} />
+            <Field label="Onboarded" value={<span className={`admin-pill ${member.onboarding_completed ? 'signal' : 'muted'}`}>{member.onboarding_completed ? 'Yes' : 'No'}</span>} />
             <div>
               <div className="admin-detail-field-label">Verified</div>
               <div className="admin-detail-field-value" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {member.is_verified ? 'Yes' : 'No'}
+                <span className={`admin-pill ${member.is_verified ? 'signal' : 'muted'}`}>{member.is_verified ? 'Yes' : 'No'}</span>
                 {canVerify && (
                   <button className="btn-ghost btn-sm" onClick={toggleVerified} disabled={verifying}>
                     {verifying ? '...' : member.is_verified ? 'Unverify' : 'Verify'}

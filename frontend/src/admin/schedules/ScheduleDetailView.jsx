@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../../lib/api';
 
+const STATUS_VARIANT = { confirmed: 'signal', declined: 'warn' };
+
 export default function ScheduleDetailView({ scheduleId, onBack }) {
   const [schedule, setSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,8 +38,8 @@ export default function ScheduleDetailView({ scheduleId, onBack }) {
           </h2>
 
           <div className="admin-detail-grid">
-            <Field label="Status" value={schedule.status.replace(/_/g, ' ')} />
-            <Field label="Stuck" value={schedule.stuck ? 'Yes' : 'No'} />
+            <Field label="Status" value={<span className={`admin-pill ${STATUS_VARIANT[schedule.status] || ''}`}>{schedule.status.replace(/_/g, ' ')}</span>} />
+            <Field label="Stuck" value={<span className={`admin-pill ${schedule.stuck ? 'warn' : 'signal'}`}>{schedule.stuck ? 'Yes' : 'No'}</span>} />
             <Field label="Updated" value={new Date(schedule.updated_at).toLocaleString()} />
           </div>
 
