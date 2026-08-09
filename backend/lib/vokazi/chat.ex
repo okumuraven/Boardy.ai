@@ -69,15 +69,32 @@ defmodule Vokazi.Chat do
   def create_message(attrs \\ %{}) do
     notification_type = Map.get(attrs, :notification_type) || "chat_message"
     attachment_id = Map.get(attrs, :attachment_id)
+    reply_to_id = Map.get(attrs, :reply_to_id)
+    chat_room_id = Map.get(attrs, :chat_room_id)
     content = (Map.get(attrs, :content) || "") |> to_string() |> String.trim()
 
-    if content == "" and is_nil(attachment_id) do
-      {:error, :empty_message}
-    else
-      attrs
-      |> Map.put(:content, content)
-      |> do_create_message(attachment_id, notification_type)
+    cond do
+      content == "" and is_nil(attachment_id) ->
+        {:error, :empty_message}
+
+      not valid_reply_to?(reply_to_id, chat_room_id) ->
+        {:error, :invalid_reply_to}
+
+      true ->
+        attrs
+        |> Map.put(:content, content)
+        |> do_create_message(attachment_id, notification_type)
     end
+  end
+
+  # A reply can only ever quote a message already sitting in the SAME
+  # room - the FK alone would happily accept any message id in the
+  # table, letting someone quote a private message from a room they
+  # aren't even a participant in.
+  defp valid_reply_to?(nil, _chat_room_id), do: true
+
+  defp valid_reply_to?(reply_to_id, chat_room_id) do
+    Repo.exists?(from(m in Message, where: m.id == ^reply_to_id and m.chat_room_id == ^chat_room_id))
   end
 
   defp do_create_message(attrs, attachment_id, notification_type) do
@@ -85,7 +102,7 @@ defmodule Vokazi.Chat do
       with {:ok, message} <- %Message{} |> Message.changeset(attrs) |> Repo.insert(),
            {:ok, _attachment} <- maybe_attach(attachment_id, message) do
         message
-        |> Repo.preload([:sender, :attachment])
+        |> Repo.preload([:sender, :attachment, reply_to: :sender])
         |> tap(&notify_recipient_if_absent(&1, notification_type))
       else
         {:error, reason} -> Repo.rollback(reason)
@@ -210,7 +227,7 @@ defmodule Vokazi.Chat do
     |> where([m], m.chat_room_id == ^room_id)
     |> order_by([m], desc: m.id)
     |> limit(^limit)
-    |> preload([:sender, :attachment])
+    |> preload([:sender, :attachment, reply_to: :sender])
     |> Repo.all()
     |> Enum.reverse()
   end
@@ -224,7 +241,7 @@ defmodule Vokazi.Chat do
     |> where([m], m.chat_room_id == ^room_id and m.id < ^before_id)
     |> order_by([m], desc: m.id)
     |> limit(^limit)
-    |> preload([:sender, :attachment])
+    |> preload([:sender, :attachment, reply_to: :sender])
     |> Repo.all()
     |> Enum.reverse()
   end
