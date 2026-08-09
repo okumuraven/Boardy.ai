@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Socket, Presence } from "phoenix";
 import { getToken, apiFetch } from "../lib/api";
 import "./ChatSystem.css";
+import "./ChatHeader.css";
+import "./ChatComposer.css";
 import SchedulingFlow from "../features/scheduling";
 import MatchProfilePanel from "../features/matches/MatchProfilePanel";
 import FlagConcernPanel from "../features/matches/FlagConcernPanel";
@@ -377,7 +379,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 if (msg.content?.startsWith("📞")) {
                   return (
                     <div key={msg.id} className="msg-system">
-                      {msg.content} · {time}
+                      <span className="msg-system-icon">📞</span>
+                      <span className="msg-system-text">{msg.content.replace("📞", "").trim()}</span>
+                      <span className="msg-system-time">{time}</span>
                     </div>
                   );
                 }
@@ -447,58 +451,60 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
           </div>
         )}
         <form onSubmit={handleSendMessage} className="chat-input-row">
-          <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: "none" }} />
-          <button
-            type="button"
-            className="chat-attach-btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={connectionState !== "joined" || uploadState === "uploading"}
-            title="Attach a file"
-            aria-label="Attach a file"
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
-            </svg>
-          </button>
-          {matchId && (
+          <div className="chat-input-shell">
+            <input ref={fileInputRef} type="file" onChange={handleFileSelect} style={{ display: "none" }} />
             <button
               type="button"
-              className="chat-attach-btn"
-              onClick={suggestOpener}
-              disabled={connectionState !== "joined" || suggesting}
-              title="Suggest something to say"
-              aria-label="Suggest something to say"
+              className="chat-inline-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={connectionState !== "joined" || uploadState === "uploading"}
+              title="Attach a file"
+              aria-label="Attach a file"
             >
-              {suggesting ? "···" : "💡"}
-            </button>
-          )}
-          <button
-            type="button"
-            className={`chat-attach-btn ${isRecording ? "recording" : ""}`}
-            onClick={() => (isRecording ? stopRecording(false) : startRecording())}
-            disabled={connectionState !== "joined" || uploadState === "uploading"}
-            title={isRecording ? "Stop and send voice note" : "Record a voice note"}
-            aria-label={isRecording ? "Stop and send voice note" : "Record a voice note"}
-          >
-            {isRecording ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
-            ) : (
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
               </svg>
+            </button>
+            {matchId && (
+              <button
+                type="button"
+                className="chat-inline-btn"
+                onClick={suggestOpener}
+                disabled={connectionState !== "joined" || suggesting}
+                title="Suggest something to say"
+                aria-label="Suggest something to say"
+              >
+                {suggesting ? "···" : "💡"}
+              </button>
             )}
-          </button>
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
-            disabled={connectionState !== "joined"}
-            className="chat-input"
-          />
+            <button
+              type="button"
+              className={`chat-inline-btn ${isRecording ? "recording" : ""}`}
+              onClick={() => (isRecording ? stopRecording(false) : startRecording())}
+              disabled={connectionState !== "joined" || uploadState === "uploading"}
+              title={isRecording ? "Stop and send voice note" : "Record a voice note"}
+              aria-label={isRecording ? "Stop and send voice note" : "Record a voice note"}
+            >
+              {isRecording ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
+              ) : (
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+                  <path d="M19 10v2a7 7 0 01-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              )}
+            </button>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
+              disabled={connectionState !== "joined"}
+              className="chat-input"
+            />
+          </div>
           <button
             type="submit"
             className="chat-send-btn"

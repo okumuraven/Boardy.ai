@@ -1,0 +1,117 @@
+/* Split out of ChatSystem.css once it crossed the 250-line cap - compose
+   bar (input shell, inline icon buttons, send button, pending-attachment
+   banner) and its mobile overrides live together here. */
+
+.chat-input-row { display: flex; gap: 0.5rem; align-items: center; }
+
+/* The attach/suggest/mic buttons and the text field used to be four
+   separate floating circles with gaps between them - functional, but
+   reading as loose parts rather than one control. Wrapping them in a
+   single pill (WhatsApp/Telegram's actual shape - the exact bar these
+   users already know) turns it into one deliberate input, with the
+   send button kept outside as the one distinct, colored "commit"
+   action. */
+.chat-input-shell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 999px;
+  padding: 0.3rem 0.4rem 0.3rem 0.5rem;
+}
+.chat-input-shell:focus-within { border-color: var(--brass-dim); }
+
+.chat-inline-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-inline-btn:hover:not(:disabled) { background: var(--ink-line); color: var(--brass); }
+.chat-inline-btn:disabled { opacity: 0.4; cursor: default; }
+.chat-inline-btn.recording { color: var(--warn); background: var(--warn-wash); }
+
+.chat-input {
+  flex: 1;
+  /* A flex item's default minimum width is its own content size, and a
+     plain <input> doesn't shrink below a browser-assigned baseline
+     (commonly 170-200px) without this - on a narrow phone that's wider
+     than the input actually had room for once the surrounding buttons
+     also claimed their space. */
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0.55rem 0.4rem;
+  color: var(--paper);
+  outline: none;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+/* Icon send button, not a rectangular text button - the size/shape a
+   real messaging app uses next to a pill input. The one button in this
+   row with color, so "commit" reads as visually distinct from the
+   secondary attach/suggest/mic actions inside the shell. */
+.chat-send-btn {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--brass);
+  color: var(--ink);
+}
+.chat-send-btn:hover:not(:disabled) { filter: brightness(1.1); }
+.chat-send-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* A file picked but not yet sent - sits above the input row, same
+   pill-on-dark-strip treatment as an inline banner rather than a full
+   panel, since it's meant to feel provisional. */
+.chat-pending-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--paper);
+}
+.chat-pending-attachment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-pending-attachment-remove {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.chat-pending-attachment-remove:hover { color: var(--warn); }
+
+@media (max-width: 900px) {
+  /* Tighter footprint buys real breathing room for the input text on
+     narrow screens - 34-36px still clears the ~40-44px comfortable tap
+     target once you count the shell's own padding around each button. */
+  .chat-input-row { gap: 0.4rem; }
+  .chat-input-shell { padding: 0.25rem 0.3rem 0.25rem 0.4rem; }
+  .chat-inline-btn { width: 33px; height: 33px; }
+  .chat-input { padding: 0.5rem 0.3rem; font-size: 0.92rem; }
+  .chat-send-btn { width: 40px; height: 40px; }
+}
