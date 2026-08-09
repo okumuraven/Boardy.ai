@@ -5,7 +5,11 @@
 /* flex-shrink: 0 - same "constant, solid outer frame" reasoning as
    .chat-header (ChatHeader.css): this row must never compress, only
    .chat-messages should ever give up space. */
-.chat-input-row { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
+/* align-items: flex-end, not center - once .chat-input grows past one
+   line (see .chat-input below), the send button should anchor to the
+   bottom of the row the way WhatsApp/Telegram do, not float centered
+   against a box that's now taller than it is. */
+.chat-input-row { display: flex; gap: 0.5rem; align-items: flex-end; flex-shrink: 0; }
 
 /* The attach/suggest/mic buttons and the text field used to be four
    separate floating circles with gaps between them - functional, but
@@ -18,11 +22,15 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
+  /* Same flex-end reasoning as .chat-input-row - the attach/suggest/mic
+     buttons stay pinned to the bottom line as the text field grows
+     upward, instead of drifting to the vertical center of a box that's
+     no longer just one line tall. */
+  align-items: flex-end;
   gap: 0.1rem;
   background: var(--ink);
   border: 1px solid var(--ink-line);
-  border-radius: 999px;
+  border-radius: 22px;
   padding: 0.3rem 0.4rem 0.3rem 0.5rem;
 }
 .chat-input-shell:focus-within { border-color: var(--brass-dim); }
@@ -43,10 +51,16 @@
 .chat-inline-btn:disabled { opacity: 0.4; cursor: default; }
 .chat-inline-btn.recording { color: var(--warn); background: var(--warn-wash); }
 
+/* A <textarea>, not an <input> - a single-line input just scrolls long
+   text off-screen horizontally with no way to see or edit past the
+   first few words before sending. This grows with content instead
+   (height set imperatively in ChatSystem.jsx from scrollHeight, capped
+   at MAX_COMPOSE_HEIGHT and internally scrollable past that), matching
+   how WhatsApp/Telegram actually handle a long pasted message. */
 .chat-input {
   flex: 1;
   /* A flex item's default minimum width is its own content size, and a
-     plain <input> doesn't shrink below a browser-assigned baseline
+     plain text field doesn't shrink below a browser-assigned baseline
      (commonly 170-200px) without this - on a narrow phone that's wider
      than the input actually had room for once the surrounding buttons
      also claimed their space. */
@@ -58,6 +72,13 @@
   outline: none;
   font-size: 0.95rem;
   font-family: inherit;
+  resize: none;
+  max-height: 120px;
+  overflow-y: auto;
+  /* Matches the single-line padding above exactly, so the imperative
+     scrollHeight measurement in ChatSystem.jsx starts from the same
+     baseline this CSS actually renders at. */
+  line-height: 1.35;
 }
 
 /* Icon send button, not a rectangular text button - the size/shape a
