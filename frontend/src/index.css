@@ -12,6 +12,12 @@
      disappear while scrolling. Older browsers that don't know `dvh`
      just ignore this line and keep the `vh` value above. */
   min-height: 100dvh;
+  /* Same `--app-vh` override as AppShell.css's .app-shell, and for the
+     same reason (dvh's inconsistent real-world behavior) - kept as
+     min-height rather than height since this wrapper never clips
+     anything itself, .app-shell is the one that actually needs to be
+     exact. */
+  min-height: calc(var(--app-vh, 1vh) * 100);
   display: flex;
   flex-direction: column;
   position: relative;

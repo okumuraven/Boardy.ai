@@ -10,7 +10,12 @@
    bar showing/hiding, so the shell could render taller than the
    actually-visible screen and push the tab bar (the flex column's
    last item) below the fold until the browser's own UI caught up. */
-.app-shell { height: 100vh; height: 100dvh; display: flex; overflow: hidden; }
+/* `--app-vh` (set by AppShell.jsx from the real window.innerHeight/
+   visualViewport, updated on resize) wins last when JS has run - `dvh`
+   support is inconsistent enough in practice (a persistent dead gap
+   below mobile content on some Android browsers) that it can't be the
+   only source of truth, even though it's the right idea. */
+.app-shell { height: 100vh; height: 100dvh; height: calc(var(--app-vh, 1vh) * 100); display: flex; overflow: hidden; }
 
 .shell-rail {
   width: 68px;

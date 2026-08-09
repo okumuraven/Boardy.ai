@@ -80,6 +80,27 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     setMoreOpen(false);
   }, [activeTab]);
 
+  // CSS `dvh` should already track the real visible viewport as a mobile
+  // browser's address bar shows/hides, but support for it is inconsistent
+  // enough in practice (seen leaving a persistent dead gap below the
+  // compose bar on Android/Samsung Internet) that it can't be trusted
+  // alone. This measures the actual viewport directly and writes it as a
+  // px custom property AppShell.css prefers over the dvh value, so
+  // .app-shell's height is never stale or wrong for the browser chrome
+  // that's actually showing right now.
+  useEffect(() => {
+    const setAppVh = () => {
+      document.documentElement.style.setProperty("--app-vh", `${window.innerHeight * 0.01}px`);
+    };
+    setAppVh();
+    window.addEventListener("resize", setAppVh);
+    window.visualViewport?.addEventListener("resize", setAppVh);
+    return () => {
+      window.removeEventListener("resize", setAppVh);
+      window.visualViewport?.removeEventListener("resize", setAppVh);
+    };
+  }, []);
+
   useEffect(() => {
     if (pendingMatchOpen) {
       setActiveTab("matches");
