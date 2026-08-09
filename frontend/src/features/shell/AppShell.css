@@ -121,6 +121,26 @@
      height. The back arrow already in the chat header is the way out. */
   .app-shell.chat-open .shell-tabbar { display: none; }
 
+  /* The actual fix for "whole page shifts/gets stuck when scrolling" -
+     rather than keep threading a perfect height/overflow chain through
+     every ancestor (app-container -> app-shell -> shell-content ->
+     shell-view -> matches-view -> match-stage -> chat-panel), pull the
+     active view clean out of that chain and pin it directly to the
+     viewport with `position: fixed; inset: 0`. Its size is then always
+     exactly the real visible viewport as the browser itself reports it
+     for a fixed element - no vh/dvh arithmetic, no ancestor height
+     resolving to `auto` somewhere and silently breaking containment.
+     Paired with `interactive-widget=resizes-content` (index.html), the
+     browser shrinks this box itself when the keyboard opens, so the
+     compose bar rides up above it exactly like WhatsApp/Telegram,
+     without any JS visualViewport tracking. Scoped to .chat-open only -
+     every other mobile tab keeps the normal in-flow layout. */
+  .app-shell.chat-open .shell-view.active {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+  }
+
   /* "More" overflow sheet - the tabs that don't fit in the primary row
      (see mobileMoreTabs in AppShell.jsx). A real bottom sheet, not a
      cramped popover, since that's the pattern mobile users already
