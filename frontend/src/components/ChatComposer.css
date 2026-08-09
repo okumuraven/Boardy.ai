@@ -2,7 +2,10 @@
    bar (input shell, inline icon buttons, send button, pending-attachment
    banner) and its mobile overrides live together here. */
 
-.chat-input-row { display: flex; gap: 0.5rem; align-items: center; }
+/* flex-shrink: 0 - same "constant, solid outer frame" reasoning as
+   .chat-header (ChatHeader.css): this row must never compress, only
+   .chat-messages should ever give up space. */
+.chat-input-row { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
 
 /* The attach/suggest/mic buttons and the text field used to be four
    separate floating circles with gaps between them - functional, but

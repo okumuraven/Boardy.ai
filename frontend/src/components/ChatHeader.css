@@ -12,6 +12,11 @@
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--ink-line);
   padding-bottom: 1rem;
+  /* Part of the "constant, solid outer frame" - a flex item's default
+     flex-shrink is 1 (it CAN shrink), which is the wrong default for
+     the one piece of chrome that should never move or compress
+     regardless of what .chat-messages is doing. */
+  flex-shrink: 0;
 }
 
 .chat-header-identity { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
