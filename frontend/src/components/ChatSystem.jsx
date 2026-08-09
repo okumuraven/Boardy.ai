@@ -52,6 +52,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordingTimerRef = useRef(null);
   // Mirrors channelRef.current for CallPanel's prop - reading a ref's
@@ -81,6 +82,20 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   useEffect(() => {
     if (prefillMessage) setNewMessage(prefillMessage);
   }, [prefillMessage]);
+
+  // A single-line <input> just scrolls long text off-screen horizontally,
+  // so there's no way to see or edit anything past the first few words
+  // before sending - real chat apps (WhatsApp/Telegram) grow the compose
+  // box to fit what's typed instead. Reset to "auto" before reading
+  // scrollHeight each time, or a box that's already tall would never be
+  // able to measure itself shrinking back down when text is deleted.
+  const MAX_COMPOSE_HEIGHT = 120;
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, MAX_COMPOSE_HEIGHT)}px`;
+  }, [newMessage]);
 
   const updatePresence = useCallback(() => {
     const online = Presence.list(presenceStateRef.current).some((p) => p.id !== String(profile.id));
@@ -496,8 +511,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 </svg>
               )}
             </button>
-            <input
-              type="text"
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder={connectionState === "joined" ? "Type a message..." : "Connecting..."}
