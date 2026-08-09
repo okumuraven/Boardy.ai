@@ -80,6 +80,15 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     setMoreOpen(false);
   }, [activeTab]);
 
+  // Only the app shell itself needs the outer page locked from
+  // scrolling (see tokens.css's body.app-shell-active) - pre-login
+  // screens still rely on the page scrolling naturally, so this class
+  // must not outlive AppShell being mounted.
+  useEffect(() => {
+    document.body.classList.add("app-shell-active");
+    return () => document.body.classList.remove("app-shell-active");
+  }, []);
+
   // CSS `dvh` should already track the real visible viewport as a mobile
   // browser's address bar shows/hides, but support for it is inconsistent
   // enough in practice (seen leaving a persistent dead gap below the
