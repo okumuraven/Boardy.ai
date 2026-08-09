@@ -91,3 +91,27 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
 }
+
+/* AppShell.jsx adds this class to <body> only while it's mounted (post-
+   login) and removes it on unmount - pre-login screens (LandingPage,
+   ProfileSetup, MatchReview) rely on the page itself scrolling when
+   their content runs taller than one viewport (.onboarding-container's
+   own `min-height: 100vh`), so this can't be a blanket rule. Inside the
+   app shell, though, the outer page must never scroll at all - only
+   designated inner regions (.chat-messages, .matches-list, etc.) own
+   their own `overflow-y: auto`. Without this, any momentary height
+   mismatch (a viewport-unit recalculation, a focus event, anything)
+   lets the whole page shift instead of just the intended region,
+   dragging fixed chrome like a chat header out from under the
+   browser's own address bar. `--app-vh`/`dvh` (AppShell.jsx/.css) keep
+   .app-shell sized to the real viewport; this class is the backstop
+   that makes overflow structurally impossible regardless of any of
+   that being off by a pixel at some instant. */
+body.app-shell-active {
+  height: 100%;
+  overflow: hidden;
+}
+html:has(body.app-shell-active) {
+  height: 100%;
+  overflow: hidden;
+}
