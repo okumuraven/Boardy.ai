@@ -115,6 +115,37 @@
 .chat-send-btn:hover:not(:disabled) { filter: brightness(1.1); }
 .chat-send-btn:disabled { opacity: 0.45; cursor: default; }
 
+/* Shown above the compose row while replying to a message
+   (ChatSystem.jsx's replyingTo state) - same accent-bordered treatment
+   as the quoted snippet inside a sent reply (.msg-reply-quote,
+   ChatSystem.css), so the two visually read as the same feature. */
+.chat-reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-left: 3px solid var(--brass);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+.chat-reply-preview-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.chat-reply-preview-sender { font-size: 0.74rem; font-weight: 700; color: var(--brass); }
+.chat-reply-preview-text { font-size: 0.82rem; color: var(--paper); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-reply-preview-cancel {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.chat-reply-preview-cancel:hover { color: var(--warn); }
+
 /* A file picked but not yet sent - sits above the input row, same
    pill-on-dark-strip treatment as an inline banner rather than a full
    panel, since it's meant to feel provisional. */

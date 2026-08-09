@@ -79,8 +79,15 @@ defmodule VokaziWeb.ChatRoomChannel do
     user_id = socket.assigns.user_id
     room_id = socket.assigns.room_id
     attachment_id = Map.get(payload, "attachment_id")
+    reply_to_id = Map.get(payload, "reply_to_id")
 
-    case Chat.create_message(%{content: content, sender_id: user_id, chat_room_id: room_id, attachment_id: attachment_id}) do
+    case Chat.create_message(%{
+           content: content,
+           sender_id: user_id,
+           chat_room_id: room_id,
+           attachment_id: attachment_id,
+           reply_to_id: reply_to_id
+         }) do
       {:ok, message} ->
         broadcast!(socket, "new_msg", serialize_message(message))
         {:reply, :ok, socket}
@@ -312,7 +319,8 @@ defmodule VokaziWeb.ChatRoomChannel do
       sender_id: message.sender_id,
       sender_name: message.sender && message.sender.full_name,
       inserted_at: Vokazi.DateTimeJSON.utc(message.inserted_at),
-      attachment: serialize_attachment(Map.get(message, :attachment))
+      attachment: serialize_attachment(Map.get(message, :attachment)),
+      reply_to: serialize_reply_to(Map.get(message, :reply_to))
     }
   end
 
@@ -326,6 +334,20 @@ defmodule VokaziWeb.ChatRoomChannel do
   end
 
   defp serialize_attachment(_), do: nil
+
+  # A lightweight quoted snippet, not the full message - the frontend
+  # renders this inline (ChatSystem.jsx's .msg-reply-quote) without a
+  # second round-trip to fetch what was quoted.
+  defp serialize_reply_to(%Vokazi.Chat.Message{} = reply) do
+    %{
+      id: reply.id,
+      content: reply.content,
+      sender_id: reply.sender_id,
+      sender_name: reply.sender && reply.sender.full_name
+    }
+  end
+
+  defp serialize_reply_to(_), do: nil
 
   defp changeset_error_message(changeset) do
     changeset.errors

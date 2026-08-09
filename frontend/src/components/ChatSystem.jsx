@@ -51,8 +51,22 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const [suggestError, setSuggestError] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
+  // WhatsApp-style "swipe to reply" (or, on desktop where there's no
+  // touch gesture, a hover-revealed button - see .msg-reply-btn) - the
+  // message currently quoted for the next send, cleared once it's sent
+  // or explicitly cancelled.
+  const [replyingTo, setReplyingTo] = useState(null);
+  // Which message id to briefly flash (tapping a quoted snippet jumps
+  // to and highlights the original it quoted).
+  const [highlightedId, setHighlightedId] = useState(null);
+  // Only one bubble is ever mid-swipe at a time - {id, dx} rather than
+  // per-bubble state, since re-rendering every bubble on every
+  // touchmove of just one of them would be wasteful.
+  const [swipeState, setSwipeState] = useState({ id: null, dx: 0 });
+  const swipeStartRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const chatMessagesRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordingTimerRef = useRef(null);
   // Mirrors channelRef.current for CallPanel's prop - reading a ref's
@@ -96,6 +110,55 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, MAX_COMPOSE_HEIGHT)}px`;
   }, [newMessage]);
+
+  const SWIPE_REPLY_THRESHOLD = 56;
+  const SWIPE_REPLY_MAX = 72;
+
+  const startReply = (msg) => {
+    setReplyingTo({
+      id: msg.id,
+      content: msg.content,
+      sender_id: msg.sender_id,
+      sender_name: msg.sender_id === profile.id ? "You" : (msg.sender_name || partnerName || "them"),
+    });
+    textareaRef.current?.focus();
+  };
+
+  // Swipe-right on a bubble to reply, matching WhatsApp exactly - no
+  // e.preventDefault() here, so the message list's own vertical scroll
+  // (a normal up/down drag) is never fought with; only a clearly
+  // rightward drag accumulates into a reply.
+  const handleBubbleTouchStart = (msg) => (e) => {
+    swipeStartRef.current = { id: msg.id, x: e.touches[0].clientX };
+  };
+
+  const handleBubbleTouchMove = (msg) => (e) => {
+    if (swipeStartRef.current?.id !== msg.id) return;
+    const dx = e.touches[0].clientX - swipeStartRef.current.x;
+    if (dx > 0) setSwipeState({ id: msg.id, dx: Math.min(dx, SWIPE_REPLY_MAX) });
+  };
+
+  const handleBubbleTouchEnd = (msg) => () => {
+    if (swipeStartRef.current?.id === msg.id && swipeState.dx >= SWIPE_REPLY_THRESHOLD) {
+      startReply(msg);
+    }
+    swipeStartRef.current = null;
+    setSwipeState({ id: null, dx: 0 });
+  };
+
+  // Tapping a quoted snippet inside a bubble jumps to and briefly
+  // flashes the original message it quoted (.msg-bubble.highlighted),
+  // the same "show me what this was replying to" affordance WhatsApp
+  // gives. Scoped to this room's own message list, not a bare
+  // document.querySelector, in case more than one chat is ever mounted
+  // at once.
+  const scrollToMessage = (id) => {
+    const el = chatMessagesRef.current?.querySelector(`[data-message-id="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightedId(id);
+    setTimeout(() => setHighlightedId((current) => (current === id ? null : current)), 1500);
+  };
 
   const updatePresence = useCallback(() => {
     const online = Presence.list(presenceStateRef.current).some((p) => p.id !== String(profile.id));
@@ -162,13 +225,16 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
     // Only the attachment (real upload effort already spent) survives a
     // failed/timed-out send so it can be retried without re-uploading -
     // text clearing optimistically is pre-existing behavior, unchanged.
+    // The reply reference, on the other hand, is cheap to redo, so it's
+    // cleared optimistically along with the text.
     channelRef.current
-      ?.push("new_msg", { content, attachment_id: pendingAttachment?.id })
+      ?.push("new_msg", { content, attachment_id: pendingAttachment?.id, reply_to_id: replyingTo?.id })
       .receive("ok", () => setPendingAttachment(null))
       .receive("error", ({ reason }) => alert(reason || "Message failed to send."))
       .receive("timeout", () => alert("Message timed out - please try again."));
 
     setNewMessage("");
+    setReplyingTo(null);
   };
 
   // Covers both a brand new empty chat and one that's already gone
@@ -348,7 +414,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         </div>
 
         {/* Messages Area */}
-        <div className="chat-messages">
+        <div className="chat-messages" ref={chatMessagesRef}>
           {connectionState === "error" ? (
             <div style={{ textAlign: 'center', color: 'var(--warn)', margin: 'auto' }}>{joinError}</div>
           ) : messages.length === 0 ? (
@@ -407,13 +473,36 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 // Collapsed like a real group thread: the label only
                 // repeats when the sender actually changes.
                 const showSenderLabel = !isMe && !matchId && msg.sender_name && messages[i - 1]?.sender_id !== msg.sender_id;
+                const swipeDx = swipeState.id === msg.id ? swipeState.dx : 0;
                 return (
-                  <div key={msg.id} className={`msg-bubble ${isMe ? 'me' : 'them'}`}>
+                  <div
+                    key={msg.id}
+                    data-message-id={msg.id}
+                    className={`msg-bubble ${isMe ? 'me' : 'them'} ${highlightedId === msg.id ? 'highlighted' : ''}`}
+                    style={swipeDx ? { transform: `translateX(${swipeDx}px)` } : undefined}
+                    onTouchStart={handleBubbleTouchStart(msg)}
+                    onTouchMove={handleBubbleTouchMove(msg)}
+                    onTouchEnd={handleBubbleTouchEnd(msg)}
+                  >
+                    {swipeDx > 8 && (
+                      <span className="msg-reply-indicator" style={{ opacity: Math.min(swipeDx / SWIPE_REPLY_THRESHOLD, 1) }}>↩</span>
+                    )}
+                    <button type="button" className="msg-reply-btn" onClick={() => startReply(msg)} aria-label="Reply" title="Reply">
+                      ↩
+                    </button>
                     {showSenderLabel && (
                       <span className="msg-sender-label">
                         <Avatar userId={msg.sender_id} name={msg.sender_name} className="msg-sender-avatar" />
                         {msg.sender_name} <span className="msg-sender-org">· Kuzana team</span>
                       </span>
+                    )}
+                    {msg.reply_to && (
+                      <button type="button" className="msg-reply-quote" onClick={() => scrollToMessage(msg.reply_to.id)}>
+                        <span className="msg-reply-quote-sender">
+                          {msg.reply_to.sender_id === profile.id ? "You" : (msg.reply_to.sender_name || partnerName)}
+                        </span>
+                        <span className="msg-reply-quote-text">{msg.reply_to.content || "📎 Attachment"}</span>
+                      </button>
                     )}
                     {msg.attachment && <AttachmentBubble attachment={msg.attachment} />}
                     {msg.attachment && attachmentActions?.(msg)}
@@ -428,6 +517,17 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         </div>
 
         {/* Input Area */}
+        {replyingTo && (
+          <div className="chat-reply-preview">
+            <div className="chat-reply-preview-body">
+              <span className="chat-reply-preview-sender">{replyingTo.sender_name}</span>
+              <span className="chat-reply-preview-text">{replyingTo.content || "📎 Attachment"}</span>
+            </div>
+            <button type="button" className="chat-reply-preview-cancel" onClick={() => setReplyingTo(null)} aria-label="Cancel reply">
+              ×
+            </button>
+          </div>
+        )}
         {suggestError && (
           <div className="chat-pending-attachment error">
             <span className="chat-pending-attachment-name">{suggestError}</span>

@@ -7,6 +7,12 @@ defmodule Vokazi.Chat.Message do
     belongs_to :chat_room, Vokazi.Chat.ChatRoom
     belongs_to :sender, Vokazi.Accounts.User
     has_one :attachment, Vokazi.Chat.Attachment
+    # Optional - the WhatsApp-style "swipe to reply" quote. Always
+    # validated (Vokazi.Chat.create_message/1) to point at a message in
+    # the SAME chat_room as this one, before this ever reaches the DB -
+    # the FK alone doesn't stop someone quoting a message from a room
+    # they're not even in.
+    belongs_to :reply_to, __MODULE__
 
     timestamps()
   end
@@ -27,7 +33,7 @@ defmodule Vokazi.Chat.Message do
   @doc false
   def changeset(message, attrs) do
     message
-    |> cast(attrs, [:content, :chat_room_id, :sender_id], empty_values: [])
+    |> cast(attrs, [:content, :chat_room_id, :sender_id, :reply_to_id], empty_values: [])
     |> update_change(:content, &(&1 && String.trim(&1)))
     |> validate_required([:chat_room_id, :sender_id])
     |> validate_length(:content, max: @max_content_length)

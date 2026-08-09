@@ -46,6 +46,7 @@
    a tail, and the timestamp tucked inside the bubble itself instead of
    sitting on its own full-width line below it (see .msg-time). */
 .msg-bubble {
+  position: relative;
   max-width: 75%;
   padding: 0.5rem 0.75rem 0.35rem;
   font-size: 0.95rem;
@@ -55,11 +56,87 @@
   flex-direction: column;
   gap: 0.1rem;
   margin: 0.15rem 0;
+  /* Swipe-to-reply (ChatSystem.jsx) translates this on touchmove - only
+     that JS-driven transform should ever move it, and letting the
+     browser's own touch scroll-gesture handling fight over the
+     horizontal axis is exactly what makes a swipe gesture feel janky. */
+  touch-action: pan-y;
 }
 .msg-bubble.them { align-self: flex-start; background: var(--ink-raised); border: 1px solid var(--ink-line); color: var(--paper); border-bottom-left-radius: 4px; }
 .msg-bubble.me { align-self: flex-end; background: var(--brass); color: var(--ink); font-weight: 500; border-bottom-right-radius: 4px; }
 .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg-time { align-self: flex-end; font-size: 0.68rem; opacity: 0.6; }
+
+/* Tapping a quoted snippet (.msg-reply-quote below) scrolls to and
+   flashes the original message it quoted - a ring rather than a
+   background-color animation, so it never has to "remember" and
+   restore each bubble's own me/them background once the flash ends. */
+.msg-bubble.highlighted { animation: msg-highlight-flash 1.4s ease; }
+@keyframes msg-highlight-flash {
+  0%, 25% { box-shadow: 0 0 0 3px var(--brass-dim); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+/* Revealed mid-swipe, to the left of the bubble as it slides right -
+   opacity is driven inline from how far into the gesture the user
+   already is (ChatSystem.jsx), so it visibly "arrives" as they cross
+   the reply threshold instead of just popping in at 100%. */
+.msg-reply-indicator {
+  position: absolute;
+  left: -34px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.1rem;
+  color: var(--brass);
+}
+
+/* Desktop has no swipe gesture - this hover-revealed button is the
+   equivalent affordance there (Slack/Discord's own pattern for exactly
+   this). Hidden on mobile below: :hover lingers oddly after a tap on
+   touch devices, and swipe already covers that case. */
+.msg-reply-btn {
+  position: absolute;
+  top: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink-line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.msg-bubble.me .msg-reply-btn { left: -30px; }
+.msg-bubble.them .msg-reply-btn { right: -30px; }
+.msg-bubble:hover .msg-reply-btn { opacity: 1; }
+
+/* The quoted snippet inside a reply (WhatsApp's own nested-quote look) -
+   a real <button> (tappable, scrolls to the original) reset back to
+   plain text/block styling rather than looking like a form control. */
+.msg-reply-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border: none;
+  border-left: 3px solid var(--brass);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  margin-bottom: 0.3rem;
+  cursor: pointer;
+}
+.msg-bubble.me .msg-reply-quote { background: rgba(0, 0, 0, 0.15); }
+.msg-bubble.them .msg-reply-quote { background: var(--ink); }
+.msg-reply-quote-sender { font-size: 0.72rem; font-weight: 700; color: var(--brass); }
+.msg-reply-quote-text { font-size: 0.82rem; opacity: 0.85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Who on the team actually sent this - a Bizi verification room has no
    single fixed "other side" the way a match chat does (any active admin
@@ -153,4 +230,9 @@
      up as much vertical space as real conversation. */
   .msg-system { font-size: 0.72rem; padding: 0.25rem 0.7rem 0.25rem 0.35rem; margin: 0.1rem 0; }
   .msg-system-icon { width: 18px; height: 18px; font-size: 0.62rem; }
+
+  /* Swipe (ChatSystem.jsx's touch handlers) is the mobile reply
+     affordance - this hover-revealed button has no equivalent "hover"
+     state on touch, and would otherwise linger visible after a tap. */
+  .msg-reply-btn { display: none; }
 }
