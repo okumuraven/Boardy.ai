@@ -22,6 +22,14 @@
   flex: 1;
   min-width: 0;
   display: flex;
+  /* Explicit, not relying on the flex default - some mobile WebViews
+     (Samsung Internet included) have a documented history of buggy
+     flex-basis handling specifically for <textarea> as a flex item,
+     occasionally computing its intrinsic content width instead of
+     honoring flex:1/min-width:0, which pushes the icon buttons onto
+     their own wrapped row underneath it. Being explicit here removes
+     any ambiguity for those engines to get wrong. */
+  flex-wrap: nowrap;
   /* Same flex-end reasoning as .chat-input-row - the attach/suggest/mic
      buttons stay pinned to the bottom line as the text field grows
      upward, instead of drifting to the vertical center of a box that's
@@ -65,6 +73,13 @@
      than the input actually had room for once the surrounding buttons
      also claimed their space. */
   min-width: 0;
+  /* Belt-and-suspenders alongside flex/min-width above: a few mobile
+     WebViews have shipped buggy flex-basis resolution specifically for
+     <textarea>, falling back to its intrinsic content width (from the
+     UA's default `cols`) instead of flex:1's 0%. An explicit near-zero
+     width gives those engines an unambiguous starting point to grow
+     from via flex-grow, rather than a content-based one to ignore. */
+  width: 1px;
   background: transparent;
   border: none;
   padding: 0.55rem 0.4rem;
