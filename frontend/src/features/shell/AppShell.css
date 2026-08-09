@@ -63,8 +63,13 @@
 
 .shell-tabbar { display: none; }
 
-.shell-content { flex: 1; min-width: 0; overflow: hidden; display: flex; }
-.shell-view { flex: 1; min-width: 0; display: none; overflow: hidden; }
+/* min-height: 0 alongside min-width: 0 - without it, a flex child's
+   default min-height is auto (its content's natural height), so a
+   descendant meant to scroll internally (chat's .chat-messages) instead
+   forces every ancestor to grow and the whole page scrolls as one block
+   instead of just that inner region. */
+.shell-content { flex: 1; min-width: 0; min-height: 0; overflow: hidden; display: flex; }
+.shell-view { flex: 1; min-width: 0; min-height: 0; display: none; overflow: hidden; }
 .shell-view.active { display: flex; }
 
 @media (max-width: 900px) {

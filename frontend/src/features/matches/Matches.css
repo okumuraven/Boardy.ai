@@ -1,6 +1,11 @@
 /* ---- Matches (list + stage) ---- */
 
-.matches-view { flex: 1; min-width: 0; display: flex; }
+/* min-height: 0 alongside min-width: 0 - same nested-scroll fix as
+   AppShell.css's .shell-content/.shell-view (see that comment). Without
+   it here too, this link in the chain still lets .chat-messages'
+   content dictate the whole page's height instead of scrolling inside
+   its own flex: 1 allocation. */
+.matches-view { flex: 1; min-width: 0; min-height: 0; display: flex; }
 
 .matches-list {
   width: 280px; flex-shrink: 0;
@@ -51,7 +56,7 @@
 .match-row.highlighted { background: var(--signal-wash); }
 .match-row.highlighted:hover { background: var(--signal-wash); filter: brightness(1.05); }
 
-.match-stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.match-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .match-empty { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 0.9rem; text-align: center; padding: 2rem; }
 
 @media (max-width: 900px) {
