@@ -21,6 +21,21 @@ const formatBytes = (bytes) => {
 
 const formatDuration = (seconds) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
+// null when there's genuinely nothing to show yet (a Bizi room with no
+// single fixed "other side", or a partner who's simply never gone away
+// during this account's whole lifetime) - the header falls back to
+// plain "Offline" in that case rather than a broken-looking blank.
+const formatLastSeen = (iso) => {
+  if (!iso) return null;
+  const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (minutes < 1) return "Last seen just now";
+  if (minutes < 60) return `Last seen ${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `Last seen ${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "Last seen yesterday" : `Last seen ${days}d ago`;
+};
+
 export default function ChatRoomView({ roomId, matchId, pairingKind, profile, partnerName, partnerAvatarUrl, introMessage, myOpener, startInScheduling, onBack, attachmentActions, prefillMessage }) {
   // One docked side panel, not two competing ones - `null | "schedule" |
   // "profile"`. Opens straight into scheduling when a calendar-reminder
@@ -39,6 +54,12 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   const [connectionState, setConnectionState] = useState("connecting"); // connecting | joined | error
   const [joinError, setJoinError] = useState("");
   const [otherOnline, setOtherOnline] = useState(false);
+  // The other side's read-up-to cursor and last-seen time (Vokazi.Chat's
+  // read receipts) - null last_seen_at just means "never gone away yet
+  // this account's whole lifetime" or "still online right now", not
+  // "unknown".
+  const [partnerReadUpTo, setPartnerReadUpTo] = useState(null);
+  const [partnerLastSeenAt, setPartnerLastSeenAt] = useState(null);
   const [hasMoreHistory, setHasMoreHistory] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   // The file finishes its HTTP upload (and gets a real attachment id)
@@ -195,6 +216,18 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
       updatePresence();
     });
 
+    // Read receipts - only ever moves the cursor forward (a stale/older
+    // receipt arriving after a newer one shouldn't roll ticks backward
+    // on already-read messages).
+    channel.on("read_receipt", ({ user_id, last_read_message_id }) => {
+      if (String(user_id) === String(profile.id)) return;
+      setPartnerReadUpTo((prev) => (prev == null || last_read_message_id > prev ? last_read_message_id : prev));
+    });
+
+    channel.on("partner_last_seen", ({ last_seen_at }) => {
+      setPartnerLastSeenAt(last_seen_at);
+    });
+
     channel
       .join()
       .receive("ok", () => {
@@ -216,6 +249,53 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
       setChannelForCall(null);
     };
   }, [roomId, profile.id, updatePresence]);
+
+  // Always readable inside the visibility handler below without making
+  // it re-subscribe on every single message (it only depends on
+  // connectionState) - a plain closure over `messages` there would
+  // otherwise capture whatever the array was the one time the effect
+  // last ran.
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  // "Real-time" presence - reports backgrounded/foregrounded the
+  // instant the Page Visibility API notices, instead of waiting for a
+  // network heartbeat to eventually time the connection out (which
+  // could take a while, and in the meantime shows someone as "online"
+  // when they've actually just switched apps or locked their phone).
+  useEffect(() => {
+    if (connectionState !== "joined") return;
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        channelRef.current?.push("set_away", {});
+      } else {
+        channelRef.current?.push("set_present", {});
+        const latest = messagesRef.current[messagesRef.current.length - 1];
+        if (latest?.id) channelRef.current?.push("mark_read", { message_id: latest.id });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    // Joining while already backgrounded (e.g. a notification opened
+    // this room in a new background tab) shouldn't claim "present" by
+    // default just because the join happened to succeed.
+    if (document.hidden) handleVisibility();
+
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [connectionState]);
+
+  // The read-receipt half of the same feature - marks up through the
+  // latest message the moment it's actually visible (a fresh arrival
+  // while the tab is focused, or history that just loaded), not only
+  // when visibility itself changes.
+  useEffect(() => {
+    if (connectionState !== "joined" || document.hidden || messages.length === 0) return;
+    const latest = messages[messages.length - 1];
+    if (latest?.id) channelRef.current?.push("mark_read", { message_id: latest.id });
+  }, [messages, connectionState]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
@@ -376,7 +456,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
               <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: '1.3rem', margin: 0, color: 'var(--paper)' }}>{partnerName || "Your match"}</h2>
               <span style={{ fontSize: '0.8rem', color: otherOnline ? 'var(--signal)' : 'var(--muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                 <span className={`dot ${otherOnline ? 'online' : ''}`}></span>
-                {connectionState === "joined" ? (otherOnline ? "Online now" : "Offline") : connectionState === "error" ? "Connection failed" : "Connecting..."}
+                {connectionState === "joined"
+                  ? (otherOnline ? "Online now" : (formatLastSeen(partnerLastSeenAt) || "Offline"))
+                  : connectionState === "error" ? "Connection failed" : "Connecting..."}
               </span>
             </div>
           </div>
@@ -507,7 +589,20 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                     {msg.attachment && <AttachmentBubble attachment={msg.attachment} />}
                     {msg.attachment && attachmentActions?.(msg)}
                     {msg.content && <span className="msg-text">{msg.content}</span>}
-                    <span className="msg-time">{time}</span>
+                    <span className="msg-time">
+                      <span className="msg-time-text">{time}</span>
+                      {isMe && matchId && (
+                        <MessageTicks
+                          state={
+                            partnerReadUpTo != null && msg.id <= partnerReadUpTo
+                              ? "read"
+                              : otherOnline
+                                ? "delivered"
+                                : "sent"
+                          }
+                        />
+                      )}
+                    </span>
                   </div>
                 );
               })}
@@ -651,5 +746,30 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
         </div>
       </div>
     </div>
+  );
+}
+
+// Sent (single grey check), sent-and-they're-online-but-unread (double
+// grey), or read (double blue - --brass, already a blue in this exact
+// palette, so this lands on-theme rather than importing WhatsApp's
+// color wholesale). One shared shape so "read" isn't a visually
+// different icon from "unread", just a different color/count - the
+// same distinction WhatsApp itself draws.
+function MessageTicks({ state }) {
+  const doubleCheck = (
+    <svg width="15" height="10" viewBox="0 0 16 11" fill="none">
+      <path d="M1 5.5L4.5 9L11 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 5.5L9 9L15.5 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
+  if (state === "read") return <span className="msg-ticks read">{doubleCheck}</span>;
+  if (state === "delivered") return <span className="msg-ticks">{doubleCheck}</span>;
+  return (
+    <span className="msg-ticks">
+      <svg width="10" height="10" viewBox="0 0 11 11" fill="none">
+        <path d="M1 5.5L4.5 9L10 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
   );
 }

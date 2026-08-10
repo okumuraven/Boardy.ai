@@ -4,7 +4,7 @@ defmodule Vokazi.Chat do
   """
   import Ecto.Query, warn: false
   alias Vokazi.Repo
-  alias Vokazi.Chat.{ChatRoom, Message, Attachment, Storage}
+  alias Vokazi.Chat.{ChatRoom, ChatRoomRead, Message, Attachment, Storage}
   alias Vokazi.Matchmaking.Match
   alias Vokazi.Bizi.Application
   alias Vokazi.Accounts.User
@@ -43,6 +43,79 @@ defmodule Vokazi.Chat do
 
   defp match_participant?(match_id, user_id) do
     Repo.exists?(from(m in Match, where: m.id == ^match_id and (m.user_a_id == ^user_id or m.user_b_id == ^user_id)))
+  end
+
+  @doc """
+  The other participant's user_id in a 1:1 match room - nil for a Bizi
+  room (no single fixed "other side" - any active admin can be the
+  one who reads/replies) or if the room somehow isn't a match room.
+  Powers "last seen" (ChatRoomChannel's :after_join push), which only
+  ever makes sense for a real 1:1 partner.
+  """
+  def other_match_participant_id(room_id, user_id) do
+    case Repo.get(ChatRoom, room_id) do
+      %ChatRoom{match_id: match_id} when not is_nil(match_id) ->
+        match = Repo.get!(Match, match_id)
+        if match.user_a_id == user_id, do: match.user_b_id, else: match.user_a_id
+
+      _ ->
+        nil
+    end
+  end
+
+  @doc """
+  Moves `user_id`'s read cursor for `room_id` forward to `message_id` -
+  never backward, so re-fetching older history (`list_messages_before/3`)
+  never "unreads" something newer than what's already been seen.
+  Broadcasting the resulting read receipt is the caller's job
+  (ChatRoomChannel), not this function's.
+  """
+  def mark_read(room_id, user_id, message_id) when is_integer(message_id) do
+    case Repo.get_by(ChatRoomRead, chat_room_id: room_id, user_id: user_id) do
+      nil ->
+        %ChatRoomRead{}
+        |> ChatRoomRead.changeset(%{chat_room_id: room_id, user_id: user_id, last_read_message_id: message_id})
+        |> Repo.insert()
+
+      %ChatRoomRead{last_read_message_id: current} = existing when is_nil(current) or message_id > current ->
+        existing
+        |> ChatRoomRead.changeset(%{last_read_message_id: message_id})
+        |> Repo.update()
+
+      existing ->
+        {:ok, existing}
+    end
+  end
+
+  @doc "nil if `user_id` has never read anything in this room."
+  def read_cursor_for(room_id, user_id) do
+    case Repo.get_by(ChatRoomRead, chat_room_id: room_id, user_id: user_id) do
+      nil -> nil
+      read -> read.last_read_message_id
+    end
+  end
+
+  @doc """
+  Stamped whenever a user's chat presence goes away - either they
+  explicitly signal "backgrounded" (ChatRoomChannel's "set_away", from
+  the frontend's Page Visibility listener) or their socket disconnects
+  for real (ChatRoomChannel.terminate/2). Same trusted-internal-field
+  pattern as InterviewReminderWorker's own timestamp stamping - a bare
+  Ecto.Changeset.change/2, not a named changeset, since no member-facing
+  path should ever be able to set this themselves.
+  """
+  def mark_last_seen(user_id) do
+    case Repo.get(User, user_id) do
+      nil ->
+        :ok
+
+      user ->
+        user
+        |> Ecto.Changeset.change(last_seen_at: DateTime.truncate(DateTime.utc_now(), :second))
+        |> Repo.update()
+
+        :ok
+    end
   end
 
   defp bizi_participant?(application_id, user_id) do

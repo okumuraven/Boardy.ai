@@ -65,7 +65,22 @@
 .msg-bubble.them { align-self: flex-start; background: var(--ink-raised); border: 1px solid var(--ink-line); color: var(--paper); border-bottom-left-radius: 4px; }
 .msg-bubble.me { align-self: flex-end; background: var(--brass); color: var(--ink); font-weight: 500; border-bottom-right-radius: 4px; }
 .msg-text { white-space: pre-wrap; overflow-wrap: anywhere; }
-.msg-time { align-self: flex-end; font-size: 0.68rem; opacity: 0.6; }
+/* A flex row now (time text + read-receipt ticks), not a single opacity-
+   0.6 text node - opacity applies to a whole subtree, so if the ticks
+   lived inside this it would dim the blue "read" state too and defeat
+   the entire point of it being a distinct, fully-saturated color.
+   font-size/opacity moved onto .msg-time-text specifically instead. */
+.msg-time { align-self: flex-end; display: flex; align-items: center; gap: 0.25rem; }
+.msg-time-text { font-size: 0.68rem; opacity: 0.6; }
+
+/* Read receipts (MessageTicks in ChatSystem.jsx) - grey/muted for
+   sent/delivered-unread (its own opacity, same look .msg-time-text had
+   before), --brass at full opacity for read. --brass happens to
+   already be a blue in this exact palette (Focus Blue), so "blue
+   ticks" lands on-theme rather than importing WhatsApp's color choice
+   wholesale. */
+.msg-ticks { display: inline-flex; align-items: center; opacity: 0.6; }
+.msg-ticks.read { color: var(--brass); opacity: 1; }
 
 /* Tapping a quoted snippet (.msg-reply-quote below) scrolls to and
    flashes the original message it quoted - a ring rather than a
