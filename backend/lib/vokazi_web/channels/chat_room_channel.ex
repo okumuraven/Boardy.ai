@@ -30,6 +30,18 @@ defmodule VokaziWeb.ChatRoomChannel do
     ArgumentError -> {:error, %{reason: "not_found"}}
   end
 
+  # A real disconnect (tab closed, network dropped, browser killed) -
+  # "set_away" (below) covers the *clean* backgrounded case, but this is
+  # the backstop for every case that never gets a chance to send that
+  # event at all. Presence's own CRDT already removes the tracked entry
+  # on process exit with no help needed here; this only adds the
+  # last_seen_at stamp Presence itself has no concept of.
+  @impl true
+  def terminate(_reason, socket) do
+    if Map.has_key?(socket.assigns, :room_id), do: Chat.mark_last_seen(socket.assigns.user_id)
+    :ok
+  end
+
   @impl true
   def handle_info(:after_join, socket) do
     room_id = socket.assigns.room_id
@@ -40,6 +52,24 @@ defmodule VokaziWeb.ChatRoomChannel do
 
     {:ok, _ref} = Presence.track(socket, to_string(user_id), %{online_at: System.system_time(:second)})
     push(socket, "presence_state", Presence.list(socket))
+
+    # The other side's read-up-to cursor and last-seen time, pushed once
+    # right away - without this, reopening a room would show every
+    # already-sent message as freshly "unread" (grey ticks) until the
+    # other side's client happens to send a new live read_receipt, which
+    # might not be for a while if they're just re-reading old history.
+    case Chat.other_match_participant_id(room_id, user_id) do
+      nil ->
+        :ok
+
+      other_id ->
+        push(socket, "read_receipt", %{user_id: other_id, last_read_message_id: Chat.read_cursor_for(room_id, other_id)})
+
+        case Repo.get(User, other_id) do
+          %User{last_seen_at: last_seen_at} -> push(socket, "partner_last_seen", %{user_id: other_id, last_seen_at: Vokazi.DateTimeJSON.utc(last_seen_at)})
+          nil -> :ok
+        end
+    end
 
     # Re-surfaces a still-ringing call for whoever just (re)joined - the
     # case that matters is someone opening the app from the Web Push
@@ -108,6 +138,49 @@ defmodule VokaziWeb.ChatRoomChannel do
   def handle_in("load_more", %{"before_id" => before_id}, socket) do
     messages = Chat.list_messages_before(socket.assigns.room_id, before_id)
     {:reply, {:ok, %{messages: Enum.map(messages, &serialize_message/1)}}, socket}
+  end
+
+  # "Real-time" presence, not just "is the socket still technically
+  # connected" - the frontend's Page Visibility listener fires this the
+  # instant the tab is backgrounded, rather than waiting for a network
+  # heartbeat to eventually time out (which could take a while and, in
+  # the meantime, shows someone as "online" when they've actually just
+  # switched apps or locked their phone).
+  @impl true
+  def handle_in("set_away", _payload, socket) do
+    user_id = socket.assigns.user_id
+    Presence.untrack(socket, to_string(user_id))
+    Chat.mark_last_seen(user_id)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_in("set_present", _payload, socket) do
+    {:ok, _ref} = Presence.track(socket, to_string(socket.assigns.user_id), %{online_at: System.system_time(:second)})
+    {:noreply, socket}
+  end
+
+  # Read receipts - moves the caller's own read cursor forward
+  # (Chat.mark_read/3 never lets it move backward) and tells the other
+  # side right away, so their sent messages' ticks update live instead
+  # of only catching up the next time they happen to rejoin.
+  @impl true
+  def handle_in("mark_read", %{"message_id" => message_id}, socket) do
+    user_id = socket.assigns.user_id
+    room_id = socket.assigns.room_id
+
+    case Chat.mark_read(room_id, user_id, message_id) do
+      {:ok, _read} ->
+        broadcast_from!(socket, "read_receipt", %{user_id: user_id, last_read_message_id: message_id})
+        {:noreply, socket}
+
+      {:error, _changeset} ->
+        {:noreply, socket}
+    end
+  end
+
+  def handle_in("mark_read", _payload, socket) do
+    {:reply, {:error, %{reason: "invalid_payload"}}, socket}
   end
 
   # In-App Calling, Phase 1 (call_feature.md) - bare-bones signaling only,

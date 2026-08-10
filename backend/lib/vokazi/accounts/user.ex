@@ -31,6 +31,11 @@ defmodule Vokazi.Accounts.User do
     # never through changeset/2 below - it needs its own image-type/size
     # validation, not a plain cast.
     field :avatar_path, :string
+    # Stamped by VokaziWeb.ChatRoomChannel whenever this user's chat
+    # presence is untracked (backgrounded via the Page Visibility API,
+    # or a real disconnect) - never cast by any member-facing changeset
+    # below, only ever written by that channel directly via Repo.update.
+    field :last_seen_at, :utc_datetime
 
     # Kuzana staff identity, layered on top of the same Google-verified
     # account every member has - never a second auth system. nil means
