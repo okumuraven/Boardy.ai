@@ -65,8 +65,8 @@ defmodule Vokazi.Scheduling.MyFreeDays do
     |> Enum.filter(&(Date.compare(&1.date, first_date) != :lt and Date.compare(&1.date, last_date) != :gt))
     |> Enum.map(fn event ->
       %{
-        start: DateTime.new!(event.date, event.start_time, "Etc/UTC") |> DateTime.to_iso8601(),
-        end: DateTime.new!(event.date, event.end_time, "Etc/UTC") |> DateTime.to_iso8601()
+        start: SlotMatcher.nairobi_wall_time_to_utc(event.date, event.start_time) |> DateTime.to_iso8601(),
+        end: SlotMatcher.nairobi_wall_time_to_utc(event.date, event.end_time) |> DateTime.to_iso8601()
       }
     end)
   end
@@ -99,8 +99,8 @@ defmodule Vokazi.Scheduling.MyFreeDays do
     parsed_date = Date.from_iso8601!(date)
 
     %{
-      start: DateTime.new!(parsed_date, Time.from_iso8601!(start_time <> ":00"), "Etc/UTC") |> DateTime.to_iso8601(),
-      end: DateTime.new!(parsed_date, Time.from_iso8601!(end_time <> ":00"), "Etc/UTC") |> DateTime.to_iso8601()
+      start: SlotMatcher.nairobi_wall_time_to_utc(parsed_date, Time.from_iso8601!(start_time <> ":00")) |> DateTime.to_iso8601(),
+      end: SlotMatcher.nairobi_wall_time_to_utc(parsed_date, Time.from_iso8601!(end_time <> ":00")) |> DateTime.to_iso8601()
     }
   end
 end

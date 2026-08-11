@@ -159,11 +159,35 @@ export default function App() {
     }
   };
 
+  // The Google Calendar OAuth redirect (GoogleOAuthController#callback)
+  // lands back on `/` with `match_id` in the query string, but nothing
+  // used to read it - the user came from that match's scheduling flow,
+  // did a full-page navigation to Google and back, and landed on
+  // whatever tab happened to be active, with no way back to where they
+  // were short of manually re-finding the match. This deep-links them
+  // straight back into it, scheduling panel open, the same way a
+  // notification click already does. Left for SchedulingFlow's own
+  // mount effect to read the banner text and clear these params -
+  // it won't mount at all unless this actually opens that match first.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const matchId = params.get("match_id");
+    if (matchId && (params.has("calendar_connected") || params.has("calendar_connect_error"))) {
+      // Every other pendingMatchOpen source (Web Push, the Bell dropdown,
+      // findMatch) carries match_id as a real JS number decoded from
+      // JSON - MatchesList's `selectedId === match.match_id` highlight
+      // check relies on that, so a raw string straight off the query
+      // string would silently fail to highlight the row even though the
+      // chat/schedule panel itself would still open correctly.
+      setPendingMatchOpen({ matchId: Number(matchId), openScheduling: true });
+    }
+  }, []);
+
   // The two ways a Web Push click reaches the app: an already-open tab
   // gets `postMessage`d by service-worker.js's notificationclick
   // handler; a fully-closed app instead opens a fresh tab carrying the
   // link as a query param (same pattern as the Google Calendar OAuth
-  // redirect elsewhere in this app).
+  // redirect above).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const link = params.get("notification_link");
