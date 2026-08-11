@@ -260,6 +260,19 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
     messagesRef.current = messages;
   }, [messages]);
 
+  // The actual cursor position already sent to the server - every
+  // caller below goes through this instead of pushing "mark_read"
+  // directly, so a message list re-render that doesn't change the
+  // latest id (or the visibility-change handler firing right after the
+  // messages effect already caught the same id) never costs a second
+  // round-trip for something the server already knows.
+  const lastMarkedReadIdRef = useRef(null);
+  const markReadUpTo = useCallback((id) => {
+    if (!id || id === lastMarkedReadIdRef.current) return;
+    lastMarkedReadIdRef.current = id;
+    channelRef.current?.push("mark_read", { message_id: id });
+  }, []);
+
   // "Real-time" presence - reports backgrounded/foregrounded the
   // instant the Page Visibility API notices, instead of waiting for a
   // network heartbeat to eventually time the connection out (which
@@ -274,7 +287,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
       } else {
         channelRef.current?.push("set_present", {});
         const latest = messagesRef.current[messagesRef.current.length - 1];
-        if (latest?.id) channelRef.current?.push("mark_read", { message_id: latest.id });
+        markReadUpTo(latest?.id);
       }
     };
 
@@ -285,7 +298,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
     if (document.hidden) handleVisibility();
 
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [connectionState]);
+  }, [connectionState, markReadUpTo]);
 
   // The read-receipt half of the same feature - marks up through the
   // latest message the moment it's actually visible (a fresh arrival
@@ -293,9 +306,8 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
   // when visibility itself changes.
   useEffect(() => {
     if (connectionState !== "joined" || document.hidden || messages.length === 0) return;
-    const latest = messages[messages.length - 1];
-    if (latest?.id) channelRef.current?.push("mark_read", { message_id: latest.id });
-  }, [messages, connectionState]);
+    markReadUpTo(messages[messages.length - 1]?.id);
+  }, [messages, connectionState, markReadUpTo]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();

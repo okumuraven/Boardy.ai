@@ -7,6 +7,17 @@ import BiziApplicationForm from "./BiziApplicationForm";
 import BiziVerificationChat from "./BiziVerificationChat";
 import "./Bizi.css";
 
+// Per Ceez (Kuzana community coordinator), applicants now go through
+// Kuzana's own external quiz instead of our in-app form - our
+// Bizi.Applications backend, the admin review pipeline, and the
+// verification chat (attachments/voice notes/document tagging, phases
+// B/C) are all left fully intact below, just unreachable from the UI:
+// a deliberate PAUSE, not a removal, in case Kuzana wants to adopt our
+// verification system later. Re-enabling it is reverting this one
+// constant/the three call sites below, nothing more.
+const BIZI_QUIZ_URL = "https://kuzana.co/quiz/?source=linkedin&campaign=Quiz";
+const goToQuiz = () => window.open(BIZI_QUIZ_URL, "_blank", "noopener,noreferrer");
+
 // Kuzana's real form rejects everyone but the operating founder outright
 // (kuzana_website.md §9) - shown to non-founders as a better-fitting
 // offer, not a dead end (bizi_flow.md §1).
@@ -132,7 +143,7 @@ export default function BiziSection({ profile, openRequest, onConsumeOpenRequest
     if (view === "loading") return null;
 
     if (view === "rulebook") {
-      return <BiziRulebook onBack={() => setView(applications.length > 0 ? "list" : "entry")} onApply={() => setView("form")} canApply />;
+      return <BiziRulebook onBack={() => setView(applications.length > 0 ? "list" : "entry")} onApply={goToQuiz} canApply />;
     }
 
     if (view === "form") {
@@ -167,7 +178,7 @@ export default function BiziSection({ profile, openRequest, onConsumeOpenRequest
         <ApplicationList
           applications={applications}
           onReadRulebook={() => setView("rulebook")}
-          onApplyAgain={() => setView("form")}
+          onApplyAgain={goToQuiz}
           onOpenChat={(application) => {
             setActiveApplication(application);
             setView("chat");
@@ -176,7 +187,7 @@ export default function BiziSection({ profile, openRequest, onConsumeOpenRequest
       );
     }
 
-    return <EntryCard onReadRulebook={() => setView("rulebook")} onApply={() => setView("form")} />;
+    return <EntryCard onReadRulebook={() => setView("rulebook")} onApply={goToQuiz} />;
   };
 
   const isChatView = view === "chat" && activeApplication;
