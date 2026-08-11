@@ -1,61 +1,26 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
+import { presetDays, bestDefaultWindow, windowToClock, windowLabel, dayRangeLabel, formatDayLabel, dayPhrase } from "./availabilityWindows";
 
-const formatDayLabel = (dateStr) => {
-  const date = new Date(dateStr + "T00:00:00");
-  const isToday = date.toDateString() === new Date().toDateString();
-  const weekday = date.toLocaleDateString([], { weekday: "short" });
-  const md = date.toLocaleDateString([], { month: "short", day: "numeric" });
-  return isToday ? `Today · ${md}` : `${weekday} · ${md}`;
-};
-
-const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-const toClock = (iso) => new Date(iso).toISOString().slice(11, 16);
-
-// Grammatical form for inline use ("is also free {dayPhrase}") - reads
-// naturally next to a time range instead of the bare "Today · Jul 20"
-// label used on the day buttons themselves.
-const dayPhrase = (dateStr) => {
-  const date = new Date(dateStr + "T00:00:00");
-  if (date.toDateString() === new Date().toDateString()) return "today";
-  return date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
-};
-
-// The window to default-select for a day: if the other side already
-// offered a window on this same date, prefer wherever the two windows
-// actually overlap - that's the slice of time most likely to survive
-// the later mutual-intersection step, so defaulting to it saves a
-// round trip instead of picking blind and hoping it overlaps.
-const bestDefaultWindow = (day) => {
-  if (day.other_offered) {
-    const otherStart = new Date(day.other_offered.start).getTime();
-    const otherEnd = new Date(day.other_offered.end).getTime();
-    for (const w of day.windows) {
-      const start = Math.max(new Date(w.start).getTime(), otherStart);
-      const end = Math.min(new Date(w.end).getTime(), otherEnd);
-      if (start < end) return { start: new Date(start).toISOString(), end: new Date(end).toISOString() };
-    }
-  }
-  return day.windows[0];
-};
-
-// Shown once Calendar connects - your REAL free days for the next few
-// days (Vokazi.Scheduling.MyFreeDays), so you explicitly pick which
-// ones to offer instead of the system silently using every free
-// minute. Submits through the same endpoint a manual user uses, so
-// both paths land in the same place. Days the other side has already
-// offered are surfaced and sorted first, so picking one of those is
-// the fast path to an actual mutual match instead of two independently
-// chosen, disjoint sets.
-export default function DayPicker({ matchId, profile, partnerName, onSubmit, busy }) {
-  const [days, setDays] = useState([]);
-  const [loading, setLoading] = useState(true);
+// One simple day/time picker for offering availability for this intro
+// (Vokazi.Scheduling.submit_manual_availability/3), used regardless of
+// whether this side connected Calendar - replaces what used to be two
+// entirely different screens (a real-free-time day picker vs. a typed
+// multi-row date/time form). Calendar-connected users tap from their
+// own REAL free windows (Vokazi.Scheduling.MyFreeDays); everyone else
+// taps from the same fixed set of time blocks. Same screen, same
+// tap-to-select interaction, same submit button either way - only
+// where a day's "windows" come from differs.
+export default function AvailabilityPicker({ matchId, profile, calendarConnected, partnerName, onSubmit, busy }) {
+  const [days, setDays] = useState(calendarConnected ? [] : presetDays());
+  const [loading, setLoading] = useState(calendarConnected);
   const [loadError, setLoadError] = useState("");
   const [needsReauth, setNeedsReauth] = useState(false);
   const [reconnecting, setReconnecting] = useState(false);
-  const [selected, setSelected] = useState({}); // date -> {start, end} (ISO)
+  const [selected, setSelected] = useState({}); // date -> {start, end} ("HH:MM" clock strings)
 
   useEffect(() => {
+    if (!calendarConnected) return;
     apiFetch(`/api/matches/${matchId}/schedule/my_free_days`)
       .then((res) => res.json())
       .then((data) => {
@@ -70,7 +35,7 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
       })
       .catch(() => setLoadError("Couldn't load your calendar."))
       .finally(() => setLoading(false));
-  }, [matchId, profile.id]);
+  }, [matchId, profile.id, calendarConnected]);
 
   const reconnectCalendar = () => {
     setReconnecting(true);
@@ -90,23 +55,18 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
       if (next[day.date]) {
         delete next[day.date];
       } else {
-        const w = bestDefaultWindow(day);
-        next[day.date] = { start: w.start, end: w.end };
+        next[day.date] = windowToClock(bestDefaultWindow(day));
       }
       return next;
     });
   };
 
   const chooseWindow = (date, window) => {
-    setSelected((prev) => ({ ...prev, [date]: { start: window.start, end: window.end } }));
+    setSelected((prev) => ({ ...prev, [date]: windowToClock(window) }));
   };
 
   const submit = () => {
-    const slots = Object.entries(selected).map(([date, w]) => ({
-      date,
-      start: toClock(w.start),
-      end: toClock(w.end),
-    }));
+    const slots = Object.entries(selected).map(([date, w]) => ({ date, start: w.start, end: w.end }));
     onSubmit(slots);
   };
 
@@ -142,8 +102,9 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
     <div className="panel" style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
       <p className="panel-label">Which days work for you?</p>
       <p style={{ fontSize: "0.8rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-        These are your real free times over the next few days. Pick the ones you're offering for this
-        intro - the other side only ever sees what you choose here, never your full calendar.
+        {calendarConnected
+          ? "These are your real free times over the next few days. Pick the ones you're offering for this intro - the other side only ever sees what you choose here, never your full calendar."
+          : "Tap a day, then a time block that works for you - we'll match it against theirs automatically."}
         {anyOverlap && ` Days marked below already work for ${partnerName || "the other person"} too - picking one gets you both to a call fastest.`}
       </p>
 
@@ -158,7 +119,7 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
           <div key={day.date} style={{ opacity: hasFreeTime ? 1 : 0.4 }}>
             {day.other_offered && (
               <p style={{ margin: "0 0 0.3rem 0.1rem", fontSize: "0.72rem", color: "var(--signal)" }}>
-                ✓ {partnerName || "They"} {partnerName ? "is" : "are"} also free {dayPhrase(day.date)}, {formatTime(day.other_offered.start)}–{formatTime(day.other_offered.end)}
+                ✓ {partnerName || "They"} {partnerName ? "is" : "are"} also free {dayPhrase(day.date)}, {windowLabel(day.other_offered)}
               </p>
             )}
             <button
@@ -168,9 +129,7 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
               style={{ width: "100%", justifyContent: "space-between", display: "flex", padding: "0.6rem 0.9rem", fontSize: "0.85rem" }}
             >
               <span>{formatDayLabel(day.date)}</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>
-                {hasFreeTime ? `${formatTime(day.windows[0].start)}–${formatTime(day.windows[day.windows.length - 1].end)}` : "Busy all day"}
-              </span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>{dayRangeLabel(day)}</span>
             </button>
 
             {isSelected && day.windows.length > 1 && (
@@ -180,13 +139,9 @@ export default function DayPicker({ matchId, profile, partnerName, onSubmit, bus
                     key={i}
                     onClick={() => chooseWindow(day.date, w)}
                     className="pref-pill"
-                    style={
-                      selected[day.date]?.start === w.start
-                        ? { borderColor: "var(--brass)", color: "var(--brass)" }
-                        : undefined
-                    }
+                    style={windowToClock(w).start === selected[day.date]?.start ? { borderColor: "var(--brass)", color: "var(--brass)" } : undefined}
                   >
-                    {formatTime(w.start)}–{formatTime(w.end)}
+                    {windowLabel(w)}
                   </button>
                 ))}
               </div>
