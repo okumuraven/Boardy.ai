@@ -66,6 +66,16 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
           </div>
         </div>
       </main>
+
+      {/* Real static pages (frontend/public/*.html), not in-app views -
+          Google's OAuth verification needs these reachable at a plain
+          URL with no sign-in required, and every visitor should be able
+          to find them regardless, not just Google's reviewers. */}
+      <footer style={{ textAlign: 'center', padding: '1.5rem 1rem 2rem', color: 'var(--muted)', fontSize: '0.8rem' }}>
+        By continuing, you agree to our{' '}
+        <a href="/terms.html" style={{ color: 'var(--muted)' }}>Terms &amp; Conditions</a> and{' '}
+        <a href="/privacy.html" style={{ color: 'var(--muted)' }}>Privacy Policy</a>.
+      </footer>
     </div>
   );
 }
