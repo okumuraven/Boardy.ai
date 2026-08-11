@@ -87,7 +87,7 @@ defmodule Vokazi.Scheduling do
     case Vokazi.Scheduling.GoogleOAuth.verify_state(state) do
       {:ok, %{user_id: user_id, match_id: nil}} -> handle_admin_oauth_callback(code, user_id)
       {:ok, %{user_id: user_id, match_id: match_id}} -> handle_match_oauth_callback(code, user_id, match_id)
-      {:error, reason} -> {:error, :unknown, reason}
+      {:error, reason} -> {:error, :unknown, nil, reason}
     end
   end
 
@@ -98,7 +98,7 @@ defmodule Vokazi.Scheduling do
         {:ok, {:admin, user_id}}
 
       {:error, reason} ->
-        {:error, :admin, reason}
+        {:error, :admin, nil, reason}
     end
   end
 
@@ -113,7 +113,11 @@ defmodule Vokazi.Scheduling do
 
       {:ok, {:match, match_id}}
     else
-      {:error, reason} -> {:error, :match, reason}
+      # Carries match_id even on failure so the controller can still
+      # redirect the user back into that specific match's scheduling
+      # flow (with an error banner) instead of just landing on the
+      # generic home screen with no idea what to retry.
+      {:error, reason} -> {:error, :match, match_id, reason}
     end
   end
 
@@ -179,6 +183,7 @@ defmodule Vokazi.Scheduling do
       if slot in schedule.proposed_slots do
         side = side_of(match, user_id)
         {:ok, updated} = update_schedule(schedule, %{selected_slot_field(side) => slot})
+        updated = reconcile_slot_picks(updated)
         EventFinalizer.maybe_run(match, updated)
         {:ok, view(updated, match, user_id)}
       else
@@ -186,6 +191,24 @@ defmodule Vokazi.Scheduling do
       end
     end
   end
+
+  # Both sides pick independently, with no way to see what the other
+  # picked - if they land on different slots, `EventFinalizer.maybe_run/2`
+  # silently no-ops and each side would otherwise be stuck forever on
+  # "Waiting for them to confirm a time too". Clearing both picks here
+  # means the next status poll (every 6s from the frontend) shows the
+  # picker again on both sides instead of a permanent dead end.
+  defp reconcile_slot_picks(%{selected_slot_a: a, selected_slot_b: b} = schedule)
+       when not is_nil(a) and not is_nil(b) do
+    if a["start"] == b["start"] and a["end"] == b["end"] do
+      schedule
+    else
+      {:ok, cleared} = update_schedule(schedule, %{selected_slot_a: nil, selected_slot_b: nil})
+      cleared
+    end
+  end
+
+  defp reconcile_slot_picks(schedule), do: schedule
 
   @doc """
   Nudges the other side with a real chat message. See

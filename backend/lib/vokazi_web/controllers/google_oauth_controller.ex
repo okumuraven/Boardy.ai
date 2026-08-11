@@ -19,13 +19,18 @@ defmodule VokaziWeb.GoogleOAuthController do
       {:ok, {:admin, _user_id}} ->
         redirect(conn, external: "#{frontend_url()}/admin?calendar_connected=1")
 
-      {:error, :admin, reason} ->
+      {:error, :admin, _match_id, reason} ->
         Logger.error("GoogleOAuthController: admin callback failed: #{inspect(reason)}")
         redirect(conn, external: "#{frontend_url()}/admin?calendar_connect_error=1")
 
-      {:error, tag, reason} ->
+      # `match_id` may still be nil (e.g. a state we couldn't verify at
+      # all) - carry it along when we have it so the frontend can reopen
+      # that exact match's scheduling flow to show the error, instead of
+      # dropping the user on the generic home screen with no context.
+      {:error, tag, match_id, reason} ->
         Logger.error("GoogleOAuthController: #{tag} callback failed: #{inspect(reason)}")
-        redirect(conn, external: "#{frontend_url()}/?calendar_connect_error=1")
+        match_param = if match_id, do: "&match_id=#{match_id}", else: ""
+        redirect(conn, external: "#{frontend_url()}/?calendar_connect_error=1#{match_param}")
     end
   end
 

@@ -29,21 +29,37 @@ defmodule Vokazi.Scheduling.EventFinalizer do
     user_a = Repo.get!(User, match.user_a_id)
     user_b = Repo.get!(User, match.user_b_id)
 
-    event_details = %{
-      summary: "Vokazi Intro: #{user_a.full_name} <> #{user_b.full_name}",
-      description: "Introduced via Vokazi's Trust-Gate matchmaking. Say hello!",
-      start_time: start_dt,
-      end_time: end_dt,
-      attendee_emails: Enum.reject([user_a.email, user_b.email], &is_nil/1)
-    }
-
     case first_available_token([{:a, match.user_a_id}, {:b, match.user_b_id}]) do
       :none ->
-        Logger.error("Vokazi.Scheduling.EventFinalizer: neither side has a Calendar token for match #{match.id}")
+        # Neither side connected Calendar (the fully-manual path) - there's
+        # no Google event to create, but the two sides already agreed on a
+        # real time, so still confirm it in-app rather than leaving the
+        # intro stuck in "slot_proposed" forever with only a silent log
+        # line. `google_meet_link` stays nil; the frontend already renders
+        # the confirmed panel without a Join button in that case, and each
+        # side's `contact_preference` (call/video/chat) covers how they
+        # actually connect.
+        finalize_without_calendar(schedule, start_dt, end_dt, match, user_a, user_b)
 
       {side, token} ->
+        event_details = %{
+          summary: "Vokazi Intro: #{user_a.full_name} <> #{user_b.full_name}",
+          description: "Introduced via Vokazi's Trust-Gate matchmaking. Say hello!",
+          start_time: start_dt,
+          end_time: end_dt,
+          attendee_emails: Enum.reject([user_a.email, user_b.email], &is_nil/1)
+        }
+
         finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match, user_a, user_b)
     end
+  end
+
+  defp finalize_without_calendar(schedule, start_dt, end_dt, match, user_a, user_b) do
+    schedule
+    |> IntroSchedule.changeset(%{status: "confirmed", confirmed_start: start_dt, confirmed_end: end_dt})
+    |> Repo.update!()
+
+    notify_confirmed(match, user_a, user_b, start_dt)
   end
 
   defp finalize_with_token(schedule, token, side, event_details, start_dt, end_dt, match, user_a, user_b) do
@@ -72,7 +88,8 @@ defmodule Vokazi.Scheduling.EventFinalizer do
   # in-app, so this also drives the "calendar_slot" email (see
   # Vokazi.Notifications.notify/4's @email_types).
   defp notify_confirmed(match, user_a, user_b, start_dt) do
-    when_str = Calendar.strftime(start_dt, "%B %d at %H:%M UTC")
+    nairobi_dt = DateTime.add(start_dt, 3 * 3600, :second)
+    when_str = Calendar.strftime(nairobi_dt, "%B %d at %H:%M EAT")
     link = Jason.encode!(%{match_id: match.id})
 
     Notifications.notify(user_a.id, "calendar_slot", "📅 Your intro with #{other_name(user_b)} is confirmed for #{when_str}", link)
