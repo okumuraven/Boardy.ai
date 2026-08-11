@@ -13,12 +13,29 @@ const formatElapsed = (since) => {
 // Shown once this side has resolved its own step (Calendar connected,
 // or manual availability submitted) but the other side hasn't yet -
 // makes the wait visible and gives the user something to *do* about it,
-// instead of an unexplained spinner.
-export default function WaitingPanel({ partnerName, since, lastReminderSentAt, reminderCooldownSeconds, onRemind, busy, connectionError }) {
+// instead of an unexplained spinner. `noOverlap` covers the other case
+// that used to look identical to this one: BOTH sides have already
+// submitted, but SlotMatcher found no mutual free time at all - that's
+// not something a reminder can fix, so it gets its own message and a
+// way to actually retry instead of spinning forever.
+export default function WaitingPanel({ partnerName, since, lastReminderSentAt, reminderCooldownSeconds, onRemind, onRetry, busy, connectionError, noOverlap }) {
   const cooldownRemaining = lastReminderSentAt
     ? reminderCooldownSeconds - Math.floor((Date.now() - new Date(lastReminderSentAt).getTime()) / 1000)
     : 0;
   const onCooldown = cooldownRemaining > 0;
+
+  if (noOverlap) {
+    return (
+      <div className="panel" style={{ textAlign: "center", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <p style={{ margin: 0, color: "var(--warn)", fontSize: "0.9rem" }}>
+          You and {partnerName || "the other side"} didn't offer any overlapping times.
+        </p>
+        <button onClick={onRetry} disabled={busy} className="btn-primary" style={{ alignSelf: "center", padding: "0.6rem 1.3rem" }}>
+          Offer different times
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="panel" style={{ textAlign: "center", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>

@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 
+// Always Africa/Nairobi, never the viewer's own device timezone - these
+// slots are real meeting times for a Kenya-based user base, so someone
+// browsing from elsewhere seeing their own local time here would be
+// shown the wrong hour for when the call actually happens.
 const formatSlot = (slot) =>
-  new Date(slot.start).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  `${new Date(slot.start).toLocaleString([], { timeZone: "Africa/Nairobi", weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })} EAT`;
 
 // Mutual candidate times, computed server-side from both sides'
 // availability. Picking one only finalizes the event once the other

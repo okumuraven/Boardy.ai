@@ -284,6 +284,12 @@ defmodule Vokazi.Scheduling do
       # (curated from Calendar, or typed manually) - not merely having
       # decided whether to connect Calendar at all.
       my_resolved: Map.get(schedule, manual_field(side)) != [],
+      # Lets the frontend tell "still waiting on them to submit" apart
+      # from "both submitted, but SlotProposal found zero mutual
+      # overlap" - both looked identical before (an empty proposed_slots
+      # list either way), which meant a genuine no-overlap case just
+      # spun forever with no way to tell the user or let them retry.
+      other_resolved: Map.get(schedule, manual_field(other_side)) != [],
       proposed_slots: schedule.proposed_slots,
       my_selected_slot: Map.get(schedule, selected_slot_field(side)),
       other_confirmed_own_slot: not is_nil(Map.get(schedule, selected_slot_field(other_side))),
