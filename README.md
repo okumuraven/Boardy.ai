@@ -1,5 +1,7 @@
 # Kuzana Connect 🎙️🤝
 
+> 🚀 **Important Note:** Please read our **[Web 2.5 Roadmap & Monetization Strategy](./ROADMAP.md)**! It details our strategy for leveraging our current Web2 growth to transition into a decentralized, Avalanche-powered monetization ecosystem (Trust-Gates, Premium Tiers, and Milestone Escrows).
+
 Kuzana Connect is an AI-driven member-discovery and matchmaking tool built specifically for
 Kuzana's own community of founders, investors, operators, lenders, and consultants.
 
