@@ -213,37 +213,15 @@ as a combination of both options originally on the table, explicitly **without**
 
 ---
 
-## 💰 Phase 5: Monetization — What Kuzana's Own Members Already Asked For
-*Objective: keep a scoped, evidence-backed monetization shape on record for when Kuzana is ready to
-discuss it - not to build it now. This replaces the old, speculative "Vokazi Enterprise"
-AVAX-bounty talent-marketplace vision below (which is dropped, not just paused - see the
-superseded note). But the pause on monetization work itself is still fully in effect: the Kuzana
-representative's 2026-07-18 guidance to deprioritize monetization was reconfirmed directly on
-2026-07-23 - do not start building anything in this phase until told otherwise. Nothing here is
-built, nothing is scheduled; it exists only so the shape (paid direct-contact tier, investor/lender
-deal-flow tier) is ready to discuss whenever Kuzana raises it.*
+## 💰 Phase 5: Monetization & Web 2.5 Infrastructure (Avalanche)
+*Objective: Our immediate focus is on frictionless growth and onboarding. However, our documented plan for the monetization and premium engagement phases relies heavily on integrating Avalanche, transforming Kuzana Connect into a powerful Web 2.5 platform.*
 
-- [ ] **Paid direct-contact tier** — open browsing/discovery of the directory, with direct member
-  contact gated behind a paid tier. This is Kuzana's own stated MVP gate, and Samuel Kagwe asked,
-  unprompted, whether Connect would be free or paid — a real member already assuming a monetized
-  product is coming.
-- [ ] **Investor/lender deal-flow tier** — a higher-touch, filterable view for capital-side members
-  (structured financials, funding stage, traction) as a separate, likely higher-value tier from
-  general membership. The Discovery Report frames this as a potentially larger and more scalable
-  opportunity than membership fees alone.
-- [ ] **Pricing TBD with Kuzana directly** — nothing below (or above) is a committed number; both
-  tiers exist as validated *shapes* of what to charge for, not amounts.
+- [ ] **Avalanche-Powered "Trust-Gate" for Premium Matches** — We have already designed and tested a Web3 "Trust-Gate" (`VokaziMatchStaking.sol`) on the Avalanche Fuji testnet. Users will stake a small amount of AVAX to unlock high-value matches, eliminating ghosting and ensuring commitment.
+- [ ] **Paid Direct-Contact Tier** — Open browsing/discovery of the directory, with direct member contact (and messaging unlocks) facilitated by decentralized payments/subscriptions on Avalanche.
+- [ ] **Investor/Lender Deal-Flow Tier** — A higher-touch, filterable view for capital-side members (structured financials, funding stage, traction). Access to these exclusive deal-flows will be token-gated or managed via Avalanche smart contracts.
+- [ ] **Automated Milestone-Escrow Contracts** — For consultants and service providers who find matches on the platform, we plan to implement `VokaziMilestoneEscrow.sol` to ensure secure, transparent, milestone-based payouts directly on the C-Chain.
 
-<details>
-<summary>Superseded: the old "Vokazi Enterprise" talent-marketplace vision (kept for record only)</summary>
-
-This phase originally proposed an AVAX-bounty talent marketplace (companies staking a recruitment
-bounty + a candidate time-incentive, AI-screened technical interviews, smart-contract revenue
-routing on hire). That vision depended entirely on the Avalanche staking infrastructure that's now
-removed from the product, and was never validated against a real Kuzana use case the way Phase 5
-above is. It's dropped, not rebuilt — Kuzana's own Discovery Report gives us a monetization
-direction with actual member demand behind it instead.
-</details>
+By building on Avalanche, we ensure that as the platform matures and transactions begin occurring between matched parties (e.g., funding, consulting gigs), the value exchange remains decentralized, transparent, and immediate.
 
 ---
 

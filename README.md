@@ -13,12 +13,7 @@ genuinely complementary matches. Both members review the AI's match score and re
 independently accept before anything unlocks — the moment both say yes, a real-time chat room
 opens and a mutual scheduling flow finds a call time that works for both sides.
 
-> **2026-07-22:** an earlier version of this product included an on-chain "Trust-Gate" — a small
-> Avalanche stake required from both sides before a match unlocked. That mechanic was removed
-> entirely at Kuzana's direct request: it introduced more friction (a funded crypto wallet) than
-> the ghosting problem it solved was worth. There is no blockchain, wallet, or staking step
-> anywhere in the current product. See `ROADMAP.md` and `boardy_comparison.md` for the full
-> reasoning.
+> **Note on Web 2.5 Architecture:** While our immediate focus is on frictionless Web2 onboarding and growth, our future monetization and premium engagement phases are designed around **Avalanche**. We have already designed and tested a Web3 "Trust-Gate" on the Avalanche Fuji Testnet, and we plan to reintroduce Avalanche smart contracts for premium direct-contact tiers, investor deal-flow subscriptions, and automated milestone-escrow payouts as the platform matures. See `ROADMAP.md` for our full Web 2.5 monetization strategy.
 
 ## 🚀 Architecture
 - **Frontend**: React + Vite + custom CSS (Kuzana Connect design system — Space Grotesk / Inter,

@@ -113,18 +113,11 @@ validated, and a working system built against it. Building this in-house means r
 discovery process with a general engineering team; we're handing over something already shaped by
 your community's own stated requirements."
 
-**Q: "Didn't you say something earlier about a blockchain trust mechanism? What happened to that?"**
-**A:** "We built it, tested it, and removed it — on Kuzana's own instruction, after a direct
-conversation with your team confirmed it was adding friction a Kenyan SME founder had no reason to
-absorb. The current product has zero crypto, zero wallets, and zero staking. Our edge is match
-quality and community-specific validation, not a financial commitment device."
+**Q: "How does Avalanche fit into your platform if it's currently focused on Web2 onboarding?"**
+**A:** "Our immediate focus is on frictionless growth. However, our Web 2.5 infrastructure is built to leverage Avalanche for our monetization and premium engagement phases. We have previously designed and tested a Web3 'Trust-Gate' on the Avalanche C-Chain where users stake a small amount of AVAX to unlock high-value matches. Moving forward, Avalanche will power our premium direct-contact tiers, investor deal-flow subscriptions, and automated milestone-escrow contracts."
 
-**Q: "What's the monetization plan?"**
-**A:** "Two tiers, both directly requested by your own members in the Discovery Report: a paid tier
-that gates direct contact after free browsing/discovery, and a deal-flow tier for investors and
-lenders who want structured, filterable access to vetted businesses. We haven't fixed pricing —
-that's a conversation to have with Kuzana directly, grounded in what your membership tiers already
-look like, not a number we'd invent unilaterally."
+**Q: "What's the specific monetization plan?"**
+**A:** "Two tiers, both requested by members: a paid tier that gates direct contact after free browsing, and a deal-flow tier for investors wanting filterable access to vetted businesses. We plan to process these premium subscriptions and transactions directly via Avalanche smart contracts, ensuring decentralized, transparent, and immediate value exchange."
 
 **Q: "Are you calling people's phones? Is this expensive to run?"**
 **A:** "No — the voice interview runs entirely in-browser over the user's own data connection via
