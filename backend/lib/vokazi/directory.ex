@@ -48,7 +48,9 @@ defmodule Vokazi.Directory do
         left_join: ip in InvestmentProfile,
         on: ip.user_id == u.id,
         where: u.id != ^user_id,
-        where: not is_nil(p.offer_text) and not is_nil(p.need_text)
+        where: not is_nil(p.offer_text) and not ilike(p.offer_text, "%Not explicitly stated%"),
+        where: not is_nil(p.need_text) and not ilike(p.need_text, "%Not explicitly stated%"),
+        where: p.need_text != "Requires manual parsing. Raw transcript saved."
       )
       |> maybe_filter_search(search)
       |> maybe_filter_field(:industry, industry)

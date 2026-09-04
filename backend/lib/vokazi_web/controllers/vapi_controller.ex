@@ -130,6 +130,11 @@ defmodule VokaziWeb.VapiController do
 
       {:error, reason} ->
         Logger.error("Vapi webhook: Gemini fallback extraction failed for call_id=#{call_id}: #{inspect(reason)}. Saving raw transcript instead.")
+        
+        Task.start(fn ->
+          Vokazi.Admin.SystemAlertMailer.notify_extraction_failure(call_id, reason)
+        end)
+
         {transcript, "Requires manual parsing. Raw transcript saved.", "call"}
     end
   end
