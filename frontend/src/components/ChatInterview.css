@@ -1,44 +1,108 @@
-/* Text-chat interview - deliberately its own small class set (not
-   ChatSystem.css's .msg-bubble/.chat-messages) since that component is
-   the separate member-to-member messaging feature; reuses the same
-   color language (brass for "me", ink-raised for "them") for visual
-   consistency with the rest of the app. */
+/* Text-chat interview - its own small class set (not ChatSystem.css's
+   .msg-bubble/.chat-messages, the separate member-to-member messaging
+   feature), but built on the app's shared primitives (.panel, .field,
+   .btn-primary/.btn-ghost from index.css) rather than reinventing card/
+   input chrome, so it reads as part of the same product instead of a
+   bolted-on widget. */
+.chat-interview-wrap {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.chat-interview-panel {
+  padding: 1.5rem;
+}
+
+.chat-interview-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.chat-interview-header-mark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px;
+}
+
+.chat-interview-header-mark svg { width: 100%; height: 100%; }
+
+.chat-interview-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.15rem;
+  color: var(--paper);
+  margin: 0 0 0.3rem;
+}
+
+.chat-interview-subtitle {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .chat-interview-messages {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  max-height: 420px;
+  gap: 0.75rem;
+  max-height: 400px;
   overflow-y: auto;
-  padding: 1rem;
-  /* --ink, not --ink-raised - matches ChatSystem.css's .chat-messages, so
-     the "them" bubble (--ink-raised) actually reads as a step lighter
-     than its container instead of nearly disappearing into it (the two
-     tokens sit only ~2% apart in light mode). */
-  background: var(--ink);
-  border: 1px solid var(--ink-line);
-  border-radius: 8px;
+  padding: 0.25rem 0.25rem 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
+.chat-interview-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.chat-interview-row.me { justify-content: flex-end; }
+
+.chat-interview-avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.chat-interview-avatar svg { width: 100%; height: 100%; }
+
 .chat-interview-bubble {
-  max-width: 78%;
-  padding: 0.7rem 1rem;
-  border-radius: 12px;
+  max-width: 76%;
+  padding: 0.65rem 0.95rem;
+  border-radius: 14px;
   font-size: 0.95rem;
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.chat-interview-bubble.them {
-  align-self: flex-start;
+.chat-interview-row.them .chat-interview-bubble {
   background: var(--ink-raised);
   border: 1px solid var(--ink-line);
   color: var(--paper);
   border-bottom-left-radius: 4px;
 }
 
-.chat-interview-bubble.me {
-  align-self: flex-end;
+.chat-interview-row.me .chat-interview-bubble {
   background: var(--brass);
   color: var(--ink);
   font-weight: 500;
@@ -49,7 +113,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0.9rem 1.1rem;
+  padding: 0.85rem 1.05rem;
 }
 
 .chat-interview-typing span {
@@ -69,19 +133,32 @@
   30% { transform: translateY(-4px); opacity: 1; }
 }
 
+.chat-interview-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0 0 0.5rem 0.25rem;
+}
+
+.chat-interview-error {
+  color: var(--warn);
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem 0.25rem;
+}
+
+/* .field (index.css) supplies the bordered-input chrome and focus-within
+   treatment already used everywhere else in the app - overridden here
+   only for what a growing multi-line composer genuinely needs. */
 .chat-interview-composer {
-  display: flex;
   align-items: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
 }
 
 .chat-interview-input {
   flex: 1;
   resize: none;
-  background: var(--ink-raised);
-  border: 1px solid var(--ink-line);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
   color: var(--paper);
   font-family: inherit;
   /* 16px, not the bubble's 0.95rem (~15.2px) - anything smaller makes
@@ -89,24 +166,44 @@
      sub-16px input as "the user must want to zoom to read this." */
   font-size: 16px;
   line-height: 1.4;
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0;
   max-height: 140px;
   overflow-y: auto;
   outline: none;
-  transition: border-color 0.2s ease;
 }
 
-.chat-interview-input:focus {
-  border-color: var(--brass-dim);
-}
+.chat-interview-input::placeholder { color: var(--muted); opacity: 0.7; }
 
-.chat-interview-composer .action-btn {
-  width: 46px;
-  height: 46px;
+.chat-interview-send {
   flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: var(--ink-line);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+}
+
+.chat-interview-send.ready {
+  background: var(--brass);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.chat-interview-send.ready:hover { filter: brightness(1.1); }
+
+.chat-interview-finish-row {
+  text-align: center;
+  margin-top: 1rem;
 }
 
 @media (max-width: 768px) {
-  .chat-interview-messages { max-height: 340px; padding: 0.75rem; }
+  .chat-interview-panel { padding: 1.1rem; }
+  .chat-interview-messages { max-height: 320px; }
   .chat-interview-bubble { max-width: 88%; font-size: 0.92rem; padding: 0.6rem 0.85rem; }
 }

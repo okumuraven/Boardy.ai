@@ -28,11 +28,32 @@ defmodule Vokazi.AI do
   Google account/project so each carries its own independent free-tier
   daily quota - falls back to the single `GEMINI_API_KEY` env var if unset,
   so single-key setups (e.g. local dev) are unaffected.
+
+  `opts[:max_attempts]` caps how many keys get tried before giving up -
+  every existing caller omits it and keeps the old "try every configured
+  key" behavior (fine for the async paths: Vapi's webhook, embeddings,
+  matchmaking - nobody's watching a spinner). A live interactive caller
+  (Vokazi.AI.chat_reply/1) passes a small cap instead: with N keys and a
+  10s per-key timeout, an unbounded rotation through several dead/rate-
+  limited keys in a row can take well over a minute (observed 125s in
+  production with 12 keys) while someone stares at a "typing..." bubble -
+  worth failing fast and letting the frontend offer a retry instead.
   """
-  def gemini_post(model_and_action, body) do
+  def gemini_post(model_and_action, body, opts \\ []) do
     case gemini_api_keys() do
-      [] -> {:error, :missing_api_key}
-      keys -> post_with_key_rotation(rotate_from_last_good(keys), model_and_action, body)
+      [] ->
+        {:error, :missing_api_key}
+
+      keys ->
+        keys = rotate_from_last_good(keys)
+
+        keys =
+          case Keyword.get(opts, :max_attempts) do
+            n when is_integer(n) -> Enum.take(keys, n)
+            _ -> keys
+          end
+
+        post_with_key_rotation(keys, model_and_action, body)
     end
   end
 
@@ -337,7 +358,12 @@ defmodule Vokazi.AI do
       generationConfig: %{responseMimeType: "application/json"}
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    # max_attempts: 3, not the default unbounded rotation - this is the
+    # one Gemini call a real person sits watching live (a "typing..."
+    # bubble), unlike every other caller here which runs async. Worth
+    # failing in ~30s worst case and letting the frontend offer a retry
+    # instead of silently working through the whole key list first.
+    case gemini_post("gemini-flash-latest:generateContent", body, max_attempts: 3) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
