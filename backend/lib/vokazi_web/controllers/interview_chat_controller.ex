@@ -27,9 +27,13 @@ defmodule VokaziWeb.InterviewChatController do
 
   @doc """
   Finalizes the chat interview - the chat equivalent of what Vapi's
-  end-of-call webhook does for voice, but run synchronously in the
-  request instead of async-then-poll, since there's no third-party
-  webhook delivery to race here.
+  end-of-call webhook does for voice. Originally ran this synchronously
+  in the request (no third-party webhook to race here, so it seemed
+  simpler) - reverted after production showed a single Gemini call can
+  take 125s+ working through a long key-rotation list, and this path
+  chains up to four of them (extract_summary, extract_tags, two
+  embeddings). Async-then-poll, same as Vapi's webhook, so the HTTP
+  request itself can never hang on that chain.
   """
   def finish(conn, params) do
     history = Map.get(params, "history", [])
@@ -52,26 +56,31 @@ defmodule VokaziWeb.InterviewChatController do
         conn |> put_status(422) |> json(%{error: "No conversation to finish yet"})
 
       true ->
-        {offer, need, contact_preference} =
-          case Vokazi.AI.extract_summary(transcript) do
-            {:ok, o, n, pref} ->
-              {o, n, pref}
+        Task.start(fn ->
+          try do
+            {offer, need, contact_preference} =
+              case Vokazi.AI.extract_summary(transcript) do
+                {:ok, o, n, pref} ->
+                  {o, n, pref}
 
-            {:error, reason} ->
-              Logger.error("InterviewChatController: extract_summary failed for user_id=#{user_id}: #{inspect(reason)}")
-              {transcript, "Requires manual parsing. Raw transcript saved.", "chat"}
+                {:error, reason} ->
+                  Logger.error("InterviewChatController: extract_summary failed for user_id=#{user_id}: #{inspect(reason)}")
+                  {transcript, "Requires manual parsing. Raw transcript saved.", "chat"}
+              end
+
+            Vokazi.Interviews.save_and_process(profile, %{
+              raw_transcript: transcript,
+              offer_text: offer,
+              need_text: need,
+              contact_preference: contact_preference,
+              interview_channel: "chat"
+            })
+          rescue
+            e -> Logger.error("InterviewChatController: finish task failed for user_id=#{user_id}: #{inspect(e)}")
           end
+        end)
 
-        updated_profile =
-          Vokazi.Interviews.save_and_process(profile, %{
-            raw_transcript: transcript,
-            offer_text: offer,
-            need_text: need,
-            contact_preference: contact_preference,
-            interview_channel: "chat"
-          })
-
-        json(conn, %{offer_text: updated_profile.offer_text, need_text: updated_profile.need_text})
+        json(conn, %{status: "processing"})
     end
   end
 end

@@ -4,16 +4,27 @@ import { useState, useEffect } from "react";
 // off the transcript, then two sequential Gemini calls run) rather than
 // a bare spinner - the exact per-stage timing is a reasonable guess, not
 // instrumented from the backend, but the stages and their order are real.
-const STAGES = [
+// Shared by both interview channels (Dashboard's processingRedo covers
+// both voice's call-end and chat's finish) - "Call received"/"Transcribing"
+// only make sense for voice, chat skips straight to extraction since its
+// transcript is already text.
+const VOICE_STAGES = [
   { at: 0, label: "Call received" },
   { at: 4, label: "Transcribing your conversation" },
   { at: 12, label: "Extracting your Offer & Need" },
   { at: 24, label: "Generating your match profile" },
 ];
 
+const CHAT_STAGES = [
+  { at: 0, label: "Reading through your conversation" },
+  { at: 8, label: "Extracting your Offer & Need" },
+  { at: 20, label: "Generating your match profile" },
+];
+
 const EXPECTED_SECONDS = 35;
 
-export default function InterviewProcessing() {
+export default function InterviewProcessing({ channel = "voice" }) {
+  const STAGES = channel === "chat" ? CHAT_STAGES : VOICE_STAGES;
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {

@@ -21,6 +21,11 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
   // chat is a visible, equally-first-class alternative for members who
   // don't like talking to a voice agent.
   const [mode, setMode] = useState("voice");
+  // Set by ChatInterview once there's a real reply to protect - chat's
+  // history only ever lives in that component's own state (no server-side
+  // conversation storage), so switching tabs mid-chat would otherwise
+  // unmount it and silently drop everything typed so far.
+  const [chatInProgress, setChatInProgress] = useState(false);
   const [processingRedo, setProcessingRedo] = useState(false);
   const [syncTimedOut, setSyncTimedOut] = useState(false);
   const [checkingAgain, setCheckingAgain] = useState(false);
@@ -137,13 +142,15 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
       });
   };
 
-  // Chat's finish endpoint already blocks until the whole pipeline (extract
-  // → tags → embeddings → matchmaking) has run, unlike Vapi's webhook - so
-  // there's nothing to poll for, just one refetch to pull the finished
-  // profile into App.jsx's state before swapping to the summary view.
-  const handleChatFinished = async () => {
-    await onInterviewCompleteRef.current?.();
-    setView("summary");
+  // Chat's finish endpoint only acks that the async pipeline (extract →
+  // tags → embeddings → matchmaking) has started - same reasoning as
+  // Vapi's webhook (a single Gemini call can run well past what an HTTP
+  // request should ever block on), so this reuses the exact same
+  // poll-for-sync loop voice's call-end handler uses below.
+  const handleChatFinished = () => {
+    setProcessingRedo(true);
+    setSyncTimedOut(false);
+    pollForSync(profileRef.current?.offer_text || null, 0);
   };
 
   const handleCallClick = async () => {
@@ -201,7 +208,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
   return (
     <div style={{ width: '100%', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       {processingRedo ? (
-        <InterviewProcessing />
+        <InterviewProcessing channel={mode} />
       ) : view === "summary" ? (
         <ProfileSummary
           profile={profile}
@@ -220,7 +227,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
               call is active/connecting or a chat has real turns, same as
               you wouldn't want to lose an in-progress call or conversation
               by fat-fingering the other tab. */}
-          {callStatus === "inactive" && (
+          {callStatus === "inactive" && !chatInProgress && (
             <div className="mode-toggle" style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
               <button
                 onClick={() => setMode("voice")}
@@ -250,6 +257,7 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
               profile={profile}
               onFinished={handleChatFinished}
               onBackToProfile={() => setView("summary")}
+              onProgress={setChatInProgress}
             />
           )}
         </div>
