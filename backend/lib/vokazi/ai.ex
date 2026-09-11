@@ -335,6 +335,8 @@ defmodule Vokazi.AI do
       end)
       |> Enum.join("\n")
 
+    member_turn_count = Enum.count(history, &(&1["role"] == "user"))
+
     prompt = """
       You are the Kuzana Connect onboarding agent, having a real text chat with a new member -
       the same conversation a friendly, curious human interviewer would have, not a form or an
@@ -350,6 +352,18 @@ defmodule Vokazi.AI do
       If this is the very first turn (no Member messages yet), open warmly and ask what they do
       or what brought them to Kuzana Connect - don't ask about "need" before you've heard their
       offer.
+
+      #{if member_turn_count >= 6 do
+      """
+      This member has already replied #{member_turn_count} times - that's a long conversation for
+      a quick interview. Start actively steering toward a close: stop opening new lines of
+      inquiry, and if you have even a rough sense of their offer and need, set "ready_to_finish"
+      to true with your best-effort read rather than continuing to probe for perfect clarity. A
+      slightly rougher summary beats a conversation that never ends.
+      """
+      else
+        ""
+      end}
 
       Conversation so far:
       #{if transcript == "", do: "(nothing yet - this is the opening message)", else: transcript}
