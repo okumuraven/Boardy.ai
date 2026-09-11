@@ -66,39 +66,15 @@ defmodule VokaziWeb.VapiController do
         )
 
       profile ->
-        changeset =
-          Profile.changeset(profile, %{
-            raw_transcript: transcript,
-            offer_text: offer,
-            need_text: need,
-            contact_preference: contact_preference
-          })
+        Vokazi.Interviews.save_and_process(profile, %{
+          raw_transcript: transcript,
+          offer_text: offer,
+          need_text: need,
+          contact_preference: contact_preference,
+          interview_channel: "voice"
+        })
 
-        updated_profile = Repo.update!(changeset)
         Logger.info("Vapi webhook: saved transcript + structured data for user_id=#{profile.user_id} call_id=#{call_id}")
-
-        updated_profile
-        |> save_tags()
-        |> generate_vectors()
-    end
-  end
-
-  # Separate Gemini call from resolve_offer_and_need/3 above - classifies
-  # the offer/need text that's already been saved, regardless of whether
-  # it came from Vapi's own structured extraction or our Gemini fallback,
-  # so this one step covers both paths uniformly. Never blocks profile
-  # save on failure - a bad/slow classification call shouldn't cost
-  # someone their interview.
-  defp save_tags(profile) do
-    case Vokazi.AI.extract_tags(profile.offer_text, profile.need_text) do
-      {:ok, %{looking_for_tags: looking_for, can_help_tags: can_help}} ->
-        profile
-        |> Profile.changeset(%{looking_for_tags: looking_for, can_help_tags: can_help})
-        |> Repo.update!()
-
-      {:error, reason} ->
-        Logger.error("Vapi webhook: tag extraction failed for user_id=#{profile.user_id}: #{inspect(reason)}")
-        profile
     end
   end
 
@@ -166,31 +142,6 @@ defmodule VokaziWeb.VapiController do
     case Integer.parse(id) do
       {int, ""} -> int
       _ -> nil
-    end
-  end
-
-  # Offer and Need are embedded *separately* so offer_vector and need_vector
-  # actually represent different things. Embedding one combined string for
-  # both (the old behavior) meant every profile's two vectors were
-  # identical, which silently turned "does their offer meet my need"
-  # matching into "does their whole profile read like mine" matching.
-  defp generate_vectors(profile) do
-    with {:ok, offer_vector} <- Vokazi.AI.generate_embedding(profile.offer_text),
-         {:ok, need_vector} <- Vokazi.AI.generate_embedding(profile.need_text) do
-      vector_changeset =
-        Profile.changeset(profile, %{
-          offer_vector: offer_vector,
-          need_vector: need_vector
-        })
-
-      updated_profile = Repo.update!(vector_changeset)
-      Logger.info("Vapi webhook: saved pgvector embeddings for user_id=#{profile.user_id}")
-
-      # 🔥 Phase 2: Instant Asynchronous Matchmaking
-      Vokazi.Matchmaking.find_pending_match(updated_profile)
-    else
-      {:error, reason} ->
-        Logger.error("Vapi webhook: failed to generate vector for user_id=#{profile.user_id}: #{inspect(reason)}")
     end
   end
 end

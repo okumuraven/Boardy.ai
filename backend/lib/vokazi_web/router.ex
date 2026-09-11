@@ -57,6 +57,12 @@ defmodule VokaziWeb.Router do
     post "/profiles/sync_real_transcript", ProfileController, :sync_real_transcript
     post "/profiles", ProfileController, :update
 
+    # Text-chat alternative to the Vapi voice interview - same
+    # offer/need extraction pipeline (Vokazi.Interviews), different
+    # front door for members who don't want to talk to a voice agent.
+    post "/interview/chat/message", InterviewChatController, :message
+    post "/interview/chat/finish", InterviewChatController, :finish
+
     # Service/advisory-specific fields (profile.md §4.2) - own endpoint,
     # own changeset, kept out of the general profile update above since
     # rate_types/available_for_hire are meaningless for most roles.

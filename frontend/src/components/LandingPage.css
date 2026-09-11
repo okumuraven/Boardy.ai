@@ -188,6 +188,8 @@
    is also a bare circular icon button elsewhere (VoiceInterview's call
    button) that shouldn't pick up this treatment. */
 .landing-cta {
+  width: auto;
+  white-space: nowrap;
   font-weight: 700;
   font-size: 1.02rem;
   box-shadow: 0 6px 20px var(--brass-dim);

@@ -36,7 +36,7 @@ services:
       dockerfile: Dockerfile
       network: host
     ports:
-      - "5173:5173"
+      - "5174:5173"
     env_file:
       - ./frontend/.env
     volumes:

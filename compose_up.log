@@ -1,0 +1,355 @@
+ Image boardyai-backend Building 
+ Image boardyai-frontend Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.06kB done
+#1 DONE 0.0s
+
+#2 [frontend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 371B done
+#2 DONE 0.0s
+
+#3 [backend internal] load build definition from Dockerfile
+#3 transferring dockerfile: 1.74kB done
+#3 DONE 0.1s
+
+#4 [backend internal] load metadata for docker.io/library/elixir:1.15
+#4 ...
+
+#5 [frontend internal] load metadata for docker.io/library/node:20-alpine
+#5 DONE 5.9s
+
+#4 [backend internal] load metadata for docker.io/library/elixir:1.15
+#4 DONE 5.9s
+
+#6 [frontend internal] load .dockerignore
+#6 transferring context: 373B done
+#6 DONE 0.0s
+
+#7 [backend internal] load .dockerignore
+#7 transferring context: 547B done
+#7 DONE 0.1s
+
+#8 [backend internal] load build context
+#8 DONE 0.0s
+
+#9 [frontend internal] load build context
+#9 ...
+
+#10 [frontend 1/5] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#10 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
+#10 DONE 0.1s
+
+#11 [backend 1/8] FROM docker.io/library/elixir:1.15@sha256:01b4a4fbe72140a11cdb35ef1fc9ce7037ec8ecdd6b1d973b1d2f1ed0116b933
+#11 resolve docker.io/library/elixir:1.15@sha256:01b4a4fbe72140a11cdb35ef1fc9ce7037ec8ecdd6b1d973b1d2f1ed0116b933 0.1s done
+#11 DONE 0.1s
+
+#8 [backend internal] load build context
+#8 transferring context: 2.48MB 0.1s done
+#8 DONE 0.1s
+
+#12 [backend 4/8] COPY vendor/hex-2.5.1.ez vendor/rebar3 /tmp/
+#12 CACHED
+
+#13 [backend 2/8] RUN apt-get update && apt-get install -y build-essential inotify-tools postgresql-client && rm -rf /var/lib/apt/lists/*
+#13 CACHED
+
+#14 [backend 3/8] WORKDIR /app
+#14 CACHED
+
+#15 [backend 5/8] RUN mix archive.install /tmp/hex-2.5.1.ez --force &&     cp /tmp/rebar3 /usr/local/bin/rebar3 && chmod +x /usr/local/bin/rebar3
+#15 CACHED
+
+#9 [frontend internal] load build context
+#9 ...
+
+#16 [backend 6/8] COPY . .
+#16 DONE 0.4s
+
+#17 [backend 7/8] RUN mix deps.get && mix deps.compile
+#17 ...
+
+#9 [frontend internal] load build context
+#9 transferring context: 16.70kB 3.5s done
+#9 DONE 3.7s
+
+#18 [frontend 3/5] COPY package.json package-lock.json ./
+#18 CACHED
+
+#19 [frontend 2/5] WORKDIR /app
+#19 CACHED
+
+#20 [frontend 4/5] RUN npm install
+#20 CACHED
+
+#21 [frontend 5/5] COPY . .
+#21 DONE 0.3s
+
+#17 [backend 7/8] RUN mix deps.get && mix deps.compile
+#17 ...
+
+#22 [frontend] exporting to image
+#22 exporting layers 1.4s done
+#22 exporting manifest sha256:51c9463d2c9f8c0c17a7da3fbab5bf1e464b3266c206e615bccfbe03264b5f2e
+#22 exporting manifest sha256:51c9463d2c9f8c0c17a7da3fbab5bf1e464b3266c206e615bccfbe03264b5f2e 0.2s done
+#22 exporting config sha256:a752bc91901df587acf19d6de58d0a692cf1c5834c0e5173f01963c1cc0948da
+#22 exporting config sha256:a752bc91901df587acf19d6de58d0a692cf1c5834c0e5173f01963c1cc0948da 0.2s done
+#22 exporting attestation manifest sha256:f3e6471dd4a499e0f319bb48318eb61446ff5bd124b63b2b78c2faa5ad11d81c
+#22 exporting attestation manifest sha256:f3e6471dd4a499e0f319bb48318eb61446ff5bd124b63b2b78c2faa5ad11d81c 0.3s done
+#22 exporting manifest list sha256:69f6ca3e3f4251030dba3c75b0a98a7e81e04cfc6dcdeec0b75ff6dba5a992ec
+#22 exporting manifest list sha256:69f6ca3e3f4251030dba3c75b0a98a7e81e04cfc6dcdeec0b75ff6dba5a992ec 0.2s done
+#22 naming to docker.io/library/boardyai-frontend:latest
+#22 naming to docker.io/library/boardyai-frontend:latest 0.0s done
+#22 unpacking to docker.io/library/boardyai-frontend:latest
+#22 unpacking to docker.io/library/boardyai-frontend:latest 0.3s done
+#22 DONE 2.7s
+
+#17 [backend 7/8] RUN mix deps.get && mix deps.compile
+#17 ...
+
+#23 [frontend] resolving provenance for metadata file
+#23 DONE 0.0s
+
+#17 [backend 7/8] RUN mix deps.get && mix deps.compile
+#17 20.50 Resolving Hex dependencies...
+#17 21.13 Resolution completed in 0.159s
+#17 21.18 Unchanged:
+#17 21.18   bandit 1.12.4 VULNERABLE!
+#17 21.22     EEF-CVE-2026-75484 (MEDIUM)
+#17 21.22     aka: CVE-2026-75484, GHSA-x3gh-xhj4-3vq8
+#17 21.22     HTTP/2 header field values containing CR, LF or NUL are passed to the application unvalidated in Bandit
+#17 21.22     https://osv.dev/vulnerability/EEF-CVE-2026-75484
+#17 21.22 
+#17 21.22     EEF-CVE-2026-74836 (HIGH)
+#17 21.22     aka: CVE-2026-74836, GHSA-xj8g-532w-jv94
+#17 21.22     HTTP/2 connection-window starvation pins Plug processes indefinitely in Bandit
+#17 21.22     https://osv.dev/vulnerability/EEF-CVE-2026-74836
+#17 21.22   cors_plug 3.0.3
+#17 21.22   db_connection 2.10.2
+#17 21.22   decimal 3.1.1
+#17 21.23   dns_cluster 0.2.0
+#17 21.23   ecto 3.14.0
+#17 21.23   ecto_sql 3.14.0
+#17 21.23   expo 1.1.1
+#17 21.23   finch 0.23.0
+#17 21.23   gettext 1.0.2
+#17 21.23   hpax 1.0.4
+#17 21.23   jason 1.4.5
+#17 21.23   jose 1.11.12
+#17 21.23   mime 2.0.7
+#17 21.23   mint 1.9.3 VULNERABLE!
+#17 21.23     EEF-CVE-2026-82729 (MEDIUM)
+#17 21.23     aka: CVE-2026-82729, GHSA-7p8w-j234-7qc8
+#17 21.23     Quadratic chunk-size parsing in Mint.HTTP1.Parse allows CPU-exhaustion DoS
+#17 21.23     https://osv.dev/vulnerability/EEF-CVE-2026-82729
+#17 21.23 
+#17 21.23     EEF-CVE-2026-82728 (HIGH)
+#17 21.23     aka: CVE-2026-82728, GHSA-g83f-2j6r-q6m4
+#17 21.23     Unbounded HTTP/1 status-line and chunk-extension buffering in Mint causes memory-exhaustion DoS
+#17 21.23     https://osv.dev/vulnerability/EEF-CVE-2026-82728
+#17 21.23   nimble_options 1.1.1
+#17 21.23   nimble_pool 1.1.0
+#17 21.23   oban 2.23.0
+#17 21.23   pgvector 0.3.1
+#17 21.23   phoenix 1.8.9
+#17 21.23   phoenix_ecto 4.7.0
+#17 21.23   phoenix_pubsub 2.2.0
+#17 21.23   phoenix_template 1.0.4
+#17 21.23   plug 1.20.3
+#17 21.23   plug_crypto 2.2.0
+#17 21.23   postgrex 0.22.3 VULNERABLE!
+#17 21.23     EEF-CVE-2026-66838 (MEDIUM)
+#17 21.23     aka: CVE-2026-66838, GHSA-3gww-3f36-2388
+#17 21.23     SQL injection via the :comment option in Postgrex.stream/4
+#17 21.23     https://osv.dev/vulnerability/EEF-CVE-2026-66838
+#17 21.23   req 0.6.2
+#17 21.23   telemetry 1.4.2
+#17 21.23   telemetry_metrics 1.1.0
+#17 21.23   telemetry_poller 1.3.0
+#17 21.23   thousand_island 1.5.0
+#17 21.23   web_push_elixir 0.8.0
+#17 21.23   websock 0.5.3
+#17 21.23   websock_adapter 0.6.0
+#17 21.26 * Getting phoenix (Hex package)
+#17 64.83 * Getting phoenix_ecto (Hex package)
+#17 70.20 * Getting ecto_sql (Hex package)
+#17 70.22 * Getting postgrex (Hex package)
+#17 70.24 * Getting telemetry_metrics (Hex package)
+#17 70.24 * Getting telemetry_poller (Hex package)
+#17 70.26 * Getting gettext (Hex package)
+#17 70.27 * Getting jason (Hex package)
+#17 70.27 * Getting cors_plug (Hex package)
+#17 70.28 * Getting dns_cluster (Hex package)
+#17 70.28 * Getting bandit (Hex package)
+#17 75.19 * Getting pgvector (Hex package)
+#17 75.20 * Getting req (Hex package)
+#17 75.21 * Getting web_push_elixir (Hex package)
+#17 75.22 * Getting oban (Hex package)
+#17 75.24 * Getting telemetry (Hex package)
+#17 78.01 * Getting jose (Hex package)
+#17 78.04 * Getting finch (Hex package)
+#17 78.05 * Getting mime (Hex package)
+#17 78.06 * Getting mint (Hex package)
+#17 78.07 * Getting nimble_options (Hex package)
+#17 78.07 * Getting nimble_pool (Hex package)
+#17 78.07 * Getting hpax (Hex package)
+#17 78.08 * Getting plug (Hex package)
+#17 78.09 * Getting thousand_island (Hex package)
+#17 78.10 * Getting websock (Hex package)
+#17 78.10 * Getting plug_crypto (Hex package)
+#17 78.11 * Getting expo (Hex package)
+#17 78.11 * Getting db_connection (Hex package)
+#17 78.12 * Getting decimal (Hex package)
+#17 78.12 * Getting ecto (Hex package)
+#17 78.15 * Getting phoenix_pubsub (Hex package)
+#17 78.16 * Getting phoenix_template (Hex package)
+#17 78.16 * Getting websock_adapter (Hex package)
+#17 78.16 Found packages with security advisories, see above for details
+#17 79.25 ==> decimal
+#17 79.25 Compiling 4 files (.ex)
+#17 80.15 Generated decimal app
+#17 80.17 ==> mime
+#17 80.17 Compiling 1 file (.ex)
+#17 80.28 Generated mime app
+#17 81.01 ==> nimble_options
+#17 81.01 Compiling 3 files (.ex)
+#17 81.84 Generated nimble_options app
+#17 82.01 ==> phoenix_template
+#17 82.01 Compiling 4 files (.ex)
+#17 82.20 Generated phoenix_template app
+#17 83.43 ===> Analyzing applications...
+#17 84.00 ===> Compiling telemetry
+#17 84.33 ==> telemetry_metrics
+#17 84.33 Compiling 7 files (.ex)
+#17 84.44 Generated telemetry_metrics app
+#17 84.85 ===> Analyzing applications...
+#17 84.88 ===> Compiling telemetry_poller
+#17 85.08 ==> thousand_island
+#17 85.08 Compiling 18 files (.ex)
+#17 85.65 Generated thousand_island app
+#17 85.73 ==> jason
+#17 85.73 Compiling 10 files (.ex)
+#17 88.20 Generated jason app
+#17 88.23 ==> db_connection
+#17 88.23 Compiling 18 files (.ex)
+#17 89.33 Generated db_connection app
+#17 89.37 ==> expo
+#17 89.37 Compiling 2 files (.erl)
+#17 89.73 Compiling 22 files (.ex)
+#17 90.04 Generated expo app
+#17 90.06 ==> phoenix_pubsub
+#17 90.06 Compiling 12 files (.ex)
+#17 90.74 Generated phoenix_pubsub app
+#17 90.81 ==> plug_crypto
+#17 90.81 Compiling 5 files (.ex)
+#17 90.95 Generated plug_crypto app
+#17 90.97 ==> hpax
+#17 90.97 Compiling 4 files (.ex)
+#17 91.96 Generated hpax app
+#17 92.01 ==> mint
+#17 92.01 Compiling 1 file (.erl)
+#17 92.09 Compiling 19 files (.ex)
+#17 93.37 Generated mint app
+#17 93.39 ==> dns_cluster
+#17 93.39 Compiling 1 file (.ex)
+#17 93.52 Generated dns_cluster app
+#17 93.55 ==> gettext
+#17 93.55 Compiling 18 files (.ex)
+#17 94.93 Generated gettext app
+#17 95.05 ==> jose
+#17 95.05 Compiling 113 files (.erl)
+#17 97.01 Compiling 8 files (.ex)
+#17 97.30 Generated jose app
+#17 97.32 ==> ecto
+#17 97.32 Compiling 56 files (.ex)
+#17 100.5 Generated ecto app
+#17 100.5 ==> plug
+#17 100.5 Compiling 1 file (.erl)
+#17 100.6 Compiling 42 files (.ex)
+#17 106.4 Generated plug app
+#17 106.4 ==> postgrex
+#17 106.4 Compiling 70 files (.ex)
+#17 111.9 Generated postgrex app
+#17 111.9 ==> pgvector
+#17 111.9 Compiling 11 files (.ex)
+#17 112.1 Generated pgvector app
+#17 112.1 ==> ecto_sql
+#17 112.1 Compiling 25 files (.ex)
+#17 113.1 warning: Process.set_label/1 is undefined or private
+#17 113.1   lib/ecto/adapters/sql/sandbox.ex:709: Ecto.Adapters.SQL.Sandbox.set_label/1
+#17 113.1 
+#17 113.1 Generated ecto_sql app
+#17 113.1 ==> oban
+#17 113.1 Compiling 66 files (.ex)
+#17 114.9 Generated oban app
+#17 115.0 ==> nimble_pool
+#17 115.0 Compiling 2 files (.ex)
+#17 115.3 Generated nimble_pool app
+#17 115.3 ==> finch
+#17 115.3 Compiling 23 files (.ex)
+#17 116.0 Generated finch app
+#17 116.1 ==> req
+#17 116.1 Compiling 21 files (.ex)
+#17 117.0 Generated req app
+#17 117.0 warning: the dependency :web_push_elixir requires Elixir "~> 1.18" but you are running on v1.15.8
+#17 117.0 ==> web_push_elixir
+#17 117.0 Compiling 3 files (.ex)
+#17 117.1 Generated web_push_elixir app
+#17 117.1 ==> cors_plug
+#17 117.1 Compiling 1 file (.ex)
+#17 117.1 Generated cors_plug app
+#17 117.2 ==> websock
+#17 117.2 Compiling 1 file (.ex)
+#17 117.2 Generated websock app
+#17 117.2 ==> bandit
+#17 117.2 Compiling 54 files (.ex)
+#17 118.6 Generated bandit app
+#17 118.6 ==> websock_adapter
+#17 118.6 Compiling 4 files (.ex)
+#17 118.6 Generated websock_adapter app
+#17 118.7 ==> phoenix
+#17 118.7 Compiling 74 files (.ex)
+#17 119.3 warning: this check/guard will always yield the same result
+#17 119.3   lib/phoenix/code_reloader/server.ex:245
+#17 119.3 
+#17 119.3 warning: this check/guard will always yield the same result
+#17 119.3   lib/phoenix/code_reloader/server.ex:359
+#17 119.3 
+#17 120.5 Generated phoenix app
+#17 120.5 ==> phoenix_ecto
+#17 120.5 Compiling 7 files (.ex)
+#17 120.7 Generated phoenix_ecto app
+#17 DONE 121.8s
+
+#24 [backend 8/8] RUN mix compile
+#24 1.338 Compiling 148 files (.ex)
+#24 7.406 Generated vokazi app
+#24 DONE 8.8s
+
+#25 [backend] exporting to image
+#25 exporting layers
+#25 exporting layers 1.4s done
+#25 exporting manifest sha256:ce488b6897a98d759b369b2b1006ead6d9f6426d8f452a85baf2bba0a85ccaeb 0.1s done
+#25 exporting config sha256:5f04de22e93b5fe7d1ed2632b35292ba205529dbd4e5a2828b5dc2aa6d82d6be 0.1s done
+#25 exporting attestation manifest sha256:c358addbe3a5db364e6e986866497bafe0642c897a9d1157caac1373131ec64d 0.1s done
+#25 exporting manifest list sha256:cc430332adb1c4c858e952074bae20d820bf430675efbb21f364106760c028b1 0.1s done
+#25 naming to docker.io/library/boardyai-backend:latest done
+#25 unpacking to docker.io/library/boardyai-backend:latest
+#25 unpacking to docker.io/library/boardyai-backend:latest 0.7s done
+#25 DONE 2.6s
+
+#26 [backend] resolving provenance for metadata file
+#26 DONE 0.0s
+ Image boardyai-backend Built 
+ Image boardyai-frontend Built 
+ Container boardyai-backend-1 Recreate 
+ Container boardyai-backend-1 Recreated 
+ Container boardyai-frontend-1 Recreate 
+ Container boardyai-frontend-1 Recreated 
+ Container boardyai-db-1 Starting 
+ Container boardyai-db-1 Started 
+ Container boardyai-db-1 Waiting 
+ Container boardyai-db-1 Healthy 
+ Container boardyai-backend-1 Starting 
+ Container boardyai-backend-1 Started 
+ Container boardyai-frontend-1 Starting 
+ Container boardyai-frontend-1 Started 

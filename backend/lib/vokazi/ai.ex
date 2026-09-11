@@ -278,6 +278,91 @@ defmodule Vokazi.AI do
   defp sanitize_tags(_not_a_list, _allowed), do: []
 
   @doc """
+  The chat-interview equivalent of the live back-and-forth Vapi's voice
+  assistant handles on its own servers - Gemini plays the same "Kuzana
+  Connect" agent, but here we're driving the turn-by-turn loop ourselves.
+
+  `history` is `[%{"role" => "user" | "agent", "text" => "..."}]`, oldest
+  first. There's no server-side conversation state (consistent with
+  keeping only the most-recent transcript, no history table) - the
+  caller resends the full history every turn, and this returns only the
+  agent's next message.
+
+  Returns `{:ok, %{reply: string, ready_to_finish: boolean}}`.
+  `ready_to_finish` is Gemini's own judgment that it now understands
+  enough to write a real offer/need (mirrors what a human interviewer
+  would sense once someone's actually described what they do and what
+  they're stuck on) - the frontend uses it to surface a "Finish
+  interview" affordance without forcing a fixed number of turns.
+  """
+  def chat_reply(history) when is_list(history) do
+    transcript =
+      history
+      |> Enum.map(fn turn ->
+        speaker = if turn["role"] == "agent", do: "Kuzana Connect", else: "Member"
+        "#{speaker}: #{turn["text"]}"
+      end)
+      |> Enum.join("\n")
+
+    prompt = """
+      You are the Kuzana Connect onboarding agent, having a real text chat with a new member -
+      the same conversation a friendly, curious human interviewer would have, not a form or an
+      interrogation. Your goal, exactly like the voice interview: understand what this person
+      offers (their skill, business, or track record) and what they need (their biggest
+      bottleneck right now) well enough to write it back to them in their own words.
+
+      Be warm and genuinely interested. Ask ONE natural follow-up at a time - never a list of
+      questions at once. React to what they actually said instead of reading from a script. If
+      an answer is vague, gently dig for something concrete (a number, a timeframe, a specific
+      example) the way a good interviewer would, rather than moving on with nothing to work with.
+
+      If this is the very first turn (no Member messages yet), open warmly and ask what they do
+      or what brought them to Kuzana Connect - don't ask about "need" before you've heard their
+      offer.
+
+      Conversation so far:
+      #{if transcript == "", do: "(nothing yet - this is the opening message)", else: transcript}
+
+      Return ONLY a valid JSON object with:
+      - "reply": your next message in the conversation - just your side, in plain first-person
+        agent voice, the way you'd actually type it in a chat. Never include "Kuzana Connect:"
+        or any speaker label - just the message text.
+      - "ready_to_finish": boolean, true only once you have a genuinely clear, concrete sense of
+        both their offer AND their need (enough to write a real one-to-two-sentence summary of
+        each) - false while you still only have vague or partial answers.
+      """
+
+    body = %{
+      contents: [%{parts: [%{text: prompt}]}],
+      generationConfig: %{responseMimeType: "application/json"}
+    }
+
+    case gemini_post("gemini-flash-latest:generateContent", body) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        try do
+          text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
+          parsed = Jason.decode!(extract_json_object(text_response))
+
+          reply = parsed["reply"] || "Sorry, could you say that again?"
+          ready_to_finish = parsed["ready_to_finish"] == true
+
+          {:ok, %{reply: reply, ready_to_finish: ready_to_finish}}
+        rescue
+          e ->
+            Logger.error("Vokazi.AI: failed to parse chat_reply JSON: #{inspect(e)}")
+            {:error, "Failed to parse JSON"}
+        end
+
+      {:error, :missing_api_key} = error ->
+        error
+
+      error ->
+        Logger.error("Vokazi.AI: Gemini chat reply failed: #{inspect(error)}")
+        {:error, "Failed to call Gemini"}
+    end
+  end
+
+  @doc """
   Asks Gemini to make the final call on whether a pgvector-shortlisted
   candidate pair is a *genuinely* complementary match, not just a lexically
   similar one. pgvector narrows the field; this is the judgment layer on

@@ -52,6 +52,11 @@ defmodule Vokazi.Accounts.Profile do
     # castable through whatsapp_status_changeset/2 below, set
     # exclusively by Vokazi.Admin.Members.set_whatsapp_status/3.
     field :on_whatsapp, :boolean
+    # Which onboarding path produced offer_text/need_text - "voice" (Vapi)
+    # or "chat" (the text-interview alternative). Nil for any profile
+    # that predates this column. Set by Vokazi.Interviews.save_and_process/2,
+    # never by the member directly.
+    field :interview_channel, :string
 
     belongs_to :user, Vokazi.Accounts.User
 
@@ -91,6 +96,7 @@ defmodule Vokazi.Accounts.Profile do
       :contact_preference,
       :looking_for_tags,
       :can_help_tags,
+      :interview_channel,
       :user_id
     ])
     # phone_number is genuinely optional (ProfileSetup.jsx labels it so) -
@@ -109,6 +115,7 @@ defmodule Vokazi.Accounts.Profile do
     end)
     |> validate_required([:user_id])
     |> validate_inclusion(:contact_preference, ["call", "video", "chat"])
+    |> validate_inclusion(:interview_channel, ["voice", "chat"])
     |> validate_tags(:looking_for_tags, @connection_tags)
     |> validate_tags(:can_help_tags, @connection_tags)
     |> unique_constraint(:user_id)
