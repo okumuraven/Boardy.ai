@@ -1,6 +1,16 @@
 defmodule Vokazi.AI do
   require Logger
 
+  # Pinned, not "gemini-flash-latest" - the alias started hanging/erroring
+  # across every configured key in production on 2026-09-11 (confirmed via
+  # direct testing: the same key that fails against "-latest" returns a
+  # clean 200 in ~3s against this pinned version), while "gemini-2.5-flash"
+  # explicitly 404s as deprecated ("no longer available to new users").
+  # An alias that's supposed to always mean "the current good default"
+  # clearly isn't reliably that right now - a pinned version we've actually
+  # verified beats chasing whatever "-latest" points to next.
+  @flash_model "gemini-3.6-flash"
+
   @doc """
   Posts a request body to a Gemini model endpoint, rotating through every
   configured API key on any non-2xx result - an HTTP error status
@@ -150,7 +160,7 @@ defmodule Vokazi.AI do
   end
 
   @doc """
-  Calls Gemini 1.5 Flash to intelligently extract the user's Offer, Need,
+  Calls Gemini Flash to intelligently extract the user's Offer, Need,
   and preferred way to connect for an intro call from the raw transcript.
   """
   def extract_summary(transcript) do
@@ -194,7 +204,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    case gemini_post("#{@flash_model}:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -266,7 +276,7 @@ defmodule Vokazi.AI do
       generationConfig: %{responseMimeType: "application/json"}
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    case gemini_post("#{@flash_model}:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -363,7 +373,7 @@ defmodule Vokazi.AI do
     # bubble), unlike every other caller here which runs async. Worth
     # failing in ~30s worst case and letting the frontend offer a retry
     # instead of silently working through the whole key list first.
-    case gemini_post("gemini-flash-latest:generateContent", body, max_attempts: 3) do
+    case gemini_post("#{@flash_model}:generateContent", body, max_attempts: 3) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -486,7 +496,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    case gemini_post("#{@flash_model}:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -572,7 +582,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    case gemini_post("#{@flash_model}:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
@@ -650,7 +660,7 @@ defmodule Vokazi.AI do
       }
     }
 
-    case gemini_post("gemini-flash-latest:generateContent", body) do
+    case gemini_post("#{@flash_model}:generateContent", body) do
       {:ok, %Req.Response{status: 200, body: data}} ->
         try do
           text_response = data["candidates"] |> hd() |> get_in(["content", "parts"]) |> hd() |> Map.get("text")
