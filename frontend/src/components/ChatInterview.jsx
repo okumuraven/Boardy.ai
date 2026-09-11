@@ -58,6 +58,15 @@ export default function ChatInterview({ profile, onFinished, onBackToProfile, on
   }, []);
 
   const hasUserReply = history.some((turn) => turn.role === 'user');
+  const userTurnCount = history.filter((turn) => turn.role === 'user').length;
+  // Backstop, not the primary mechanism - the prompt itself (Vokazi.AI.
+  // chat_reply/1) already starts steering the model toward ready_to_finish
+  // once the member has replied 6+ times, but that's the model's own
+  // judgment call and nothing guarantees it complies. This guarantees the
+  // nudge appears regardless, so a conversation can never quietly run
+  // forever waiting on a model that just keeps finding more to ask.
+  const MAX_TURNS_BEFORE_NUDGE = 10;
+  const effectiveReadyToFinish = readyToFinish || userTurnCount >= MAX_TURNS_BEFORE_NUDGE;
 
   // Tells Dashboard once there's real conversation worth protecting, so
   // it can hide the Talk/Chat toggle - switching tabs mid-chat would
@@ -223,8 +232,13 @@ export default function ChatInterview({ profile, onFinished, onBackToProfile, on
 
             {hasUserReply && (
               <div className="chat-interview-finish-row">
-                <button onClick={handleFinish} className={readyToFinish ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}>
-                  {readyToFinish ? "Finish interview →" : "Wrap up early"}
+                {!readyToFinish && userTurnCount >= MAX_TURNS_BEFORE_NUDGE && (
+                  <p className="chat-interview-hint" style={{ marginBottom: '0.5rem' }}>
+                    We've covered a lot of ground - feel free to wrap up whenever works for you.
+                  </p>
+                )}
+                <button onClick={handleFinish} className={effectiveReadyToFinish ? 'btn-primary btn-sm' : 'btn-ghost btn-sm'}>
+                  {effectiveReadyToFinish ? "Finish interview →" : "Wrap up early"}
                 </button>
               </div>
             )}
