@@ -3,6 +3,7 @@ import Vapi from "@vapi-ai/web";
 import InterviewProcessing from "./InterviewProcessing";
 import ProfileSummary from "./ProfileSummary";
 import VoiceInterview from "./VoiceInterview";
+import ChatInterview from "./ChatInterview";
 
 // Owns the voice-interview lifecycle and the offer/need summary - no
 // longer renders its own top nav, since the app shell now provides
@@ -15,6 +16,11 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
   // "summary": show the previous interview's Offer/Need with a Redo option.
   // "interview": show the mic UI (first-time users land here directly).
   const [view, setView] = useState(profile?.offer_text ? "summary" : "interview");
+  // Which interview UI to show while view === "interview" - voice stays
+  // the default (no behavior change for anyone who doesn't touch this),
+  // chat is a visible, equally-first-class alternative for members who
+  // don't like talking to a voice agent.
+  const [mode, setMode] = useState("voice");
   const [processingRedo, setProcessingRedo] = useState(false);
   const [syncTimedOut, setSyncTimedOut] = useState(false);
   const [checkingAgain, setCheckingAgain] = useState(false);
@@ -131,6 +137,15 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
       });
   };
 
+  // Chat's finish endpoint already blocks until the whole pipeline (extract
+  // → tags → embeddings → matchmaking) has run, unlike Vapi's webhook - so
+  // there's nothing to poll for, just one refetch to pull the finished
+  // profile into App.jsx's state before swapping to the summary view.
+  const handleChatFinished = async () => {
+    await onInterviewCompleteRef.current?.();
+    setView("summary");
+  };
+
   const handleCallClick = async () => {
     if (callStatus === "active" || callStatus === "connecting") {
       vapiInstance?.stop();
@@ -199,13 +214,45 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
           findMatchMessage={findMatchMessage}
         />
       ) : (
-        <VoiceInterview
-          profile={profile}
-          callStatus={callStatus}
-          transcript={transcript}
-          onCallClick={handleCallClick}
-          onBackToProfile={() => setView("summary")}
-        />
+        <div>
+          {/* Only meaningful mid-interview, and only before either channel
+              has produced live progress worth losing - hidden once a voice
+              call is active/connecting or a chat has real turns, same as
+              you wouldn't want to lose an in-progress call or conversation
+              by fat-fingering the other tab. */}
+          {callStatus === "inactive" && (
+            <div className="mode-toggle" style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
+              <button
+                onClick={() => setMode("voice")}
+                className={mode === "voice" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
+              >
+                🎙 Talk
+              </button>
+              <button
+                onClick={() => setMode("chat")}
+                className={mode === "chat" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
+              >
+                💬 Chat
+              </button>
+            </div>
+          )}
+
+          {mode === "voice" ? (
+            <VoiceInterview
+              profile={profile}
+              callStatus={callStatus}
+              transcript={transcript}
+              onCallClick={handleCallClick}
+              onBackToProfile={() => setView("summary")}
+            />
+          ) : (
+            <ChatInterview
+              profile={profile}
+              onFinished={handleChatFinished}
+              onBackToProfile={() => setView("summary")}
+            />
+          )}
+        </div>
       )}
     </div>
   );

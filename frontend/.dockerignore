@@ -1,0 +1,11 @@
+# Installed fresh inside the image (see Dockerfile's `npm install`) -
+# shipping the host's own node_modules as context is dead weight, and on
+# a slow uplink turns every build's context transfer into the real
+# bottleneck (same class of bug fixed for backend/.dockerignore).
+node_modules
+dist
+build
+.git
+.env
+*.env
+npm-debug.log*

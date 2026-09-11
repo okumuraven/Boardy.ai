@@ -1,0 +1,112 @@
+/* Text-chat interview - deliberately its own small class set (not
+   ChatSystem.css's .msg-bubble/.chat-messages) since that component is
+   the separate member-to-member messaging feature; reuses the same
+   color language (brass for "me", ink-raised for "them") for visual
+   consistency with the rest of the app. */
+.chat-interview-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 1rem;
+  /* --ink, not --ink-raised - matches ChatSystem.css's .chat-messages, so
+     the "them" bubble (--ink-raised) actually reads as a step lighter
+     than its container instead of nearly disappearing into it (the two
+     tokens sit only ~2% apart in light mode). */
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+}
+
+.chat-interview-bubble {
+  max-width: 78%;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-interview-bubble.them {
+  align-self: flex-start;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  color: var(--paper);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-interview-bubble.me {
+  align-self: flex-end;
+  background: var(--brass);
+  color: var(--ink);
+  font-weight: 500;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-interview-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.9rem 1.1rem;
+}
+
+.chat-interview-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.6;
+  animation: chat-interview-typing-bounce 1.2s infinite ease-in-out;
+}
+
+.chat-interview-typing span:nth-child(2) { animation-delay: 0.15s; }
+.chat-interview-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chat-interview-typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.chat-interview-composer {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.chat-interview-input {
+  flex: 1;
+  resize: none;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  color: var(--paper);
+  font-family: inherit;
+  /* 16px, not the bubble's 0.95rem (~15.2px) - anything smaller makes
+     iOS Safari zoom the whole page in on focus, since it treats a
+     sub-16px input as "the user must want to zoom to read this." */
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 0.75rem 1rem;
+  max-height: 140px;
+  overflow-y: auto;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.chat-interview-input:focus {
+  border-color: var(--brass-dim);
+}
+
+.chat-interview-composer .action-btn {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .chat-interview-messages { max-height: 340px; padding: 0.75rem; }
+  .chat-interview-bubble { max-width: 88%; font-size: 0.92rem; padding: 0.6rem 0.85rem; }
+}
