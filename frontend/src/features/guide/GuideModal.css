@@ -1,0 +1,115 @@
+/* Static feature reference (GuideModal.jsx) - same fixed full-screen
+   overlay + centered card convention as FeedbackWidget.css, scaled up
+   and scrollable since this lists every feature instead of one form. */
+.guide-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.guide-modal {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line-strong);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 560px;
+  max-height: min(720px, 90vh);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  box-sizing: border-box;
+}
+
+.guide-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.guide-modal-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: var(--paper);
+  margin: 0 0 0.3rem;
+}
+
+.guide-modal-subtitle {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.guide-modal-tour-btn {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+}
+
+.guide-modal-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: -0.25rem;
+  padding: 0.25rem;
+}
+
+.guide-modal-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 0.5rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+.guide-modal-row:last-child { border-bottom: none; }
+
+.guide-modal-row-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--ink);
+  border: 1px solid var(--ink-line);
+  color: var(--brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px;
+}
+
+.guide-modal-row-icon svg { width: 100%; height: 100%; }
+
+.guide-modal-row-text { flex: 1; min-width: 0; }
+
+.guide-modal-row-title {
+  font-weight: 600;
+  color: var(--paper);
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem;
+}
+
+.guide-modal-row-desc {
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.guide-modal-row-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: center;
+}
+
+@media (max-width: 480px) {
+  .guide-modal-row { flex-wrap: wrap; }
+  .guide-modal-row-btn { margin-left: calc(34px + 0.85rem); }
+}

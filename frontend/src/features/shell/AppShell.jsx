@@ -3,6 +3,7 @@ import NotificationBell from "../notifications";
 import IncomingCallBanner from "./IncomingCallBanner";
 import "./AppShell.css";
 import FeedbackWidget from "../../components/FeedbackWidget";
+import GuideButton from "../guide/GuideButton";
 import HomeView from "../home/HomeView";
 import DirectoryView from "../directory";
 import MatchesView from "../matches/MatchesView";
@@ -159,6 +160,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
         className={`${className} ${activeTab === key ? activeClassName : ""}`}
         title={label}
         aria-label={label}
+        data-tour={`nav-${key}`}
         onClick={() => setActiveTab(key)}
       >
         <Icon />
@@ -170,6 +172,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     <div className={`app-shell ${activeTab === "matches" && matchChatOpen ? "chat-open" : ""}`}>
       <IncomingCallBanner profile={profile} onAnswer={openMatchChat} />
       <FeedbackWidget />
+      <GuideButton onOpenMoreSheet={() => setMoreOpen(true)} onCloseMoreSheet={() => setMoreOpen(false)} />
 
       <nav className="shell-rail">
         <div className="rail-brand"><KuzanaMark /></div>
@@ -228,6 +231,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
             className={`tab-btn ${activeTab === key ? "active" : ""}`}
             title={label}
             aria-label={label}
+            data-tour={`nav-${key}`}
             onClick={() => setActiveTab(key)}
           >
             {key === "profile" ? (
@@ -258,6 +262,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
               <button
                 key={key}
                 className={`mobile-more-row ${activeTab === key ? "active" : ""}`}
+                data-tour={`nav-${key}`}
                 onClick={() => setActiveTab(key)}
               >
                 <Icon />
