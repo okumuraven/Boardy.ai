@@ -1,0 +1,34 @@
+/* Global floating guide trigger (GuideButton.jsx) - fixed bottom-left,
+   the mirror image of FeedbackWidget's bottom-right .feedback-fab, so
+   the two never overlap. Same "sit above the mobile tab bar" treatment. */
+.guide-fab {
+  position: fixed;
+  left: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 90;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-line-strong);
+  background: var(--ink-raised);
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.guide-fab:hover {
+  color: var(--paper);
+  border-color: var(--brass-dim);
+}
+
+/* Same reasoning as .feedback-fab - an open chat panel takes over this
+   corner too at any screen width once it fills enough of the viewport. */
+.app-shell.chat-open .guide-fab { display: none; }
+
+@media (max-width: 900px) {
+  .guide-fab { bottom: calc(64px + 1.25rem); }
+}
