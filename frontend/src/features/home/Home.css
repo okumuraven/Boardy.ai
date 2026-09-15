@@ -3,15 +3,27 @@
 .home-view { flex: 1; overflow-y: auto; }
 .home-view-content { padding: 2rem 2.25rem 2.5rem; }
 
-/* Some accounts have their name stored/returned in all-caps (Google's
-   own profile data isn't consistent about this) - "text-transform:
-   capitalize" alone wouldn't fix it (it only forces the first letter
-   up, doing nothing to the rest of an already-uppercase word), so this
-   forces lowercase first and re-capitalizes just the first letter -
-   normalizes "OKUMU" to "Okumu" while leaving an already-correct
-   "Okumu" unchanged either way. */
-.home-greeting-name { text-transform: lowercase; }
-.home-greeting-name::first-letter { text-transform: uppercase; }
+/* Name casing is normalized in JS now (titleCase in HomeView.jsx) -
+   the CSS lowercase+::first-letter approach that lived here rendered
+   inconsistently in practice (still showed all-lowercase live).
+
+   The same tri-color bar used in every email footer and the landing
+   page footer - ties this page's own "welcome" moment to the same
+   brand touch used everywhere else instead of being a plain heading
+   with nothing else going on. */
+.home-header-bar {
+  height: 3px;
+  width: 64px;
+  margin-bottom: 1.75rem;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--signal) 0 33.3%, var(--warn) 33.3% 66.6%, var(--brass) 66.6% 100%);
+}
+
+/* Small icon paired with a section's caption, matching the same
+   pattern used on the landing page and whitepaper - a section title is
+   a labeled destination, not just floating text. */
+.home-section-label { display: flex; align-items: center; gap: 0.4rem; }
+.home-section-label svg { width: 13px; height: 13px; }
 
 /* Stats stay a compact fixed width (they're just 2 small tiles - no
    reason to stretch them) while recent activity takes whatever's left,
@@ -36,15 +48,25 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: var(--brass-wash);
-  color: var(--brass);
   margin-bottom: 0.6rem;
 }
 
 .home-stat-icon svg { width: 16px; height: 16px; }
 
-.home-stat-tile .num { font-family: var(--font-mono); font-size: 1.7rem; color: var(--brass); font-variant-numeric: tabular-nums; }
+.home-stat-tile .num { font-family: var(--font-mono); font-size: 1.7rem; font-variant-numeric: tabular-nums; }
 .home-stat-tile .lbl { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; }
+
+/* Both tiles were the exact same pale-blue icon badge - giving each
+   its own brand color (and tinting the number to match) makes them
+   read as two distinct pieces of information at a glance instead of
+   two identically-styled boxes that happen to hold different numbers. */
+.home-stat-tile-brass { border-top: 2px solid var(--brass); }
+.home-stat-tile-brass .home-stat-icon { background: var(--brass-wash); color: var(--brass); }
+.home-stat-tile-brass .num { color: var(--brass); }
+
+.home-stat-tile-signal { border-top: 2px solid var(--signal); }
+.home-stat-tile-signal .home-stat-icon { background: var(--signal-wash); color: #b8860b; }
+.home-stat-tile-signal .num { color: #b8860b; }
 
 /* Was a bare list of rows floating directly on the page background -
    the same "give it a real card" treatment applied everywhere else
@@ -66,6 +88,11 @@
   display: flex; gap: 0.75rem; align-items: flex-start;
   padding: 0.85rem 1.1rem; margin: 0 -1.1rem;
   border-bottom: 1px solid var(--ink-line);
+  /* Color set inline per-row (TYPE_GLYPH.accent) - a colored stripe
+     matching each notification's own icon color, so scanning the list
+     gives an at-a-glance read of what kind of thing happened instead
+     of every row carrying identical neutral weight. */
+  border-left: 3px solid transparent;
   cursor: pointer;
   border-radius: 8px;
   transition: background 0.15s ease;
