@@ -1,4 +1,13 @@
 import Avatar from "../../components/Avatar";
+import { CallHistoryIcon } from "../shell/icons";
+
+// Call-event system messages ("chat_room_channel.ex") are stored with a
+// literal 📞 prefix baked into the message body - fine for a chat bubble,
+// but rendering that same emoji as this list's only "icon" reads as
+// inconsistent next to every other real SVG icon in the app. Stripped
+// here at render time (not touching the stored message) and replaced
+// with the same phone icon Call History already uses.
+const CALL_EVENT_PREFIX = /^📞\s*/;
 
 const timeLabel = (iso) => {
   if (!iso) return "";
@@ -51,6 +60,8 @@ export default function MatchesList({ matches, loading, selectedId, onSelect, hi
         matches.map((match) => {
           const pill = statusPillFor(match);
           const highlighted = isHighlighted(match);
+          const preview = previewFor(match);
+          const isCallEvent = CALL_EVENT_PREFIX.test(preview);
           return (
             <button
               key={match.match_id}
@@ -69,7 +80,10 @@ export default function MatchesList({ matches, loading, selectedId, onSelect, hi
                   <span className="match-name">{match.other_user?.name || "Someone"}</span>
                   <span className="match-time">{timeLabel(match.last_message?.inserted_at || match.updated_at)}</span>
                 </div>
-                <div className="match-preview">{previewFor(match)}</div>
+                <div className="match-preview">
+                  {isCallEvent && <CallHistoryIcon />}
+                  {preview.replace(CALL_EVENT_PREFIX, "")}
+                </div>
                 {pill && <span className={`match-status-pill ${highlighted ? "signal" : ""}`}>{pill}</span>}
               </div>
             </button>

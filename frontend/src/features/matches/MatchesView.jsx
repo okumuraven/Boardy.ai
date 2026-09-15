@@ -4,6 +4,7 @@ import ChatRoomView from "../../components/ChatSystem";
 import "./Matches.css";
 import MatchReview from "../../components/MatchReview";
 import MatchesList from "./MatchesList";
+import { MatchesIcon } from "../shell/icons";
 
 // The Matches tab: a list of every match this user is in (not just the
 // single "next thing to resolve" one), and a stage that renders whichever
@@ -105,7 +106,11 @@ export default function MatchesView({ profile, openRequest, onConsumeOpenRequest
 
       <div className={`match-stage ${!selectedId ? "hide-on-mobile-unselected" : ""}`}>
         {!selectedDetail ? (
-          <div className="match-empty">Pick a match to see the conversation.</div>
+          <div className="match-empty">
+            <div className="match-empty-icon"><MatchesIcon /></div>
+            <h3>Pick a match to see the conversation</h3>
+            <p>Your active introductions are on the left — select one to pick up where you left off.</p>
+          </div>
         ) : selectedDetail.status === "unlocked" ? (
           <ChatRoomView
             roomId={selectedDetail.chat_room_id}
