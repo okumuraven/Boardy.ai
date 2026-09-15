@@ -1,3 +1,75 @@
+/* The interview screen used to be a bare mic circle floating on the raw
+   page background - all whitespace, no framing, nothing to anchor it.
+   Wrapping it in its own card (brass top-border, matching the
+   Offer/Need panel convention) plus a soft radial glow behind the orb
+   gives the "focused activity" screen actual visual weight instead of
+   reading as empty/unfinished. */
+.voice-interview-card {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-top: 2px solid var(--brass);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem 2.5rem;
+  animation: fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.voice-interview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.voice-interview-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.voice-interview-label svg { width: 13px; height: 13px; }
+
+.voice-interview-stage {
+  position: relative;
+  text-align: center;
+  padding-top: 0.5rem;
+}
+
+/* Absolutely positioned with z-index:auto so it paints behind the
+   in-flow content below without needing z-index tricks on every child. */
+.mic-orb-glow {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--brass-wash) 0%, transparent 72%);
+  pointer-events: none;
+}
+
+.voice-interview-content {
+  position: relative;
+}
+
+.voice-interview-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--brass-wash);
+  color: var(--brass);
+  border-radius: 999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+.voice-interview-meta-pill svg { width: 13px; height: 13px; flex-shrink: 0; }
+
+@media (max-width: 480px) {
+  .voice-interview-card { padding: 1rem 1rem 2rem; }
+  .voice-interview-meta-pill { text-align: left; }
+}
+
 /* Voice interview mic button - an ambient "breathing" idle pulse invites
    the tap (the standard voice-AI convention) instead of a static flat
    circle just sitting there. Purely decorative rings, pointer-events
