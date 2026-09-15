@@ -1,0 +1,129 @@
+/* Long-form explainer page (Whitepaper.jsx) - was a plain column of
+   black text with no chrome, no brand presence, and no path back into
+   the product after reading the whole pitch. Own file per this repo's
+   "one CSS file per component" convention (.agents/AGENTS.md). */
+
+.whitepaper-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.whitepaper-body {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+  color: var(--paper);
+  line-height: 1.75;
+}
+
+.whitepaper-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 2.5rem;
+}
+
+.whitepaper-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.9rem, 5vw, 2.5rem);
+  margin-bottom: 0.5rem;
+  text-wrap: balance;
+}
+
+.whitepaper-kicker {
+  font-size: 0.9rem;
+  color: var(--brass);
+  font-weight: 600;
+  margin-bottom: 4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.whitepaper-section {
+  margin-bottom: 3.5rem;
+}
+
+.whitepaper-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ink-line);
+}
+
+/* Cycles through all three brand colors across the five sections
+   (brass/warn/signal/brass/warn) instead of one flat accent repeated
+   five times - gives the page some of the same color variety the
+   landing page's hero now has, without turning a reading page into a
+   billboard. */
+.whitepaper-section-num {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.whitepaper-section:nth-of-type(3n+1) .whitepaper-section-num { background: var(--brass); }
+.whitepaper-section:nth-of-type(3n+2) .whitepaper-section-num { background: var(--warn); }
+.whitepaper-section:nth-of-type(3n+3) .whitepaper-section-num { background: var(--signal); color: #1a1a1a; }
+
+.whitepaper-section-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.whitepaper-section p {
+  margin-bottom: 1.5rem;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.whitepaper-section p:last-child { margin-bottom: 0; }
+
+.whitepaper-section strong { color: var(--paper); }
+
+.whitepaper-closing {
+  text-align: center;
+  padding: 3rem 2rem;
+  margin: 4rem 0 2.5rem;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 12px;
+}
+
+.whitepaper-closing h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.6rem;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.whitepaper-closing p {
+  color: var(--muted);
+  font-size: 0.98rem;
+  margin: 0 0 1.75rem;
+}
+
+@media (max-width: 768px) {
+  .whitepaper-nav { padding: 1.25rem 1.5rem; }
+  .whitepaper-section-heading { gap: 0.75rem; }
+  .whitepaper-section-num { width: 34px; height: 34px; font-size: 0.95rem; }
+  .whitepaper-section-title { font-size: 1.3rem; }
+  .whitepaper-closing { padding: 2rem 1.25rem; margin: 3rem 0 2rem; }
+}

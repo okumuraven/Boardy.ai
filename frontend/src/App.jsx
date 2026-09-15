@@ -229,7 +229,7 @@ export default function App() {
     }
 
     if (!isAuthenticated) {
-      if (showWhitepaper) return <Whitepaper onBack={() => setShowWhitepaper(false)} />;
+      if (showWhitepaper) return <Whitepaper onBack={() => setShowWhitepaper(false)} onJoinClick={() => setShowLogin(true)} />;
       if (showLogin) return <Login onBack={() => setShowLogin(false)} onSignedIn={handleSignedIn} />;
       return <LandingPage
                 onJoinClick={() => setShowLogin(true)}
