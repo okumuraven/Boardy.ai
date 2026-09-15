@@ -48,7 +48,7 @@ const timeAgo = (iso) => {
 // Real stats (no invented numbers) plus the existing voice-interview /
 // profile-summary management panel underneath, now living inside the
 // shell's content area instead of being the entire screen.
-export default function HomeView({ profile, onInterviewComplete, onFindMatch, onOpenProfile }) {
+export default function HomeView({ profile, onInterviewComplete, onFindMatch, onOpenProfile, onOpenActivity }) {
   const [matches, setMatches] = useState([]);
   const [activity, setActivity] = useState([]);
 
@@ -73,7 +73,7 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
     <div className="home-view">
       <div className="home-view-content">
         <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "1.6rem", margin: "0 0 0.25rem" }}>
-          Welcome back, {profile?.name?.split(" ")[0] || "there"}.
+          Welcome back, <span className="home-greeting-name">{profile?.name?.split(" ")[0] || "there"}</span>.
         </h1>
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", margin: "0 0 1.75rem" }}>
           Here's what's moving across your introductions.
@@ -117,7 +117,14 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
                   const glyph = TYPE_GLYPH[n.type] || TYPE_GLYPH.chat_message;
                   const Icon = glyph.Icon;
                   return (
-                    <div className="home-activity-row" key={n.id}>
+                    <div
+                      className="home-activity-row"
+                      key={n.id}
+                      onClick={() => onOpenActivity?.(n)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && onOpenActivity?.(n)}
+                    >
                       <div className="home-activity-glyph" style={{ background: glyph.bg, color: glyph.color }}>
                         <Icon />
                       </div>

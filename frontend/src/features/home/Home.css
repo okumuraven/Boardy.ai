@@ -3,6 +3,16 @@
 .home-view { flex: 1; overflow-y: auto; }
 .home-view-content { padding: 2rem 2.25rem 2.5rem; }
 
+/* Some accounts have their name stored/returned in all-caps (Google's
+   own profile data isn't consistent about this) - "text-transform:
+   capitalize" alone wouldn't fix it (it only forces the first letter
+   up, doing nothing to the rest of an already-uppercase word), so this
+   forces lowercase first and re-capitalizes just the first letter -
+   normalizes "OKUMU" to "Okumu" while leaving an already-correct
+   "Okumu" unchanged either way. */
+.home-greeting-name { text-transform: lowercase; }
+.home-greeting-name::first-letter { text-transform: uppercase; }
+
 /* Stats stay a compact fixed width (they're just 2 small tiles - no
    reason to stretch them) while recent activity takes whatever's left,
    which is most of a wide desktop viewport. Previously these were
@@ -47,7 +57,20 @@
   padding: 0.25rem 1.1rem;
 }
 
-.home-activity-row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.85rem 0; border-bottom: 1px solid var(--ink-line); }
+/* Was a static row with no click handler at all - the same
+   notification data the bell dropdown already makes clickable
+   (jumping straight to the relevant match) did nothing here. Negative
+   margin/matching padding lets the hover fill bleed to the card's own
+   edges instead of leaving a gap at the row's sides. */
+.home-activity-row {
+  display: flex; gap: 0.75rem; align-items: flex-start;
+  padding: 0.85rem 1.1rem; margin: 0 -1.1rem;
+  border-bottom: 1px solid var(--ink-line);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+.home-activity-row:hover { background: var(--ink-line); }
 .home-activity-row:last-child { border-bottom: none; }
 .home-activity-glyph { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .home-activity-glyph svg { width: 15px; height: 15px; }

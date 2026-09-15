@@ -193,6 +193,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
             onInterviewComplete={onInterviewComplete}
             onFindMatch={onFindMatch}
             onOpenProfile={() => setActiveTab("profile")}
+            onOpenActivity={handleBellOpen}
           />
         </div>
         <div className={`shell-view ${activeTab === "directory" ? "active" : ""}`}>
