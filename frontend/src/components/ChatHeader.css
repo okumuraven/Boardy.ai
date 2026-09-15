@@ -36,6 +36,11 @@
   padding: 0.5rem 0.9rem; font-size: 0.85rem; white-space: nowrap;
   border-radius: 999px;
 }
+/* Real SVG, not emoji (📞/👤/📅/⚠️) - renders inconsistently across
+   OS/browsers and was the last spot in the chat screen still using
+   glyphs instead of the app's real icon set. */
+.chat-action-btn .btn-icon { display: inline-flex; flex-shrink: 0; }
+.chat-action-btn .btn-icon svg { width: 15px; height: 15px; }
 /* Header actions read as a bordered form control by default (.btn-ghost's
    box). A real chat header (WhatsApp/Telegram) uses borderless icon
    buttons that only reveal themselves on hover - so drop the box here

@@ -209,8 +209,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.68rem;
 }
+.msg-system-icon svg { width: 11px; height: 11px; }
 .msg-system-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .msg-system-time { flex-shrink: 0; opacity: 0.75; }
 
@@ -244,7 +244,8 @@
      missed/short calls reads as one compact cluster instead of taking
      up as much vertical space as real conversation. */
   .msg-system { font-size: 0.72rem; padding: 0.25rem 0.7rem 0.25rem 0.35rem; margin: 0.1rem 0; }
-  .msg-system-icon { width: 18px; height: 18px; font-size: 0.62rem; }
+  .msg-system-icon { width: 18px; height: 18px; }
+  .msg-system-icon svg { width: 10px; height: 10px; }
 
   /* Swipe (ChatSystem.jsx's touch handlers) is the mobile reply
      affordance - this hover-revealed button has no equivalent "hover"

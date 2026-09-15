@@ -3,6 +3,7 @@ import { fetchTurnCredentials, createPeerConnection, getMicrophoneStream, callSe
 import { playRingback, playRingtone, stopRingtone } from "../lib/ringtone";
 import { useCallSignaling } from "./useCallSignaling";
 import CallOverlay from "./CallOverlay";
+import { CallHistoryIcon } from "../features/shell/icons";
 
 // In-App Calling. Phase 1 (call_feature.md) built the ring/accept/
 // decline/end signaling; this adds the real media - only the caller
@@ -182,7 +183,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
 
       {status === "idle" ? (
         <button onClick={startCall} disabled={!channel} className="chat-action-btn btn-ghost" title="Call">
-          <span className="btn-icon">📞</span>
+          <span className="btn-icon"><CallHistoryIcon /></span>
           <span className="btn-label">Call</span>
         </button>
       ) : (

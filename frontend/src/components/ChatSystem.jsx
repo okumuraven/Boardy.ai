@@ -10,6 +10,52 @@ import FlagConcernPanel from "../features/matches/FlagConcernPanel";
 import CallPanel from "./CallPanel";
 import AttachmentBubble from "./AttachmentBubble";
 import Avatar from "./Avatar";
+import { ProfileIcon, CalendarIcon, CallHistoryIcon } from "../features/shell/icons";
+
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" />
+      <path d="M12 10v4" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+      <path d="M7 7l2.5 2.5M14.5 14.5L17 17M17 7l-2.5 2.5M9.5 14.5L7 17" />
+    </svg>
+  );
+}
+
+function LightbulbIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" />
+    </svg>
+  );
+}
+
+function PaperclipIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "-2px", marginRight: "0.15rem" }}>
+      <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
+    </svg>
+  );
+}
+
+function MicNoteIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "-2px", marginRight: "0.15rem" }}>
+      <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+      <path d="M19 10v2a7 7 0 01-14 0v-2" />
+    </svg>
+  );
+}
 
 const HISTORY_PAGE_SIZE = 50;
 
@@ -482,7 +528,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 className={`chat-action-btn ${panelView === "profile" ? "btn-primary" : "btn-ghost"}`}
                 title={panelView === "profile" ? "Hide profile" : `View ${partnerName || "profile"}`}
               >
-                <span className="btn-icon">👤</span>
+                <span className="btn-icon"><ProfileIcon /></span>
                 <span className="btn-label">{panelView === "profile" ? "Hide Profile" : `View ${partnerName || "Profile"}`}</span>
               </button>
               <button
@@ -490,7 +536,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 className={`chat-action-btn ${panelView === "schedule" ? "btn-primary" : "btn-ghost"}`}
                 title={panelView === "schedule" ? "Hide schedule" : "Schedule intro call"}
               >
-                <span className="btn-icon">📅</span>
+                <span className="btn-icon"><CalendarIcon /></span>
                 <span className="btn-label">{panelView === "schedule" ? "Hide Schedule" : "Schedule Intro Call"}</span>
               </button>
               {pairingKind === "buddy" && (
@@ -499,7 +545,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                   className={`chat-action-btn ${panelView === "concern" ? "btn-primary" : "btn-ghost"}`}
                   title={panelView === "concern" ? "Close" : "Flag a concern to the Kuzana team"}
                 >
-                  <span className="btn-icon">⚠️</span>
+                  <span className="btn-icon"><AlertIcon /></span>
                   <span className="btn-label">{panelView === "concern" ? "Close" : "Flag a Concern"}</span>
                 </button>
               )}
@@ -517,8 +563,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
               {matchId && introMessage ? (
                 <>
                   <div style={{ background: 'var(--brass-wash)', border: '1px solid var(--ink-line-strong)', borderRadius: '14px', padding: '1rem 1.1rem', textAlign: 'left' }}>
-                    <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--brass)', margin: '0 0 0.5rem' }}>
-                      ✨ Introduced by Kuzana AI
+                    <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--brass)', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span style={{ display: 'inline-flex', width: '12px', height: '12px' }}><SparkleIcon /></span>
+                      Introduced by Kuzana AI
                     </p>
                     <p style={{ fontSize: '0.9rem', color: 'var(--paper)', margin: 0, lineHeight: 1.5 }}>{introMessage}</p>
                   </div>
@@ -554,7 +601,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 if (msg.content?.startsWith("📞")) {
                   return (
                     <div key={msg.id} className="msg-system">
-                      <span className="msg-system-icon">📞</span>
+                      <span className="msg-system-icon"><CallHistoryIcon /></span>
                       <span className="msg-system-text">{msg.content.replace("📞", "").trim()}</span>
                       <span className="msg-system-time">{time}</span>
                     </div>
@@ -595,7 +642,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                         <span className="msg-reply-quote-sender">
                           {msg.reply_to.sender_id === profile.id ? "You" : (msg.reply_to.sender_name || partnerName)}
                         </span>
-                        <span className="msg-reply-quote-text">{msg.reply_to.content || "📎 Attachment"}</span>
+                        <span className="msg-reply-quote-text">{msg.reply_to.content || <><PaperclipIcon />Attachment</>}</span>
                       </button>
                     )}
                     {msg.attachment && <AttachmentBubble attachment={msg.attachment} />}
@@ -628,7 +675,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
           <div className="chat-reply-preview">
             <div className="chat-reply-preview-body">
               <span className="chat-reply-preview-sender">{replyingTo.sender_name}</span>
-              <span className="chat-reply-preview-text">{replyingTo.content || "📎 Attachment"}</span>
+              <span className="chat-reply-preview-text">{replyingTo.content || <><PaperclipIcon />Attachment</>}</span>
             </div>
             <button type="button" className="chat-reply-preview-cancel" onClick={() => setReplyingTo(null)} aria-label="Cancel reply">
               ×
@@ -652,7 +699,9 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
               <span className="chat-pending-attachment-name">{uploadError}</span>
             ) : pendingAttachment ? (
               <span className="chat-pending-attachment-name">
-                {pendingAttachment.content_type?.startsWith("audio/") ? "🎤 Voice note" : `📎 ${pendingAttachment.filename}`} · {formatBytes(pendingAttachment.byte_size)}
+                {pendingAttachment.content_type?.startsWith("audio/")
+                  ? <><MicNoteIcon />Voice note</>
+                  : <><PaperclipIcon />{pendingAttachment.filename}</>} · {formatBytes(pendingAttachment.byte_size)}
               </span>
             ) : null}
             {isRecording ? (
@@ -696,7 +745,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
                 title="Suggest something to say"
                 aria-label="Suggest something to say"
               >
-                {suggesting ? "···" : "💡"}
+                {suggesting ? "···" : <LightbulbIcon />}
               </button>
             )}
             <button
