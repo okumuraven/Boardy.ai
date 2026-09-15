@@ -1,3 +1,77 @@
+/* Decorative color field behind the hero (nav + .onboarding-container
+   sit at z-index 50/10, well above this) - three large, softly blurred
+   circles in the brand's own three arc colors, filling the hero's
+   naturally spacious layout with real color instead of leaving it flat
+   cream. Confined to roughly one viewport tall so it never bleeds into
+   the below-the-fold sections, which already have their own --ink
+   rhythm. */
+.landing-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  min-height: 640px;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.landing-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.22;
+}
+
+.landing-blob-brass {
+  width: 480px;
+  height: 480px;
+  background: var(--brass);
+  top: -120px;
+  right: -80px;
+}
+
+.landing-blob-signal {
+  width: 360px;
+  height: 360px;
+  background: var(--signal);
+  bottom: -60px;
+  right: 8%;
+}
+
+.landing-blob-warn {
+  width: 300px;
+  height: 300px;
+  background: var(--warn);
+  top: 40%;
+  left: -100px;
+  opacity: 0.15;
+}
+
+@media (max-width: 900px) {
+  .landing-blob { filter: blur(60px); }
+  .landing-blob-brass { width: 320px; height: 320px; }
+  .landing-blob-signal { width: 240px; height: 240px; }
+  .landing-blob-warn { width: 200px; height: 200px; }
+}
+
+/* Gives the secondary nav action real weight (a bordered pill) instead
+   of bare muted text floating alone in the header - .nav-link itself
+   stays untouched since Login/ChatSystem/Whitepaper share that base
+   class and shouldn't pick up landing-specific chrome. */
+.landing-nav-link {
+  border: 1px solid var(--ink-line-strong);
+  border-radius: 100px;
+  padding: 0.55rem 1.25rem;
+  background: var(--ink-raised);
+}
+
+.landing-nav-link:hover {
+  border-color: var(--brass-dim);
+  background: var(--brass-wash);
+}
+
 /* Onboarding/marketing composition - asymmetric golden-ratio split
    (61.8% content / 38.2% visual), left-anchored text, per the brand
    guide's own example layouts (not a centered hero). The visual column
@@ -19,6 +93,11 @@
   padding: 9rem 4rem 3rem;
   max-width: 1200px;
   margin: 0 auto;
+  /* position: relative is what actually makes z-index apply here (it's
+     a no-op on a static element) - without it, LandingPage.jsx's newer
+     absolutely-positioned .landing-hero-bg would paint OVER this
+     content instead of behind it, regardless of the z-index number. */
+  position: relative;
   z-index: 10;
   min-height: 100vh;
 }
@@ -43,16 +122,28 @@
   gap: 2.5rem;
 }
 
-/* Gives the bare mark a bit of presence (a soft badge, its own subtle
-   glow) instead of it floating loose against the page background -
-   same brand mark, just staged like a real hero element. */
+/* A real halo, not a flat single-color shadow - the same three arc
+   colors the mark itself is drawn in, swept around the ring instead of
+   confined to a single blue glow. This is the one place on the page
+   that visibly uses all three brand colors together, not just Focus
+   Blue - the guide's own "gold/coral/blue in proportion" system,
+   applied at hero scale instead of only in the footer bar. */
+.hero-mark-badge-ring {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, var(--brass), var(--warn), var(--signal), var(--brass));
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-mark-badge {
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background: var(--ink-raised);
-  border: 1px solid var(--ink-line);
-  box-shadow: 0 0 0 12px var(--brass-wash);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,11 +176,14 @@
   z-index: 2;
 }
 
+/* Gold, not a neutral dark tone - the cluster's whole point is showing
+   two real stats staged together, and giving the second one its own
+   brand color (instead of both reading as "the same blue box twice")
+   is what makes it read as a real pair rather than a duplicate. */
 .hero-stat-callout-secondary {
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid var(--ink-line-strong);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  background: var(--signal);
+  color: #1a1a1a;
+  box-shadow: 0 8px 24px var(--signal-wash);
   position: relative;
   z-index: 1;
   margin: -1.5rem 0 0 3rem;
@@ -111,7 +205,8 @@
 
 @media (max-width: 900px) {
   .hero-visual-stack { gap: 1.5rem; }
-  .hero-mark-badge { width: 76px; height: 76px; padding: 18px; box-shadow: 0 0 0 8px var(--brass-wash); }
+  .hero-mark-badge-ring { width: 88px; height: 88px; padding: 4px; }
+  .hero-mark-badge { padding: 18px; }
   .hero-stat-cluster { max-width: 220px; margin: 0 auto; }
   .hero-stat-callout { padding: 1.25rem 1.75rem; min-width: 150px; }
   .hero-stat-callout .num { font-size: 2rem; }

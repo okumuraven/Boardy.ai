@@ -63,13 +63,24 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
   return (
     <div className="landing-page" style={{ width: '100%', minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
 
+      {/* Purely decorative, behind everything (z-index/pointer-events in
+          CSS) - fills the large flat expanses around the hero with the
+          brand's own three arc colors instead of leaving them empty,
+          echoing the KuzanaMark's own shape rather than adding an
+          unrelated graphic. */}
+      <div className="landing-hero-bg" aria-hidden="true">
+        <div className="landing-blob landing-blob-brass"></div>
+        <div className="landing-blob landing-blob-signal"></div>
+        <div className="landing-blob landing-blob-warn"></div>
+      </div>
+
       <nav className="nav-bar">
         <div className="brand-logo-container">
           <div className="brand-mark"><KuzanaMark /></div>
           <span className="brand-text">Kuzana Connect</span>
         </div>
         <div>
-          <button onClick={onWhitepaperClick} className="nav-link">
+          <button onClick={onWhitepaperClick} className="nav-link landing-nav-link">
             How It Works
           </button>
         </div>
@@ -118,7 +129,9 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
 
         <div className="onboarding-visual">
           <div className="hero-visual-stack">
-            <div className="hero-mark-badge"><KuzanaMark /></div>
+            <div className="hero-mark-badge-ring">
+              <div className="hero-mark-badge"><KuzanaMark /></div>
+            </div>
             <div className="hero-stat-cluster">
               <div className="hero-stat-callout hero-stat-callout-primary">
                 <div className="num">2×</div>
