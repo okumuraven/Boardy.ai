@@ -46,7 +46,20 @@
 
 .whitepaper-section {
   margin-bottom: 3.5rem;
+  padding-left: 1.5rem;
+  border-left: 3px solid transparent;
 }
+
+/* Same three-color cycle as the number badge, carried down the left
+   edge of the whole section - a continuous thread of color as you
+   scroll, instead of the color only showing up in one small circle
+   then vanishing back into gray text. */
+.whitepaper-section:nth-of-type(3n+1) { border-left-color: var(--brass-dim); }
+.whitepaper-section:nth-of-type(3n+2) { border-left-color: var(--warn-dim); }
+/* No --signal-dim token exists (only --signal-wash at 18% alpha, too
+   faint next to brass-dim/warn-dim's ~35-40%) - matching alpha here by
+   hand keeps the three border colors visually equal in weight. */
+.whitepaper-section:nth-of-type(3n+3) { border-left-color: rgba(253, 196, 105, 0.4); }
 
 .whitepaper-section-heading {
   display: flex;
@@ -97,6 +110,84 @@
 
 .whitepaper-section strong { color: var(--paper); }
 
+/* Pulls the two real stats out of the paragraph text into their own
+   visual moment - the same numbers, just no longer buried as bold
+   words mid-sentence. */
+.whitepaper-stat-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.whitepaper-stat {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+}
+
+.whitepaper-stat-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.25rem;
+  color: var(--brass);
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.whitepaper-stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* The three ways in, shown as real cards with real icons instead of
+   three bold words buried inside a paragraph. */
+.whitepaper-ways-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.whitepaper-way {
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.whitepaper-way-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.whitepaper-way:nth-child(1) .whitepaper-way-icon { background: var(--brass-wash); color: var(--brass); }
+.whitepaper-way:nth-child(2) .whitepaper-way-icon { background: var(--warn-wash); color: var(--warn); }
+.whitepaper-way:nth-child(3) .whitepaper-way-icon { background: var(--signal-wash); color: #b8860b; }
+
+.whitepaper-way-icon svg { width: 20px; height: 20px; }
+
+.whitepaper-way-title {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--paper);
+  margin: 0 0 0.5rem;
+}
+
+.whitepaper-way-body {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+
 .whitepaper-closing {
   text-align: center;
   padding: 3rem 2rem;
@@ -122,8 +213,11 @@
 
 @media (max-width: 768px) {
   .whitepaper-nav { padding: 1.25rem 1.5rem; }
+  .whitepaper-section { padding-left: 1rem; }
   .whitepaper-section-heading { gap: 0.75rem; }
   .whitepaper-section-num { width: 34px; height: 34px; font-size: 0.95rem; }
   .whitepaper-section-title { font-size: 1.3rem; }
+  .whitepaper-stat-strip { grid-template-columns: 1fr; }
+  .whitepaper-ways-grid { grid-template-columns: 1fr; }
   .whitepaper-closing { padding: 2rem 1.25rem; margin: 3rem 0 2rem; }
 }

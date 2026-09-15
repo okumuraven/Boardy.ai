@@ -1,5 +1,34 @@
 import KuzanaMark from './KuzanaMark';
+import { DirectoryIcon } from '../features/shell/icons';
 import './Whitepaper.css';
+
+// Icons matching the exact style already used elsewhere (VoiceInterview's
+// mic icon, MatchesIcon's chat bubble) - shown as real visual cards
+// instead of the three options being buried as bold words inside a
+// paragraph.
+function MicIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="22"></line>
+    </svg>
+  );
+}
+
+function ChatBubbleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5h16v11H9l-4 4v-4H4z" />
+    </svg>
+  );
+}
+
+const WAYS_IN = [
+  { Icon: DirectoryIcon, title: 'Search the Directory', body: 'Filter by industry, role, and what people need or offer - no interview required, no commitment.' },
+  { Icon: MicIcon, title: 'Talk it through', body: 'A 3-5 minute voice conversation: what you\'re building, what you need, what you offer.' },
+  { Icon: ChatBubbleIcon, title: 'Type it out', body: "Not a voice person? A text chat asks the same questions - same result, your choice." },
+];
 
 const SECTIONS = [
   {
@@ -9,8 +38,20 @@ const SECTIONS = [
         <p>
           Right now, the way most Kuzana members find the right person is: post in the WhatsApp group, and hope. Or notice someone else's post and hope they answer a DM. It works sometimes - it depends entirely on timing, and on being online at the right moment.
         </p>
+
+        <div className="whitepaper-stat-strip">
+          <div className="whitepaper-stat">
+            <div className="whitepaper-stat-num">2×</div>
+            <div className="whitepaper-stat-label">Revenue growth in 12 weeks across Kuzana businesses</div>
+          </div>
+          <div className="whitepaper-stat">
+            <div className="whitepaper-stat-num">1/7</div>
+            <div className="whitepaper-stat-label">Applicants who actually get accepted into a batch</div>
+          </div>
+        </div>
+
         <p>
-          That's not a Kuzana problem - the network itself is real. Kuzana businesses have <strong>2x'd revenue in 12 weeks</strong>, and only about <strong>1 in 7 applicants gets accepted</strong> into a batch. The opportunity is already here. Kuzana Connect's only job is to make it findable - the accountant who's solved your exact cash-flow problem, the lender who actually funds businesses at your revenue stage, the advisor who's dealt with KRA before - without waiting on a lucky WhatsApp post.
+          That's not a Kuzana problem - the network itself is real. The opportunity is already here. Kuzana Connect's only job is to make it findable - the accountant who's solved your exact cash-flow problem, the lender who actually funds businesses at your revenue stage, the advisor who's dealt with KRA before - without waiting on a lucky WhatsApp post.
         </p>
       </>
     ),
@@ -18,14 +59,15 @@ const SECTIONS = [
   {
     title: 'Three ways in: search, talk, or type',
     body: (
-      <>
-        <p>
-          Some people already know exactly who they're looking for. The <strong>Directory</strong> lets you search and filter by industry, role, and what people need or offer - no interview required, no commitment.
-        </p>
-        <p>
-          If you'd rather just talk it through, a <strong>3-5 minute voice conversation</strong> does the same job: tell Kuzana Connect what you're building, what you need, and what you can offer. Not a voice person? A <strong>text chat</strong> asks the same questions - same result, your choice.
-        </p>
-      </>
+      <div className="whitepaper-ways-grid">
+        {WAYS_IN.map(({ Icon, title, body }) => (
+          <div key={title} className="whitepaper-way">
+            <span className="whitepaper-way-icon"><Icon /></span>
+            <h3 className="whitepaper-way-title">{title}</h3>
+            <p className="whitepaper-way-body">{body}</p>
+          </div>
+        ))}
+      </div>
     ),
   },
   {
