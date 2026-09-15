@@ -90,42 +90,55 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
           </div>
         )}
 
-        <div className="home-stats-row">
-          <div className="home-stat-tile">
-            <div className="home-stat-icon"><DirectoryIcon /></div>
-            <div className="num">{matches.length}</div>
-            <div className="lbl">Active introductions</div>
+        {/* Stats + recent activity side by side on wide screens - the
+            stats row is deliberately compact (2 small tiles), and on a
+            wide desktop viewport that left the entire right side of the
+            page empty with activity dumped full-width below instead.
+            Stacks back to a single column on narrower screens. */}
+        <div className="home-top-row">
+          <div className="home-stats-row">
+            <div className="home-stat-tile">
+              <div className="home-stat-icon"><DirectoryIcon /></div>
+              <div className="num">{matches.length}</div>
+              <div className="lbl">Active introductions</div>
+            </div>
+            <div className="home-stat-tile">
+              <div className="home-stat-icon"><ClockIcon /></div>
+              <div className="num">{awaitingResponse}</div>
+              <div className="lbl">Awaiting your response</div>
+            </div>
           </div>
-          <div className="home-stat-tile">
-            <div className="home-stat-icon"><ClockIcon /></div>
-            <div className="num">{awaitingResponse}</div>
-            <div className="lbl">Awaiting your response</div>
-          </div>
+
+          {activity.length > 0 && (
+            <div className="home-activity-col">
+              <p className="panel-label" style={{ marginBottom: "0.5rem" }}>Recent activity</p>
+              <div className="home-activity-card">
+                {activity.map((n) => {
+                  const glyph = TYPE_GLYPH[n.type] || TYPE_GLYPH.chat_message;
+                  const Icon = glyph.Icon;
+                  return (
+                    <div className="home-activity-row" key={n.id}>
+                      <div className="home-activity-glyph" style={{ background: glyph.bg, color: glyph.color }}>
+                        <Icon />
+                      </div>
+                      <div>
+                        <div className="home-activity-text">{n.body}</div>
+                        <div className="home-activity-time">{timeAgo(n.inserted_at)}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {activity.length > 0 && (
-          <>
-            <p className="panel-label" style={{ marginBottom: "0.5rem" }}>Recent activity</p>
-            <div className="home-activity-card">
-              {activity.map((n) => {
-                const glyph = TYPE_GLYPH[n.type] || TYPE_GLYPH.chat_message;
-                const Icon = glyph.Icon;
-                return (
-                  <div className="home-activity-row" key={n.id}>
-                    <div className="home-activity-glyph" style={{ background: glyph.bg, color: glyph.color }}>
-                      <Icon />
-                    </div>
-                    <div>
-                      <div className="home-activity-text">{n.body}</div>
-                      <div className="home-activity-time">{timeAgo(n.inserted_at)}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
+        {/* Not wrapped in an outer card like the sections above - every
+            state Dashboard can render (ProfileSummary's Your Offer/Need
+            panels, VoiceInterview, ChatInterview's own .panel) already
+            provides its own ink-raised card. An identical-colored outer
+            wrapper here would nest a card inside an indistinguishable
+            card instead of adding real structure. */}
         <p className="panel-label" style={{ marginBottom: "1rem", paddingTop: "0.5rem", borderTop: "1px solid var(--ink-line)" }}>
           Your voice interview
         </p>
