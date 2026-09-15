@@ -65,7 +65,17 @@ defmodule VokaziWeb.InterviewChatController do
 
                 {:error, reason} ->
                   Logger.error("InterviewChatController: extract_summary failed for user_id=#{user_id}: #{inspect(reason)}")
-                  {transcript, "Requires manual parsing. Raw transcript saved.", "chat"}
+                  # offer_text used to be the *entire unbounded* raw
+                  # transcript here - the actual bug reported live
+                  # (an admin found a member's "Your Offer" was the full
+                  # raw back-and-forth conversation, unsummarized). Bounded
+                  # now, same pattern as the voice channel's own fallback
+                  # (ProfileController.sync_real_transcript) - a fallback
+                  # should contain the damage from a failed summarization,
+                  # not dump raw conversation into a field members see as
+                  # "Your Offer" and that also gets embedded for matching.
+                  fallback = "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "..."
+                  {fallback, "Requires manual parsing. Raw transcript saved.", "chat"}
               end
 
             Vokazi.Interviews.save_and_process(profile, %{

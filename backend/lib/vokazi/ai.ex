@@ -162,8 +162,23 @@ defmodule Vokazi.AI do
   @doc """
   Calls Gemini Flash to intelligently extract the user's Offer, Need,
   and preferred way to connect for an intro call from the raw transcript.
+
+  Retries once on failure (including a malformed/truncated JSON response,
+  which is more likely on a long chat-interview transcript) before giving
+  up - a single LLM call failing is often transient (a flaky key, an
+  occasional bad generation), and the caller's own fallback on permanent
+  failure is a raw, unsummarized transcript dumped into the member's
+  profile - worth spending one retry to avoid before ever reaching that.
   """
   def extract_summary(transcript) do
+    case do_extract_summary(transcript) do
+      {:error, :missing_api_key} = error -> error
+      {:error, _reason} -> do_extract_summary(transcript)
+      ok -> ok
+    end
+  end
+
+  defp do_extract_summary(transcript) do
     prompt = """
       You are helping a Kuzana Connect member write their own profile in their own words - not
       selling them, not writing a corporate bio. Read the conversation below and extract their
