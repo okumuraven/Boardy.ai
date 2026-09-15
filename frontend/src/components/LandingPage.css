@@ -60,22 +60,24 @@
    of bare muted text floating alone in the header - .nav-link itself
    stays untouched since Login/ChatSystem/Whitepaper share that base
    class and shouldn't pick up landing-specific chrome. */
-/* A neutral --ink-line-strong border on an --ink-raised fill (the
-   first version of this) sat almost invisibly close in lightness to
-   the page background in light mode - same mistake already caught
-   once on the chat bubbles, recurring here. Real brand color instead
-   of a neutral tone, so it can't blend into the background regardless
-   of theme or screenshot compression. */
+/* Second attempt (a brass border on a 10%-opacity --brass-wash fill)
+   was still too subtle - this element sits directly on top of
+   .landing-hero-bg's soft color blobs, so a translucent fill has a
+   shifting, unpredictable background to fight for contrast against
+   instead of a flat page color. Solid opaque fill this time - it can't
+   lose to whatever's behind it regardless of theme or blob position. */
 .landing-nav-link {
-  border: 1.5px solid var(--brass);
+  border: 2px solid var(--brass);
   border-radius: 100px;
   padding: 0.55rem 1.25rem;
-  color: var(--brass);
-  background: var(--brass-wash);
+  color: #fff;
+  background: var(--brass);
+  font-weight: 600;
 }
 
 .landing-nav-link:hover {
-  background: var(--brass);
+  background: #35476b;
+  border-color: #35476b;
   color: #fff;
 }
 
