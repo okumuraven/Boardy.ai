@@ -143,14 +143,29 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
               report's finding that vetting is an asset members value. */}
           <div className="panel landing-example-card">
             <p className="panel-label">Illustrative example - not a real member</p>
-            <p style={{ color: 'var(--paper)', fontSize: '0.92rem', margin: '0 0 0.75rem', lineHeight: '1.6' }}>
-              <strong>Amina</strong> - Founder, Agribusiness<br />
-              <span style={{ color: 'var(--muted)' }}>Offer: runs a cold-chain logistics operation for smallholder dairy farmers.</span><br />
-              <span style={{ color: 'var(--muted)' }}>Need: a lender who understands seasonal cash-flow gaps.</span>
-            </p>
-            <p style={{ color: 'var(--muted)', fontSize: '0.85rem', margin: 0 }}>
-              → Matched with <strong style={{ color: 'var(--paper)' }}>David</strong>, a lender focused on exactly that: seasonal working-capital gaps in agribusiness.
-            </p>
+
+            <div className="landing-match-person">
+              <span className="landing-match-avatar landing-match-avatar-a">A</span>
+              <div>
+                <p className="landing-match-name">Amina <span className="landing-match-role">Founder, Agribusiness</span></p>
+                <p className="landing-match-detail"><strong>Offer:</strong> runs a cold-chain logistics operation for smallholder dairy farmers.</p>
+                <p className="landing-match-detail"><strong>Need:</strong> a lender who understands seasonal cash-flow gaps.</p>
+              </div>
+            </div>
+
+            <div className="landing-match-connector">
+              <span className="landing-match-connector-line"></span>
+              <span className="landing-match-connector-badge">Matched</span>
+              <span className="landing-match-connector-line"></span>
+            </div>
+
+            <div className="landing-match-person">
+              <span className="landing-match-avatar landing-match-avatar-d">D</span>
+              <div>
+                <p className="landing-match-name">David <span className="landing-match-role">Lender</span></p>
+                <p className="landing-match-detail">Focused on exactly that: seasonal working-capital gaps in agribusiness.</p>
+              </div>
+            </div>
           </div>
         </div>
 
