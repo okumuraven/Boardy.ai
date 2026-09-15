@@ -118,7 +118,7 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
           <p className="landing-kicker">For the Kuzana network</p>
 
           <h1 className="ai-greeting">
-            Kuzana businesses 2x revenue in 12 weeks. <br />
+            Kuzana businesses <span className="landing-headline-highlight">2x</span> revenue in 12 weeks. <br />
             <span className="accent-text">Now you can find who's building them.</span>
           </h1>
 

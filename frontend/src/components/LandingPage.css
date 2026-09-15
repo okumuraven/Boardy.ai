@@ -246,6 +246,30 @@
   color: var(--brass);
 }
 
+/* "2x" is the single most important word in the whole headline (the
+   entire claim rests on it) but was sitting in the same plain black
+   text as everything around it - a highlighter-marker bar behind it
+   (the one brand color, gold, not otherwise used inside the headline
+   text) makes it the first thing the eye catches instead of just
+   another word in the sentence. */
+.landing-headline-highlight {
+  position: relative;
+  white-space: nowrap;
+}
+
+.landing-headline-highlight::after {
+  content: '';
+  position: absolute;
+  left: -0.1em;
+  right: -0.1em;
+  bottom: 0.05em;
+  height: 0.32em;
+  background: var(--signal);
+  opacity: 0.55;
+  z-index: -1;
+  border-radius: 2px;
+}
+
 /* Small eyebrow above the hero headline - sets context ("this is for
    the Kuzana network specifically") in one glance before the bold
    claim below, landing-only. */
