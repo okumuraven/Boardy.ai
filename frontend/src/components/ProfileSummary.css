@@ -1,0 +1,42 @@
+/* Offer/Need summary (ProfileSummary.jsx) - was two identical stacked
+   gray panels with a plain caption each, the one section on Home left
+   without the icon+color treatment applied to every other section this
+   pass. Side by side on wide screens - a real visual pairing of "what
+   you offer" against "what you need", not a stacked FAQ list. */
+
+.profile-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.profile-summary-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.profile-summary-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.profile-summary-icon svg { width: 16px; height: 16px; }
+
+.profile-summary-panel-offer .profile-summary-icon { background: var(--brass-wash); color: var(--brass); }
+.profile-summary-panel-offer { border-top: 2px solid var(--brass); }
+
+.profile-summary-panel-need .profile-summary-icon { background: var(--signal-wash); color: #b8860b; }
+.profile-summary-panel-need { border-top: 2px solid var(--signal); }
+
+.profile-summary-actions svg { width: 16px; height: 16px; margin-right: 0.4rem; vertical-align: -3px; }
+
+@media (max-width: 640px) {
+  .profile-summary-grid { grid-template-columns: 1fr; }
+}
