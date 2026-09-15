@@ -106,12 +106,19 @@ defmodule VokaziWeb.VapiController do
 
       {:error, reason} ->
         Logger.error("Vapi webhook: Gemini fallback extraction failed for call_id=#{call_id}: #{inspect(reason)}. Saving raw transcript instead.")
-        
+
         Task.start(fn ->
-          Vokazi.Admin.SystemAlertMailer.notify_extraction_failure(call_id, reason)
+          Vokazi.Admin.SystemAlertMailer.notify_extraction_failure("voice", "Call ID: #{call_id}", reason)
         end)
 
-        {transcript, "Requires manual parsing. Raw transcript saved.", "call"}
+        # Bounded, not the entire raw transcript - the same unbounded-dump
+        # bug found and fixed on the chat channel's equivalent fallback
+        # (InterviewChatController.finish/2) applied here too, just never
+        # actually surfaced since Vapi's own structuredData extraction
+        # (resolve_offer_and_need/3's other clause) covers most calls
+        # before this fallback is ever reached.
+        fallback = "Raw Transcript Captured: " <> String.slice(transcript, 0, 500) <> "..."
+        {fallback, "Requires manual parsing. Raw transcript saved.", "call"}
     end
   end
 

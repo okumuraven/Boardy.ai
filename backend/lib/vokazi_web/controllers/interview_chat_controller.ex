@@ -65,6 +65,17 @@ defmodule VokaziWeb.InterviewChatController do
 
                 {:error, reason} ->
                   Logger.error("InterviewChatController: extract_summary failed for user_id=#{user_id}: #{inspect(reason)}")
+
+                  # Same admin alert the voice webhook has always sent on
+                  # this failure - chat never had one, so this exact
+                  # failure could (and did) sit unnoticed in a member's
+                  # profile until someone happened to spot it in the
+                  # admin panel. Vokazi.Interviews.RetryUnsummarizedWorker
+                  # (daily cron) will keep retrying automatically.
+                  Task.start(fn ->
+                    Vokazi.Admin.SystemAlertMailer.notify_extraction_failure("chat", "User ID: #{user_id}", reason)
+                  end)
+
                   # offer_text used to be the *entire unbounded* raw
                   # transcript here - the actual bug reported live
                   # (an admin found a member's "Your Offer" was the full
