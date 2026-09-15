@@ -1,14 +1,38 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { isCapitalSideRole } from "../../constants/roles";
+import { CalendarIcon, CallHistoryIcon, DirectoryIcon, MatchesIcon } from "../shell/icons";
 import "./Home.css";
 import Dashboard from "../../components/Dashboard";
 
+// Real SVG, not emoji (renders inconsistently across OS/browsers and
+// reads as unpolished next to the rest of the app's actual icon set -
+// every nav item already uses one). No sparkle glyph exists in
+// features/shell/icons.jsx yet, so a small one is defined here rather
+// than reusing an unrelated shape for "new match".
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+      <path d="M7 7l2.5 2.5M14.5 14.5L17 17M17 7l-2.5 2.5M9.5 14.5L7 17" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
+  );
+}
+
 const TYPE_GLYPH = {
-  chat_message: { icon: "💬", bg: "var(--ink-line)", color: "var(--muted)" },
-  calendar_reminder: { icon: "🔔", bg: "var(--warn-wash)", color: "var(--warn)" },
-  new_match: { icon: "✨", bg: "var(--signal-wash)", color: "var(--signal)" },
-  incoming_call: { icon: "📞", bg: "var(--brass-wash)", color: "var(--brass)" },
+  chat_message: { Icon: MatchesIcon, bg: "var(--ink-line)", color: "var(--muted)" },
+  calendar_reminder: { Icon: CalendarIcon, bg: "var(--warn-wash)", color: "var(--warn)" },
+  new_match: { Icon: SparkleIcon, bg: "var(--signal-wash)", color: "var(--signal)" },
+  incoming_call: { Icon: CallHistoryIcon, bg: "var(--brass-wash)", color: "var(--brass)" },
 };
 
 const timeAgo = (iso) => {
@@ -68,12 +92,12 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
 
         <div className="home-stats-row">
           <div className="home-stat-tile">
-            <div className="home-stat-icon">🤝</div>
+            <div className="home-stat-icon"><DirectoryIcon /></div>
             <div className="num">{matches.length}</div>
             <div className="lbl">Active introductions</div>
           </div>
           <div className="home-stat-tile">
-            <div className="home-stat-icon">⏳</div>
+            <div className="home-stat-icon"><ClockIcon /></div>
             <div className="num">{awaitingResponse}</div>
             <div className="lbl">Awaiting your response</div>
           </div>
@@ -82,13 +106,14 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
         {activity.length > 0 && (
           <>
             <p className="panel-label" style={{ marginBottom: "0.5rem" }}>Recent activity</p>
-            <div style={{ marginBottom: "2rem" }}>
+            <div className="home-activity-card">
               {activity.map((n) => {
                 const glyph = TYPE_GLYPH[n.type] || TYPE_GLYPH.chat_message;
+                const Icon = glyph.Icon;
                 return (
                   <div className="home-activity-row" key={n.id}>
                     <div className="home-activity-glyph" style={{ background: glyph.bg, color: glyph.color }}>
-                      {glyph.icon}
+                      <Icon />
                     </div>
                     <div>
                       <div className="home-activity-text">{n.body}</div>
