@@ -38,6 +38,14 @@ function MicIcon() {
   );
 }
 
+function ChatBubbleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5h16v11H9l-4 4v-4H4z" />
+    </svg>
+  );
+}
+
 // accent is the left-border/section color for this activity type - a
 // colored border alongside colored icon since a bare gray divider line
 // gave every row the same neutral weight regardless of what actually
@@ -90,6 +98,14 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
 
   const awaitingResponse = matches.filter((m) => m.status === "pending_consent" && m.my_response !== "accepted").length;
   const showInvestmentPrompt = isCapitalSideRole(profile?.role) || profile?.looking_for_tags?.includes("funding");
+
+  // interview_channel is nil for anyone who interviewed before this
+  // field existed, or whose extraction never resolved - default to the
+  // voice framing/icon rather than showing nothing, since voice was the
+  // only option for most of this app's history.
+  const isChatInterview = profile?.interview_channel === "chat";
+  const InterviewIcon = isChatInterview ? ChatBubbleIcon : MicIcon;
+  const interviewLabel = isChatInterview ? "Your chat interview" : "Your voice interview";
 
   return (
     <div className="home-view">
@@ -177,7 +193,7 @@ export default function HomeView({ profile, onInterviewComplete, onFindMatch, on
             wrapper here would nest a card inside an indistinguishable
             card instead of adding real structure. */}
         <p className="panel-label home-section-label" style={{ marginBottom: "1rem", paddingTop: "0.5rem", borderTop: "1px solid var(--ink-line)" }}>
-          <MicIcon /> Your voice interview
+          <InterviewIcon /> {interviewLabel}
         </p>
         <Dashboard profile={profile} onInterviewComplete={onInterviewComplete} onFindMatch={onFindMatch} />
       </div>

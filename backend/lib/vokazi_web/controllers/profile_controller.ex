@@ -25,6 +25,7 @@ defmodule VokaziWeb.ProfileController do
           need_text: if(user.profile, do: user.profile.need_text, else: nil),
           phone_number: if(user.profile, do: user.profile.phone_number, else: nil),
           contact_preference: if(user.profile, do: user.profile.contact_preference, else: "call"),
+          interview_channel: if(user.profile, do: user.profile.interview_channel, else: nil),
           looking_for_tags: if(user.profile, do: user.profile.looking_for_tags, else: []),
           can_help_tags: if(user.profile, do: user.profile.can_help_tags, else: []),
           avatar_url: if(user.avatar_path, do: "/api/profiles/#{user.id}/avatar", else: nil),
