@@ -5,6 +5,28 @@ import ProfileSummary from "./ProfileSummary";
 import VoiceInterview from "./VoiceInterview";
 import ChatInterview from "./ChatInterview";
 
+// Real SVG, not emoji - the mode toggle below used to read "🎙 Talk" /
+// "💬 Chat", which renders inconsistently across OS/browsers and was
+// the one remaining emoji-as-icon spot in the interview flow after
+// cleaning up every other screen this pass.
+function MicIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.4rem", verticalAlign: "-2px" }}>
+      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+      <line x1="12" y1="19" x2="12" y2="22"></line>
+    </svg>
+  );
+}
+
+function ChatBubbleIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.4rem", verticalAlign: "-2px" }}>
+      <path d="M4 5h16v11H9l-4 4v-4H4z" />
+    </svg>
+  );
+}
+
 // Owns the voice-interview lifecycle and the offer/need summary - no
 // longer renders its own top nav, since the app shell now provides
 // persistent chrome (and the wallet-disconnect action lives on the
@@ -233,13 +255,13 @@ export default function Dashboard({ profile, onInterviewComplete, onFindMatch })
                 onClick={() => setMode("voice")}
                 className={mode === "voice" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
               >
-                🎙 Talk
+                <MicIcon />Talk
               </button>
               <button
                 onClick={() => setMode("chat")}
                 className={mode === "chat" ? "btn-primary btn-sm" : "btn-ghost btn-sm"}
               >
-                💬 Chat
+                <ChatBubbleIcon />Chat
               </button>
             </div>
           )}
