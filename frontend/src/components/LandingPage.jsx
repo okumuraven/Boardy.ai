@@ -1,6 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import KuzanaMark from './KuzanaMark';
+import { CallHistoryIcon } from '../features/shell/icons';
 import './LandingPage.css';
+
+// Small inline icons matching the shared icon style (viewBox 0 0 24 24,
+// stroke currentColor, strokeWidth 1.8) - real visuals for each step
+// instead of the plain gray "01/02/03" text this section originally
+// shipped with.
+function MessageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 5h16v11H9l-4 4v-4H4z" />
+      <line x1="8" y1="9" x2="16" y2="9" />
+      <line x1="8" y1="12.5" x2="13" y2="12.5" />
+    </svg>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+      <path d="M7 7l2.5 2.5M14.5 14.5L17 17M17 7l-2.5 2.5M9.5 14.5L7 17" />
+    </svg>
+  );
+}
 
 // Fires once, the first time the section scrolls into view - not a
 // living "is currently visible" state, since a reveal-in animation
@@ -41,16 +65,19 @@ function useReveal() {
 const STEPS = [
   {
     n: '01',
+    Icon: MessageIcon,
     title: 'Tell us what you do',
     body: "A few minutes by voice or chat, whichever you'd rather - what you offer, what you're stuck on.",
   },
   {
     n: '02',
+    Icon: SparkleIcon,
     title: 'We find your match',
     body: 'Matched against real Kuzana network members based on what you actually need - not a guess in a group chat.',
   },
   {
     n: '03',
+    Icon: CallHistoryIcon,
     title: 'Connect for real',
     body: 'Schedule an intro call once you both say yes. A real conversation, not another unread message.',
   },
@@ -151,11 +178,14 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
         <h2 className="landing-section-title">From first hello to your first introduction.</h2>
 
         <div className={`landing-steps-grid ${stepsVisible ? 'is-visible' : ''}`}>
-          {STEPS.map((step) => (
-            <div key={step.n} className="landing-step">
-              <span className="landing-step-num">{step.n}</span>
-              <h3 className="landing-step-title">{step.title}</h3>
-              <p className="landing-step-body">{step.body}</p>
+          {STEPS.map(({ n, Icon, title, body }) => (
+            <div key={n} className="landing-step">
+              <div className="landing-step-top">
+                <span className="landing-step-icon"><Icon /></span>
+                <span className="landing-step-num">{n}</span>
+              </div>
+              <h3 className="landing-step-title">{title}</h3>
+              <p className="landing-step-body">{body}</p>
             </div>
           ))}
         </div>
