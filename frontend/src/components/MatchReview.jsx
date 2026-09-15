@@ -125,7 +125,7 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
   }
 
   return (
-    <div style={{ width: "100%", height: "100%", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+    <div style={{ width: "100%", height: "100%", overflowY: "auto", display: "flex", flexDirection: "column", position: "relative" }}>
       <div className="identity-badge">
         Signed in as <strong style={{ color: "var(--paper)" }}>{profile?.name || "you"}</strong>
       </div>
@@ -134,10 +134,10 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         className="centered-stage"
         style={{ animation: "fadeUpIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards" }}
       >
-        <h1 className="ai-greeting ai-greeting-compact" style={{ marginBottom: "0.25rem" }}>
+        <h1 className="match-review-heading" style={{ marginBottom: "0.25rem" }}>
           Match Found
         </h1>
-        <p className="ai-subtext" style={{ marginBottom: "0.5rem" }}>
+        <p className="match-review-subtext" style={{ marginBottom: "0.5rem" }}>
           {match.other_user?.name || "Someone"} · {match.other_user?.role || "unspecified role"}
         </p>
         <div className="match-score">

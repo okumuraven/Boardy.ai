@@ -11,6 +11,29 @@
   z-index: 10;
 }
 
+/* Own heading/subtext styling instead of reusing LandingPage.css's
+   .ai-greeting/.ai-subtext - those come with an opacity:0 + translateY
+   fade-in animation tuned for a tall, full-viewport hero moment. Stacked
+   on top of .centered-stage's own entrance animation below (and
+   .centered-stage's now-removed min-height:100vh, which forced this
+   embedded panel to think it was a full page), the two independently
+   animating layers produced exactly the "text arrives clipped at the
+   top" glitch reported live - one clean animation on the outer stage
+   is enough. */
+.match-review-heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--paper);
+}
+
+.match-review-subtext {
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
 .match-score {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -33,10 +56,10 @@
   padding: 2rem;
   max-width: 720px;
   margin: 0 auto;
-  min-height: 100vh;
 }
 
 @media (max-width: 768px) {
   .identity-badge { position: static; align-self: center; margin-bottom: 1.5rem; }
   .match-score { font-size: 2rem; }
+  .match-review-heading { font-size: 2rem; }
 }
