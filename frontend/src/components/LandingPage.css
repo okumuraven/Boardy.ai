@@ -486,14 +486,21 @@
   margin: 0;
 }
 
-.landing-final-cta {
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 2rem 2rem 6rem;
+/* Was plain centered text on the same flat background as every other
+   section - easy to scroll straight past. A full-bleed color band
+   instead of another quiet text block, so the page's one closing ask
+   actually reads as a deliberate high point, not an afterthought
+   before the footer. */
+.landing-final-cta-band {
+  background: linear-gradient(135deg, var(--brass) 0%, #35476b 100%);
+  padding: 5rem 2rem;
+  margin-top: 2rem;
   text-align: center;
 }
 
 .landing-final-cta-inner {
+  max-width: 560px;
+  margin: 0 auto;
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -504,16 +511,34 @@
 .landing-final-cta-inner h2 {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 2rem;
-  color: var(--paper);
+  font-size: 2.1rem;
+  color: #fff;
   margin: 0 0 0.75rem;
   text-wrap: balance;
 }
 
 .landing-final-cta-inner p {
-  color: var(--muted);
-  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.05rem;
   margin: 0 0 2rem;
+}
+
+/* Plain .landing-cta (brass fill) would disappear against this band's
+   own brass background - inverted to a white fill so the CTA still
+   reads as the obvious next action, not blend into the color behind
+   it. Selector matches .action-btn.ready's two-class specificity
+   (single-class .landing-cta-inverted alone would lose to it
+   regardless of source order). */
+.action-btn.landing-cta-inverted {
+  background: #fff;
+  color: var(--brass);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn.landing-cta-inverted:hover {
+  background: #fff;
+  filter: brightness(0.97);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
 }
 
 .landing-footer {
@@ -558,7 +583,7 @@
   .landing-section { padding: 4rem 1.5rem; }
   .landing-steps-grid { grid-template-columns: 1fr; gap: 2.25rem; }
   .landing-section-title { font-size: 1.6rem; margin-bottom: 2.5rem; }
-  .landing-final-cta { padding: 0 1.5rem 4rem; }
+  .landing-final-cta-band { padding: 3.5rem 1.5rem; }
   .landing-final-cta-inner h2 { font-size: 1.5rem; }
   .landing-footer { padding: 0 1.5rem 2rem; }
 }

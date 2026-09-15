@@ -191,11 +191,11 @@ export default function LandingPage({ onJoinClick, onWhitepaperClick }) {
         </div>
       </section>
 
-      <section className="landing-final-cta" ref={ctaRef}>
+      <section className="landing-final-cta-band" ref={ctaRef}>
         <div className={`landing-final-cta-inner ${ctaVisible ? 'is-visible' : ''}`}>
           <h2>Stop guessing who's in the room.</h2>
           <p>Kuzana Connect puts the right person in front of you - takes a few minutes to get started.</p>
-          <button onClick={onJoinClick} className="action-btn ready landing-cta" style={{ padding: '0 2rem', height: '56px' }}>
+          <button onClick={onJoinClick} className="action-btn ready landing-cta landing-cta-inverted" style={{ padding: '0 2rem', height: '56px' }}>
             Get started
             <svg className="landing-cta-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
               <line x1="5" y1="12" x2="19" y2="12"></line>
