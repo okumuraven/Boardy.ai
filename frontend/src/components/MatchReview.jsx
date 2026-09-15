@@ -2,6 +2,35 @@ import { useState, useEffect, useRef } from "react";
 import { apiFetch } from "../lib/api";
 import "./MatchReview.css";
 
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
+      <path d="M7 7l2.5 2.5M14.5 14.5L17 17M17 7l-2.5 2.5M9.5 14.5L7 17" />
+    </svg>
+  );
+}
+
+function GiftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3.5" y="9" width="17" height="11" rx="1.5" />
+      <path d="M3.5 13h17M12 9v11" />
+      <path d="M12 9C9.5 9 8 7.5 8 6a2.2 2.2 0 0 1 4-1.3A2.2 2.2 0 0 1 16 6c0 1.5-1.5 3-4 3Z" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" />
+      <path d="M12 10v4" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 // Shows the transparent AI breakdown for a candidate match - score,
 // reasoning, what lines up, and what doesn't - and lets each person
 // independently accept or decline before anything is unlocked.
@@ -145,16 +174,22 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
         </div>
 
         <div style={{ width: "100%", maxWidth: "640px", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div className="panel">
-            <p className="panel-label">Why this match</p>
+          <div className="panel match-review-panel-why">
+            <div className="match-review-panel-heading">
+              <span className="match-review-panel-icon"><SparkleIcon /></span>
+              <p className="panel-label" style={{ margin: 0 }}>Why this match</p>
+            </div>
             <div style={{ color: "var(--paper)", fontSize: "0.95rem", lineHeight: "1.6" }}>
               {headline}
             </div>
           </div>
 
           {strengths?.length > 0 && (
-            <div className="panel">
-              <p className="panel-label">What this brings you</p>
+            <div className="panel match-review-panel-brings">
+              <div className="match-review-panel-heading">
+                <span className="match-review-panel-icon"><GiftIcon /></span>
+                <p className="panel-label" style={{ margin: 0 }}>What this brings you</p>
+              </div>
               <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "var(--paper)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                 {strengths.map((s, i) => (
                   <li key={i}>{s}</li>
@@ -164,10 +199,13 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
           )}
 
           {gaps?.length > 0 && (
-            <div className="panel warn">
-              <p className="panel-label warn">
-                Worth knowing (the rest of the {100 - Math.round(match.ai_score)}%)
-              </p>
+            <div className="panel warn match-review-panel-worth">
+              <div className="match-review-panel-heading">
+                <span className="match-review-panel-icon"><AlertIcon /></span>
+                <p className="panel-label warn" style={{ margin: 0 }}>
+                  Worth knowing (the rest of the {100 - Math.round(match.ai_score)}%)
+                </p>
+              </div>
               <ul style={{ margin: 0, paddingLeft: "1.25rem", color: "var(--paper)", fontSize: "0.9rem", lineHeight: "1.7" }}>
                 {gaps.map((g, i) => (
                   <li key={i}>{g}</li>
@@ -238,8 +276,9 @@ export default function MatchReview({ profile, initialMatch, onResolved }) {
             <>
               {theyAlreadyAccepted && (
                 <div className="panel" style={{ textAlign: "center", borderColor: "var(--signal)", background: "var(--signal-wash)" }}>
-                  <p style={{ margin: 0, color: "var(--paper)", fontSize: "0.95rem", fontWeight: 600 }}>
-                    🎉 {match.other_user?.name || "They"} is already interested - it's your move.
+                  <p style={{ margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", color: "var(--paper)", fontSize: "0.95rem", fontWeight: 600 }}>
+                    <span className="match-review-inline-icon" style={{ color: "#b8860b" }}><SparkleIcon /></span>
+                    {match.other_user?.name || "They"} is already interested - it's your move.
                   </p>
                 </div>
               )}

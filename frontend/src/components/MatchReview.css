@@ -40,8 +40,48 @@
   font-size: 2.5rem;
   font-weight: 500;
   color: var(--brass);
+  background: var(--brass-wash);
+  padding: 0.25rem 1.25rem;
+  border-radius: 999px;
   margin-bottom: 1.5rem;
+  display: inline-block;
 }
+
+/* Why/Brings-you/Worth-knowing panels used to be three identical flat
+   gray boxes told apart only by a text label - the same "no icon, no
+   color, no differentiation" gap already fixed on the Offer/Need panels
+   and Home stat tiles. Runs the brand's own three-arc-color story
+   (brass/gold/coral) across the actual decision journey: why it's a
+   match, what you get, what to watch for. */
+.match-review-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.match-review-panel-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.match-review-panel-icon svg { width: 15px; height: 15px; }
+
+.panel.match-review-panel-why { border-top: 2px solid var(--brass); }
+.match-review-panel-why .match-review-panel-icon { background: var(--brass-wash); color: var(--brass); }
+
+.panel.match-review-panel-brings { border-top: 2px solid var(--signal); }
+.match-review-panel-brings .match-review-panel-icon { background: var(--signal-wash); color: #b8860b; }
+
+.panel.match-review-panel-worth { border-top: 2px solid var(--warn); }
+.match-review-panel-worth .match-review-panel-icon { background: var(--warn-wash); color: var(--warn); }
+
+.match-review-inline-icon { display: inline-flex; flex-shrink: 0; }
+.match-review-inline-icon svg { width: 16px; height: 16px; }
 
 /* Centered single-column stage (MatchReview) - content-dense, doesn't
    fit the marketing onboarding-container's asymmetric split, but wants
