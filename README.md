@@ -6,14 +6,17 @@ Kuzana Connect is an AI-driven member-discovery and matchmaking tool built speci
 Kuzana's own community of founders, investors, operators, lenders, and consultants.
 
 Instead of relying on WhatsApp posts and chance encounters, members complete a **conversational
-onboarding flow**: sign in with Google (no separate account, no password), then do a live voice
-interview with our AI agent (powered by Vapi) that extracts what they're offering and what they
-need, in their own words.
+onboarding flow**: sign in with Google (no separate account, no password), then either do a live
+voice interview with our AI agent (powered by Vapi) or a text-based chat interview — same
+extraction, member's choice — that pulls out what they're offering and what they need, in their
+own words.
 
 The AI (Google Gemini) turns that transcript into vector embeddings and uses `pgvector` to find
 genuinely complementary matches. Both members review the AI's match score and reasoning and must
 independently accept before anything unlocks — the moment both say yes, a real-time chat room
-opens and a mutual scheduling flow finds a call time that works for both sides.
+opens and a mutual scheduling flow finds a call time that works for both sides. Summarization
+retries automatically and self-heals on a daily sweep if a single AI call ever fails, so a member's
+profile is never left stuck on a raw, unsummarized transcript.
 
 > **Note on Web 2.5 Architecture:** While our immediate focus is on frictionless Web2 onboarding and growth, our future monetization and premium engagement phases are designed around **Avalanche**. We have already designed and tested a Web3 "Trust-Gate" on the Avalanche Fuji Testnet, and we plan to reintroduce Avalanche smart contracts for premium direct-contact tiers, investor deal-flow subscriptions, and automated milestone-escrow payouts as the platform matures. See `ROADMAP.md` for our full Web 2.5 monetization strategy.
 
