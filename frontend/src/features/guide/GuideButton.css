@@ -1,13 +1,29 @@
 /* Global floating guide trigger (GuideButton.jsx) - fixed bottom-left,
-   the mirror image of FeedbackWidget's bottom-right .feedback-fab pill,
-   so the two read as a matched pair and never overlap. Was a bare "?"
-   in a plain grey circle - easy to mistake for a stray glyph rather than
-   a real feature entry point - now an icon+label pill using the same
-   btn-ghost/btn-sm chrome as every other secondary action in the app. */
+   the same corner-pill treatment as FeedbackWidget's bottom-right
+   .feedback-fab. Was a bare "?" in a plain grey circle - easy to mistake
+   for a stray glyph rather than a real feature entry point - now an
+   icon+label pill using the same btn-ghost/btn-sm chrome as every other
+   secondary action in the app, and (unlike the old "?") always keeps its
+   "Guide" label at every width, matching Feedback's own always-labelled
+   treatment instead of collapsing into an even more ambiguous bare icon
+   on small screens.
+
+   Sits higher off the bottom edge than Feedback does on desktop - not a
+   perfect mirror - because desktop's rail (AppShell.css's .shell-rail)
+   keeps its own utility row (ThemeToggle, NotificationBell, the avatar
+   button) pinned to this exact same bottom-left corner via
+   `margin-top: auto`, not a fixed overlay, and nothing lives in
+   Feedback's bottom-right corner to clear. A plain 1.25rem offset here
+   used to land directly on top of that row (confirmed live: the guide
+   pill and the notification bell's "9+" badge rendered stacked on each
+   other). 64px is that row's real measured height on a live screenshot
+   (its border-top sits ~84px above the viewport's bottom edge) - by
+   coincidence the same clearance mobile already needs for its own tab
+   bar, so one offset works at every width. */
 .guide-fab {
   position: fixed;
   left: 1.25rem;
-  bottom: 1.25rem;
+  bottom: calc(64px + 1.25rem);
   z-index: 90;
   display: flex;
   align-items: center;
@@ -17,20 +33,8 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-.guide-fab svg { width: 16px; height: 16px; }
+.guide-fab svg { width: 16px; height: 16px; flex-shrink: 0; }
 
 /* Same reasoning as .feedback-fab - an open chat panel takes over this
    corner too at any screen width once it fills enough of the viewport. */
 .app-shell.chat-open .guide-fab { display: none; }
-
-@media (max-width: 900px) {
-  .guide-fab { bottom: calc(64px + 1.25rem); }
-}
-
-/* The label reads as extra clutter once the tab bar is this narrow -
-   the icon alone (still labelled for screen readers via aria-label)
-   keeps the tap target obvious without crowding the corner. */
-@media (max-width: 480px) {
-  .guide-fab span { display: none; }
-  .guide-fab { padding: 0.7rem !important; }
-}
