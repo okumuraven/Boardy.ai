@@ -21,7 +21,8 @@
 .setup-field-control { position: relative; }
 
 .setup-field input,
-.setup-field select {
+.setup-field select,
+.setup-field textarea {
   width: 100%;
   background: var(--ink-raised);
   border: 1px solid var(--ink-line);
@@ -37,10 +38,14 @@
   appearance: none;
 }
 
-.setup-field input::placeholder { color: var(--muted); opacity: 0.6; }
+.setup-field textarea { resize: vertical; font-weight: 400; line-height: 1.5; }
+
+.setup-field input::placeholder,
+.setup-field textarea::placeholder { color: var(--muted); opacity: 0.6; }
 
 .setup-field input:focus,
-.setup-field select:focus { border-color: var(--brass-dim); background: var(--ink-line); }
+.setup-field select:focus,
+.setup-field textarea:focus { border-color: var(--brass-dim); background: var(--ink-line); }
 
 .setup-field select { padding-right: 2.6rem; cursor: pointer; }
 

@@ -5,6 +5,13 @@ import ProfilePhotos from "./ProfilePhotos";
 import Avatar from "../../components/Avatar";
 import PhotoPreviewModal from "../../components/PhotoPreviewModal";
 import "./Profile.css";
+// .setup-field et al - previously only reached this page because
+// ProfileSetup.jsx happens to import the same file elsewhere in the
+// bundle, an implicit coupling that would silently break if that import
+// were ever removed or route-based code-splitting were introduced.
+// This page uses those classes directly now (the edit-mode form below),
+// so it imports its own dependency instead of relying on that coincidence.
+import "../../styles/SharedFormFields.css";
 import StatsCard from "./StatsCard";
 import InvestmentDetailsForm from "./InvestmentDetailsForm";
 import ServiceDetailsForm from "./ServiceDetailsForm";
@@ -22,6 +29,45 @@ const CONTACT_MODES = ["call", "video", "chat"];
 // plain text too, so an icon here alone would be inconsistent.
 const CONTACT_LABEL = { call: "Call", video: "Video call", chat: "Chat" };
 const roleTitle = (role) => (role ? roleLabel(role) : "Member");
+
+// Real SVG, not the plain "✎"/"···" text characters this screen used to
+// render directly - the one remaining spot on this page still doing
+// that, unlike every other icon-led affordance in the app.
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function LogOutIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="M16 17l5-5-5-5" />
+      <path d="M21 12H9" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg className="setup-field-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
 
 // The first real place a user can see or change what Kuzana Connect has on file
 // for them - also where they see their own connections/rank (StatsCard)
@@ -106,69 +152,76 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
   return (
     <div className="profile-view">
       <div className="profile-view-hero">
-        <div className="profile-view-avatar-wrap">
-          <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="profile-view-avatar" />
-          <button
-            className="profile-view-avatar-edit"
-            onClick={() => avatarInputRef.current?.click()}
-            disabled={uploadingAvatar}
-            title={profile?.avatar_url ? "Change photo" : "Add a photo"}
-            aria-label={profile?.avatar_url ? "Change photo" : "Add a photo"}
-          >
-            {uploadingAvatar ? "···" : "✎"}
-          </button>
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept={AVATAR_ACCEPT}
-            style={{ display: "none" }}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) setPendingAvatarFile(file);
-              e.target.value = "";
-            }}
-          />
-        </div>
-
-        <PhotoPreviewModal
-          file={pendingAvatarFile}
-          shape="circle"
-          confirming={uploadingAvatar}
-          onConfirm={uploadAvatar}
-          onCancel={() => setPendingAvatarFile(null)}
-        />
-        <div>
-          <h2>
-            {profile?.name || "Your profile"}
-            {profile?.verified && (
-              <span className="verified-badge" style={{ marginLeft: "0.5rem" }} title="Verified: photo, interview, and phone confirmed">
-                ✓
-              </span>
-            )}
-          </h2>
-          <span className="role">{roleTitle(profile?.role)}</span>
-          {profile?.is_bizi && (
-            <span
-              className="chip selected"
-              style={{ marginLeft: "0.6rem", fontSize: "0.72rem", padding: "0.25rem 0.65rem", cursor: "default" }}
-              title="Approved into the Kuzana Bizi accelerator"
+        <div className="profile-view-hero-top">
+          <div className="profile-view-avatar-ring">
+            <div className="profile-view-avatar-ring-inner">
+              <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="profile-view-avatar" />
+            </div>
+            <button
+              className="profile-view-avatar-edit"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={uploadingAvatar}
+              title={profile?.avatar_url ? "Change photo" : "Add a photo"}
+              aria-label={profile?.avatar_url ? "Change photo" : "Add a photo"}
             >
-              Verified Bizi
-            </span>
+              {uploadingAvatar ? <span className="spinner" style={{ width: "12px", height: "12px", borderWidth: "2px" }}></span> : <PencilIcon />}
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept={AVATAR_ACCEPT}
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPendingAvatarFile(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          <PhotoPreviewModal
+            file={pendingAvatarFile}
+            shape="circle"
+            confirming={uploadingAvatar}
+            onConfirm={uploadAvatar}
+            onCancel={() => setPendingAvatarFile(null)}
+          />
+
+          <div className="profile-view-hero-info">
+            <h2>
+              {profile?.name || "Your profile"}
+              {profile?.verified && (
+                <span className="verified-badge" title="Verified: photo, interview, and phone confirmed">✓</span>
+              )}
+            </h2>
+            <div className="profile-view-hero-badges">
+              <span className="role">{roleTitle(profile?.role)}</span>
+              {profile?.is_bizi && (
+                <span className="chip selected profile-view-bizi-chip" title="Approved into the Kuzana Bizi accelerator">
+                  Verified Bizi
+                </span>
+              )}
+              {profile?.avatar_url && (
+                <button onClick={removeAvatar} disabled={uploadingAvatar} className="nav-link profile-view-remove-photo">
+                  Remove photo
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!editing && (
+            <div className="profile-view-hero-actions">
+              <button onClick={() => setPreviewingCard(true)} className="btn-ghost btn-sm">
+                <EyeIcon /> Preview card
+              </button>
+              <button onClick={startEdit} className="btn-primary btn-sm">
+                <PencilIcon /> Edit profile
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      {profile?.avatar_url && (
-        <button
-          onClick={removeAvatar}
-          disabled={uploadingAvatar}
-          className="btn-ghost btn-sm"
-          style={{ marginTop: "-1.4rem", marginBottom: "1.4rem" }}
-        >
-          Remove photo
-        </button>
-      )}
       {avatarError && <p style={{ color: "var(--warn)", fontSize: "0.85rem", margin: "0 0 1rem" }}>{avatarError}</p>}
 
       {error && <p style={{ color: "var(--warn)", fontSize: "0.85rem", margin: "0 0 1rem" }}>{error}</p>}
@@ -183,75 +236,83 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
             <p className="panel-label">Account details</p>
             {editing ? (
               <>
-                <div className="profile-view-row">
-                  <span className="k">Full name</span>
-                  <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Phone number</span>
-                  <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} />
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Role</span>
-                  <select
-                    value={form.role}
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.45rem 0.65rem", color: "var(--paper)" }}
-                  >
-                    {ROLES.map((role) => (
-                      <option key={role} value={role}>{roleTitle(role)}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Industry</span>
-                  <select
-                    value={form.industry}
-                    onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.45rem 0.65rem", color: "var(--paper)" }}
-                  >
-                    {INDUSTRIES.map((industry) => (
-                      <option key={industry} value={industry}>{industry}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Company</span>
-                  <input
-                    value={form.company}
-                    placeholder="Company or business name"
-                    onChange={(e) => setForm({ ...form, company: e.target.value })}
-                  />
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Location</span>
-                  <input
-                    value={form.location}
-                    placeholder="City, country"
-                    onChange={(e) => setForm({ ...form, location: e.target.value })}
-                  />
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Bio</span>
-                  <textarea
-                    value={form.bio}
-                    placeholder="A short introduction - who you are, beyond your offer/need."
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                    rows={3}
-                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.5rem 0.65rem", color: "var(--paper)", fontFamily: "inherit", resize: "vertical" }}
-                  />
-                </div>
-                <div className="profile-view-row">
-                  <span className="k">Contact preference</span>
-                  <select
-                    value={form.contact_preference}
-                    onChange={(e) => setForm({ ...form, contact_preference: e.target.value })}
-                    style={{ background: "var(--ink)", border: "1px solid var(--ink-line-strong)", borderRadius: "5px", padding: "0.45rem 0.65rem", color: "var(--paper)" }}
-                  >
-                    {CONTACT_MODES.map((mode) => (
-                      <option key={mode} value={mode}>{CONTACT_LABEL[mode]}</option>
-                    ))}
-                  </select>
+                <div className="profile-edit-fields">
+                  <label className="setup-field">
+                    <span className="setup-field-label">Full name</span>
+                    <div className="setup-field-control">
+                      <input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Phone number</span>
+                    <div className="setup-field-control">
+                      <input value={form.phone_number} onChange={(e) => setForm({ ...form, phone_number: e.target.value })} />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Role</span>
+                    <div className="setup-field-control">
+                      <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                        {ROLES.map((role) => (
+                          <option key={role} value={role}>{roleTitle(role)}</option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Industry</span>
+                    <div className="setup-field-control">
+                      <select value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })}>
+                        {INDUSTRIES.map((industry) => (
+                          <option key={industry} value={industry}>{industry}</option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Company</span>
+                    <div className="setup-field-control">
+                      <input
+                        value={form.company}
+                        placeholder="Company or business name"
+                        onChange={(e) => setForm({ ...form, company: e.target.value })}
+                      />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Location</span>
+                    <div className="setup-field-control">
+                      <input
+                        value={form.location}
+                        placeholder="City, country"
+                        onChange={(e) => setForm({ ...form, location: e.target.value })}
+                      />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Bio</span>
+                    <div className="setup-field-control">
+                      <textarea
+                        value={form.bio}
+                        placeholder="A short introduction - who you are, beyond your offer/need."
+                        onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                        rows={3}
+                      />
+                    </div>
+                  </label>
+                  <label className="setup-field">
+                    <span className="setup-field-label">Contact preference</span>
+                    <div className="setup-field-control">
+                      <select value={form.contact_preference} onChange={(e) => setForm({ ...form, contact_preference: e.target.value })}>
+                        {CONTACT_MODES.map((mode) => (
+                          <option key={mode} value={mode}>{CONTACT_LABEL[mode]}</option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.1rem" }}>
                   <button onClick={() => setEditing(false)} disabled={saving} className="btn-ghost">Cancel</button>
@@ -272,23 +333,21 @@ export default function ProfileView({ profile, onProfileUpdated, onLogout }) {
                   <span className="k">Contact preference</span>
                   <span className="v">{CONTACT_LABEL[profile?.contact_preference] || CONTACT_LABEL.call}</span>
                 </div>
-                <button onClick={startEdit} className="btn-ghost" style={{ marginTop: "1.1rem" }}>Edit profile</button>
               </>
             )}
           </div>
 
-          <div className="profile-view-row" style={{ background: "var(--ink-raised)", border: "1px solid var(--ink-line)", borderRadius: "6px", padding: "0.9rem 1.1rem" }}>
-            <span className="k">Appearance</span>
-            <ThemeToggle />
+          <div className="panel profile-view-prefs">
+            <p className="panel-label">Preferences</p>
+            <div className="profile-view-pref-row">
+              <span className="k">Appearance</span>
+              <ThemeToggle />
+            </div>
+            <button onClick={onLogout} className="profile-view-pref-row profile-view-pref-btn profile-view-logout">
+              <span className="profile-view-pref-icon"><LogOutIcon /></span>
+              <span>Log out</span>
+            </button>
           </div>
-
-          <button onClick={() => setPreviewingCard(true)} className="btn-ghost btn-sm">
-            Preview my card
-          </button>
-
-          <button onClick={onLogout} className="btn-ghost btn-sm profile-view-disconnect">
-            Log out
-          </button>
         </div>
 
         <div className="profile-view-col">

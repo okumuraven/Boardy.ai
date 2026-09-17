@@ -3,11 +3,12 @@ import { apiFetch } from "../../lib/api";
 import { rolePlural } from "../../constants/roles";
 
 // Real SVG, not emoji - matches the anti-emoji-icon convention used
-// across the rest of the app. .stats-card-icon (Profile.css) sizes via
-// font-size for a text/emoji glyph, so these are sized inline instead.
-// Local copies rather than shell/icons.jsx's CallHistoryIcon - that one
-// takes no props/sizing, so it can't be resized to fit here.
-const ICON_STYLE = { width: "16px", height: "16px", color: "var(--muted)" };
+// across the rest of the app. Local copies rather than shell/icons.jsx's
+// CallHistoryIcon - that one takes no props/sizing, so it can't be
+// resized to fit here. No color set inline - each icon now sits inside
+// a colored .stats-card-tile-icon chip (Profile.css) and picks up that
+// chip's color via currentColor, matching Home's own stat tiles.
+const ICON_STYLE = { width: "16px", height: "16px" };
 
 function UnlockIcon() {
   return (
@@ -61,20 +62,19 @@ export default function StatsCard({ profile }) {
 
   return (
     <div className="panel stats-card">
-      <div className="stats-card-numbers">
-        <div>
-          <span className="stats-card-icon"><UnlockIcon /></span>
-          <p className="stats-card-value">{data.stats.matches_unlocked}</p>
-          <p className="stats-card-label">Matches unlocked</p>
+      <div className="stats-card-tiles">
+        <div className="stats-card-tile stats-card-tile-brass">
+          <div className="stats-card-tile-icon"><UnlockIcon /></div>
+          <p className="stats-card-tile-num">{data.stats.matches_unlocked}</p>
+          <p className="stats-card-tile-lbl">Matches unlocked</p>
         </div>
-        <div className="stats-card-divider" />
-        <div>
-          <span className="stats-card-icon"><CallIcon /></span>
-          <p className="stats-card-value">{data.stats.calls_completed}</p>
-          <p className="stats-card-label">Calls completed</p>
+        <div className="stats-card-tile stats-card-tile-signal">
+          <div className="stats-card-tile-icon"><CallIcon /></div>
+          <p className="stats-card-tile-num">{data.stats.calls_completed}</p>
+          <p className="stats-card-tile-lbl">Calls completed</p>
         </div>
       </div>
-      <div className="stats-card-rank" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+      <div className="stats-card-rank">
         <MedalIcon />
         {rankLabel(data.rank, profile?.role)}
       </div>
