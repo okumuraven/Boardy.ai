@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { startTour, hasSeenTour } from "./tour";
 import GuideModal from "./GuideModal";
+import { HelpIcon } from "../shell/icons";
 import "./GuideButton.css";
 
 // Global "?" entry point (mounted once in AppShell, mirrors
@@ -31,8 +32,9 @@ export default function GuideButton({ onOpenMoreSheet, onCloseMoreSheet }) {
 
   return (
     <>
-      <button onClick={() => setModalOpen(true)} className="guide-fab" title="How Kuzana Connect works" aria-label="Guide">
-        ?
+      <button onClick={() => setModalOpen(true)} className="btn-ghost btn-sm guide-fab" title="How Kuzana Connect works" aria-label="Guide">
+        <HelpIcon />
+        <span>Guide</span>
       </button>
 
       {modalOpen && <GuideModal onClose={() => setModalOpen(false)} onStartTour={handleStartTour} />}

@@ -97,3 +97,16 @@ export function MoreIcon() {
     </svg>
   );
 }
+
+// A proper question-mark-in-a-circle, not a bare "?" glyph - used by
+// GuideButton so the global help entry point reads as a real icon-led
+// affordance like every other nav/action button, not a stray character.
+export function HelpIcon() {
+  return (
+    <svg {...base}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M9.6 9.3a2.4 2.4 0 0 1 4.6.9c0 1.6-2.2 2-2.2 3.3" />
+      <circle cx="12" cy="16.6" r="0.15" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

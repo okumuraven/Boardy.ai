@@ -30,8 +30,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
+
+.guide-modal-kicker { margin-bottom: 0.35rem; }
 
 .guide-modal-title {
   font-family: var(--font-display);
@@ -47,28 +49,100 @@
   margin: 0;
 }
 
-.guide-modal-tour-btn {
-  align-self: flex-start;
-  margin-bottom: 1rem;
+/* Promoted from a small text button into a proper standout card - this
+   is the single best thing a member can do in this modal (see the whole
+   app at once instead of reading feature-by-feature), so it should look
+   like the primary action it is, not compete with the list below it. */
+.guide-modal-tour-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  text-align: left;
+  background: var(--brass-wash);
+  border: 1px solid var(--brass-dim);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+  transition: filter 0.15s ease, border-color 0.15s ease;
 }
+
+.guide-modal-tour-cta:hover {
+  border-color: var(--brass);
+  filter: brightness(1.05);
+}
+
+.guide-modal-tour-cta-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--brass);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guide-modal-tour-cta-icon svg { width: 19px; height: 19px; }
+
+.guide-modal-tour-cta-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.guide-modal-tour-cta-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--paper);
+}
+
+.guide-modal-tour-cta-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.guide-modal-tour-cta-arrow {
+  flex-shrink: 0;
+  color: var(--brass);
+  display: flex;
+}
+
+.guide-modal-tour-cta-arrow svg { width: 18px; height: 18px; }
 
 .guide-modal-list {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.15rem;
   margin: -0.25rem;
   padding: 0.25rem;
 }
 
+/* Rows are real buttons now (whole row jumps straight to that tab's
+   tour step) instead of a plain description row with a small "Show me"
+   link tacked on - a much bigger, more obvious tap target. */
 .guide-modal-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.85rem;
-  padding: 0.9rem 0.5rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
   border-bottom: 1px solid var(--ink-line);
+  padding: 0.85rem 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease;
 }
 
+.guide-modal-row:hover { background: var(--ink); }
 .guide-modal-row:last-child { border-bottom: none; }
 
 .guide-modal-row-icon {
@@ -76,8 +150,7 @@
   width: 34px;
   height: 34px;
   border-radius: 8px;
-  background: var(--ink);
-  border: 1px solid var(--ink-line);
+  background: var(--brass-wash);
   color: var(--brass);
   display: flex;
   align-items: center;
@@ -87,29 +160,35 @@
 
 .guide-modal-row-icon svg { width: 100%; height: 100%; }
 
-.guide-modal-row-text { flex: 1; min-width: 0; }
+.guide-modal-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
 .guide-modal-row-title {
   font-weight: 600;
   color: var(--paper);
   font-size: 0.95rem;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.2rem;
 }
 
 .guide-modal-row-desc {
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.5;
-  margin: 0;
 }
 
-.guide-modal-row-btn {
+.guide-modal-row-arrow {
   flex-shrink: 0;
-  white-space: nowrap;
-  align-self: center;
+  color: var(--muted);
+  display: flex;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
+
+.guide-modal-row-arrow svg { width: 16px; height: 16px; }
+
+.guide-modal-row:hover .guide-modal-row-arrow { opacity: 1; transform: translateX(0); }
 
 @media (max-width: 480px) {
-  .guide-modal-row { flex-wrap: wrap; }
-  .guide-modal-row-btn { margin-left: calc(34px + 0.85rem); }
+  /* Always visible on touch - there's no hover state to reveal it. */
+  .guide-modal-row-arrow { opacity: 1; transform: none; }
 }
