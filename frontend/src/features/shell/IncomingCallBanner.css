@@ -1,34 +1,80 @@
 /* Global incoming-call banner (IncomingCallBanner.jsx) - fixed above
-   everything, including the mobile tab bar, since it has to be visible
-   regardless of which tab is active. */
+   everything so it's visible regardless of which tab is active.
+   Redesigned from a full-bleed solid-color strip (a jarring, edge-to-
+   edge bar unlike anything else in the app) into a floating card that
+   matches the rest of the product: the caller's real photo in the same
+   brand ring used on the call screen itself, name + subtitle, and a
+   dedicated accept affordance instead of one flat clickable stripe. */
 .incoming-call-banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: max(14px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.85rem 1rem;
-  background: var(--brass);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.9rem;
-  border: none;
+  gap: 0.75rem;
+  width: min(380px, calc(100vw - 28px));
+  padding: 0.6rem 0.75rem 0.6rem 0.6rem;
+  background: var(--ink-raised);
+  border: 1px solid var(--ink-line-strong);
+  border-radius: 999px;
+  box-shadow: 0 12px 32px -8px rgba(26, 26, 26, 0.35);
   cursor: pointer;
-  animation: incoming-call-pulse 1.4s ease-in-out infinite;
+  animation: incoming-call-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.incoming-call-banner-icon { display: inline-flex; flex-shrink: 0; }
-.incoming-call-banner-icon svg { width: 17px; height: 17px; }
+@keyframes incoming-call-slide-in {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
 
-/* Stays fully readable throughout - the shared `pulse` keyframe fades
-   to near-invisible (0.1 opacity), meant for loading skeletons, not an
-   urgent alert that has to stay legible the whole time. */
-@keyframes incoming-call-pulse {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.15); }
+/* Same conic-gradient brand ring worn as a "story ring" on the call
+   overlay itself - kept turning here too, so the notification and the
+   full call screen it leads to read as one continuous moment. */
+.incoming-call-banner-ring {
+  flex-shrink: 0;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(from 0deg, var(--brass), var(--warn), var(--signal), var(--brass));
+  animation: incoming-call-ring-spin 1.6s linear infinite;
+  display: flex; align-items: center; justify-content: center;
+}
+@keyframes incoming-call-ring-spin { to { transform: rotate(360deg); } }
+
+.incoming-call-banner-avatar {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--ink-raised);
+  border: 2px solid var(--ink-raised);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; color: var(--brass);
+}
+.incoming-call-banner-avatar .avatar-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.incoming-call-banner-text {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 0.1rem;
+  text-align: left;
+}
+.incoming-call-banner-name {
+  font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; color: var(--paper);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.incoming-call-banner-sub { font-size: 0.76rem; color: var(--muted); }
+
+.incoming-call-banner-accept {
+  flex-shrink: 0;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--signal);
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+}
+.incoming-call-banner-accept svg { width: 16px; height: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .incoming-call-banner-ring { animation: none; }
+  .incoming-call-banner { animation: none; }
 }

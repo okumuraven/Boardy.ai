@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
 import { getToken } from "../../lib/api";
 import { CallHistoryIcon } from "./icons";
+import Avatar from "../../components/Avatar";
 import "./IncomingCallBanner.css";
 
 // Makes an incoming call visible from anywhere in the app - not just
@@ -29,7 +30,7 @@ export default function IncomingCallBanner({ profile, onAnswer }) {
 
     channel.on("call_ring", (payload) => {
       callIdRef.current = payload.call_id;
-      setIncoming({ matchId: payload.match_id, fromName: payload.from_name });
+      setIncoming({ matchId: payload.match_id, fromName: payload.from_name, fromUserId: payload.from_user_id });
     });
 
     // Any resolution path other than the callee tapping the banner
@@ -64,8 +65,14 @@ export default function IncomingCallBanner({ profile, onAnswer }) {
 
   return (
     <button className="incoming-call-banner" onClick={handleAnswer}>
-      <span className="incoming-call-banner-icon"><CallHistoryIcon /></span>
-      {incoming.fromName || "Someone"} is calling · tap to answer
+      <span className="incoming-call-banner-ring">
+        <Avatar userId={incoming.fromUserId} name={incoming.fromName} className="incoming-call-banner-avatar" />
+      </span>
+      <span className="incoming-call-banner-text">
+        <span className="incoming-call-banner-name">{incoming.fromName || "Someone"}</span>
+        <span className="incoming-call-banner-sub">Incoming call · tap to answer</span>
+      </span>
+      <span className="incoming-call-banner-accept"><CallHistoryIcon /></span>
     </button>
   );
 }
