@@ -107,7 +107,15 @@
     display: flex; align-items: center; justify-content: space-around;
     height: 64px; flex-shrink: 0; order: 2;
     background: var(--ink-raised);
-    border-top: 1px solid var(--ink-line);
+    /* --ink-line-strong, not the plain --ink-line the rest of this rule
+       started with - a dark shadow reads fine as elevation on light
+       mode's near-white background, but is nearly invisible once
+       --ink-raised and --ink are both already dark (confirmed on a
+       real dark-mode screenshot: the shadow and a plain --ink-line edge
+       both vanished into a flat rectangle). The stronger border alone
+       holds up in both themes, so it carries the separation rather than
+       depending on a shadow that only works in one of them. */
+    border-top: 1px solid var(--ink-line-strong);
     border-radius: 18px 18px 0 0;
     box-shadow: 0 -8px 24px -4px rgba(26, 26, 26, 0.12);
     /* iPhone home-indicator clearance - without this the bar sits flush
@@ -130,16 +138,26 @@
      as a stray line rather than a deliberate selected state. Also now
      shares the exact same brass-wash treatment the desktop rail's own
      `.rail-btn.active` already uses, so the two nav shapes finally speak
-     the same visual language instead of two different ones. */
+     the same visual language instead of two different ones. Pops in
+     with a small overshoot on arrival (spring-ish cubic-bezier) instead
+     of a flat cross-fade, so landing on a tab reads as a deliberate,
+     tactile "catch" rather than a passive color swap. */
   .tab-btn-icon {
     display: flex; align-items: center; justify-content: center;
-    width: 40px; height: 26px; border-radius: 999px;
-    transition: background 0.15s ease, transform 0.15s ease;
+    width: 44px; height: 30px; border-radius: 999px;
+    transition: transform 0.12s ease;
   }
-  .tab-btn.active .tab-btn-icon { background: var(--brass-wash); }
+  .tab-btn.active .tab-btn-icon {
+    background: var(--brass-wash);
+    animation: tab-pill-in 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes tab-pill-in {
+    from { transform: scale(0.75); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
   .tab-btn:active .tab-btn-icon { transform: scale(0.88); }
 
-  .tab-btn .lbl { font-size: 0.63rem; font-weight: 500; }
+  .tab-btn .lbl { font-size: 0.63rem; font-weight: 500; letter-spacing: 0.01em; transition: font-weight 0.1s ease; }
   .tab-btn.active .lbl { font-weight: 600; }
   .tab-btn svg { width: 19px; height: 19px; }
   .tab-btn .badge-dot { position: absolute; top: 0; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
@@ -148,8 +166,13 @@
     background: var(--ink); border: 1.5px solid var(--ink-line-strong);
     display: flex; align-items: center; justify-content: center;
     font-family: var(--font-display); font-size: 0.56rem; color: var(--paper);
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s ease;
   }
-  .tab-btn.active .tab-btn-avatar { border-color: var(--brass); }
+  /* A small grow, not just a border-color swap - the avatar is the one
+     icon that's already a photo/initials, not a line-art glyph, so it
+     needs its own version of "selected" rather than relying on the pill
+     alone to carry it. */
+  .tab-btn.active .tab-btn-avatar { border-color: var(--brass); transform: scale(1.12); }
 
   /* A conversation takes the whole screen while it's open, the way
      WhatsApp/Telegram do - the app's own tab bar has no reason to
