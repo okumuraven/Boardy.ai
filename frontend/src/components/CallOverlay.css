@@ -127,6 +127,43 @@
   .call-overlay-btn { width: 52px; height: 52px; }
 }
 
+/* Desktop: the chat panel this overlay covers is a wide rectangle, not
+   a phone screen - the same small centered orb that reads fine on
+   mobile gets lost in a much larger dark void here. Scales the whole
+   composition up and adds two off-center companion blobs (the same
+   device the landing page's hero uses) so the extra width reads as
+   deliberate depth, not empty space. */
+@media (min-width: 860px) {
+  .call-overlay-glow { width: 760px; height: 760px; }
+  .call-overlay-glow::before,
+  .call-overlay-glow::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.5;
+  }
+  .call-overlay-glow::before {
+    width: 260px; height: 260px;
+    background: var(--warn);
+    top: -8%; right: 6%;
+    opacity: 0.12;
+  }
+  .call-overlay-glow::after {
+    width: 220px; height: 220px;
+    background: var(--signal);
+    bottom: 2%; left: 8%;
+    opacity: 0.14;
+  }
+  .call-ring-frame { width: 216px; height: 216px; padding: 6px; }
+  .call-overlay-avatar { font-size: 3.6rem; }
+  .call-overlay-name { font-size: 2rem; margin-top: 1.85rem; }
+  .call-overlay-status-pill { font-size: 0.95rem; padding: 0.5rem 1.3rem; }
+  .call-overlay-btn { width: 64px; height: 64px; }
+  .call-overlay-btn svg { width: 25px; height: 25px; }
+  .call-overlay-actions { gap: 2rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .call-ring-frame.spinning, .call-ring-frame.ringing { animation: none; }
   .call-waveform span { animation: none; height: 12px; }
