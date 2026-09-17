@@ -1,5 +1,6 @@
 defmodule VokaziWeb.ChatRoomChannel do
   use VokaziWeb, :channel
+  require Logger
 
   alias Vokazi.{Calling, Chat, Notifications, Repo}
   alias Vokazi.Accounts.User
@@ -236,6 +237,8 @@ defmodule VokaziWeb.ChatRoomChannel do
 
   @impl true
   def handle_in("call_accept", %{"call_id" => call_id}, socket) do
+    Logger.info("Call signaling: call_accept call_id=#{call_id} room=#{socket.assigns.room_id} by user_id=#{socket.assigns.user_id}")
+
     with {:ok, call_log} <- Calling.mark_in_progress(call_id) do
       notify_call_resolved(call_log.callee_id, call_id, "call_accepted")
     end
@@ -302,6 +305,7 @@ defmodule VokaziWeb.ChatRoomChannel do
 
   @impl true
   def handle_in("webrtc_offer", %{"sdp" => sdp}, socket) do
+    Logger.info("Call signaling: webrtc_offer room=#{socket.assigns.room_id} from user_id=#{socket.assigns.user_id}, relaying to #{Presence.list(socket) |> map_size()} present peer(s)")
     broadcast_from!(socket, "webrtc_offer", %{sdp: sdp})
     {:reply, :ok, socket}
   end
@@ -312,6 +316,7 @@ defmodule VokaziWeb.ChatRoomChannel do
 
   @impl true
   def handle_in("webrtc_answer", %{"sdp" => sdp}, socket) do
+    Logger.info("Call signaling: webrtc_answer room=#{socket.assigns.room_id} from user_id=#{socket.assigns.user_id}")
     broadcast_from!(socket, "webrtc_answer", %{sdp: sdp})
     {:reply, :ok, socket}
   end
@@ -322,6 +327,13 @@ defmodule VokaziWeb.ChatRoomChannel do
 
   @impl true
   def handle_in("webrtc_ice_candidate", %{"candidate" => candidate}, socket) do
+    kind = cond do
+      is_binary(candidate["candidate"]) and candidate["candidate"] =~ "typ relay" -> "relay(TURN)"
+      is_binary(candidate["candidate"]) and candidate["candidate"] =~ "typ srflx" -> "srflx(STUN)"
+      is_binary(candidate["candidate"]) and candidate["candidate"] =~ "typ host" -> "host(direct)"
+      true -> "unknown/end-of-candidates"
+    end
+    Logger.info("Call signaling: ice_candidate room=#{socket.assigns.room_id} from user_id=#{socket.assigns.user_id} type=#{kind}")
     broadcast_from!(socket, "webrtc_ice_candidate", %{candidate: candidate})
     {:reply, :ok, socket}
   end
