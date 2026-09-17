@@ -16,6 +16,12 @@
    here too, so this can't be scoped to the mobile media query below. */
 .app-shell.chat-open .feedback-fab { display: none; }
 
+/* The mobile "More" sheet (AppShell.css's .mobile-more-sheet) slides up
+   over this same corner - same bug confirmed live on .guide-fab (a
+   higher z-index than the sheet let a fixed corner button float on top
+   of, and swallow taps meant for, the sheet's own rows underneath it). */
+.app-shell.more-open .feedback-fab { display: none; }
+
 @media (max-width: 900px) {
   .feedback-fab { bottom: calc(64px + 1.25rem); }
 }

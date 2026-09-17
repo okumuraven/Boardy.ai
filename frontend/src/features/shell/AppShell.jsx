@@ -169,7 +169,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
     ));
 
   return (
-    <div className={`app-shell ${activeTab === "matches" && matchChatOpen ? "chat-open" : ""}`}>
+    <div className={`app-shell ${activeTab === "matches" && matchChatOpen ? "chat-open" : ""} ${moreOpen ? "more-open" : ""}`}>
       <IncomingCallBanner profile={profile} onAnswer={openMatchChat} />
       <FeedbackWidget />
       <GuideButton onOpenMoreSheet={() => setMoreOpen(true)} onCloseMoreSheet={() => setMoreOpen(false)} />

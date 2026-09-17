@@ -38,3 +38,10 @@
 /* Same reasoning as .feedback-fab - an open chat panel takes over this
    corner too at any screen width once it fills enough of the viewport. */
 .app-shell.chat-open .guide-fab { display: none; }
+
+/* The mobile "More" sheet (AppShell.css's .mobile-more-sheet) slides up
+   from this exact corner too - confirmed live: this fab has a higher
+   z-index than the sheet, so it rendered floating on top of the sheet's
+   own rows (visually stacked on "Bizi") and would have swallowed taps
+   meant for whatever row sits underneath it, not just looked wrong. */
+.app-shell.more-open .guide-fab { display: none; }
