@@ -133,9 +133,19 @@ export default function CallPanel({ channel, profile, partnerName, partnerAvatar
   // handling) before it even fetched credentials and sent an offer - by
   // then the callee's own 20s clock (started the moment it accepted) had
   // almost no runway left to receive the offer, answer, and gather ICE
-  // before timing out. 40s gives real-world slack for a slow network, a
-  // backgrounded tab, or a slower TURN allocation on either side.
-  const CONNECT_TIMEOUT_MS = 40000;
+  // before timing out.
+  //
+  // 40s still wasn't enough for two real people in different locations:
+  // a follow-up live call (call_id=40) had BOTH sides successfully gather
+  // relay(TURN) candidates - the fix itself was working end-to-end - but
+  // the callee took ~33s after the offer arrived to send an answer back
+  // (a real human noticing the ring, tapping accept, and granting a mic
+  // permission prompt on their own device isn't instant), leaving well
+  // under 10s of runway on both peers' independently-started clocks
+  // before the handshake could finish and ICE could actually connect.
+  // 60s gives a real two-human, cross-location call room to actually
+  // complete instead of racing its own safety net.
+  const CONNECT_TIMEOUT_MS = 60000;
   useEffect(() => {
     if (status !== "connecting") return;
     connectTimeoutRef.current = setTimeout(() => {
