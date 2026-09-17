@@ -22,7 +22,8 @@
   cursor: pointer;
   animation: incoming-call-pulse 1.4s ease-in-out infinite;
 }
-.incoming-call-banner-icon { font-size: 1.05rem; }
+.incoming-call-banner-icon { display: inline-flex; flex-shrink: 0; }
+.incoming-call-banner-icon svg { width: 17px; height: 17px; }
 
 /* Stays fully readable throughout - the shared `pulse` keyframe fades
    to near-invisible (0.1 opacity), meant for loading skeletons, not an

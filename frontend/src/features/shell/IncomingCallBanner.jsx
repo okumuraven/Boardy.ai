@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
 import { getToken } from "../../lib/api";
+import { CallHistoryIcon } from "./icons";
 import "./IncomingCallBanner.css";
 
 // Makes an incoming call visible from anywhere in the app - not just
@@ -63,7 +64,7 @@ export default function IncomingCallBanner({ profile, onAnswer }) {
 
   return (
     <button className="incoming-call-banner" onClick={handleAnswer}>
-      <span className="incoming-call-banner-icon">📞</span>
+      <span className="incoming-call-banner-icon"><CallHistoryIcon /></span>
       {incoming.fromName || "Someone"} is calling · tap to answer
     </button>
   );

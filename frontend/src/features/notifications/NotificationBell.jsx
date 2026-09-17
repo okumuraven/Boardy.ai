@@ -3,6 +3,18 @@ import { Socket } from "phoenix";
 import { apiFetch, getToken } from "../../lib/api";
 import { enablePushNotifications } from "./pushSetup";
 
+// Real SVG, not emoji (🔔 renders inconsistently across OS/browsers and
+// was the last spot in the notification UI still using a glyph instead
+// of the app's real icon set).
+function BellIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 const timeAgo = (iso) => {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
   if (seconds < 60) return "just now";
@@ -88,7 +100,7 @@ export default function NotificationBell({ profile, onOpen }) {
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen((v) => !v)} className="btn-ghost btn-sm" style={{ position: "relative" }}>
-        🔔
+        <span style={{ display: "inline-flex", width: "16px", height: "16px" }}><BellIcon /></span>
         {unreadCount > 0 && (
           <span
             style={{
@@ -130,11 +142,16 @@ export default function NotificationBell({ profile, onOpen }) {
               className="btn-ghost"
               style={{ width: "100%", padding: "0.5rem", fontSize: "0.8rem", marginBottom: "0.5rem", textAlign: "center" }}
             >
-              {pushStatus === "enabling"
-                ? "Requesting permission..."
-                : pushStatus === "error"
-                ? "Couldn't enable - try again?"
-                : "🔔 Enable push alerts (works even with this tab closed)"}
+              {pushStatus === "enabling" ? (
+                "Requesting permission..."
+              ) : pushStatus === "error" ? (
+                "Couldn't enable - try again?"
+              ) : (
+                <>
+                  <span style={{ display: "inline-flex", width: "13px", height: "13px", verticalAlign: "-2px", marginRight: "0.35rem" }}><BellIcon /></span>
+                  Enable push alerts (works even with this tab closed)
+                </>
+              )}
             </button>
           )}
 

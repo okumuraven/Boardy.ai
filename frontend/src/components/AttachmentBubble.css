@@ -16,7 +16,8 @@
   color: inherit;
   max-width: 240px;
 }
-.attachment-chip-icon { font-size: 1.3rem; flex-shrink: 0; }
+.attachment-chip-icon { display: inline-flex; flex-shrink: 0; }
+.attachment-chip-icon svg { width: 20px; height: 20px; }
 .attachment-chip-info { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .attachment-chip-name { font-size: 0.85rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .attachment-chip-size { font-size: 0.7rem; opacity: 0.75; }
