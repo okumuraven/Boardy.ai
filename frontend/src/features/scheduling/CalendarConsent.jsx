@@ -1,3 +1,13 @@
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: "13px", height: "13px", marginRight: "0.3rem", verticalAlign: "-2px", flexShrink: 0 }}>
+      <path d="M12 3.5 21.5 20h-19L12 3.5Z" />
+      <path d="M12 10v4" />
+      <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 // Per-intro consent step: connecting Calendar here is scoped to THIS
 // introduction specifically, separate from any wallet/identity sign-in -
 // declining still lets the intro get scheduled, just via manually-entered
@@ -19,7 +29,7 @@ export default function CalendarConsent({ onConnect, onDecline, busy }) {
           verification, but the fear around it can be. */}
       <div style={{ background: "var(--ink-raised)", border: "1px solid var(--ink-line)", borderRadius: "8px", padding: "0.7rem 0.9rem" }}>
         <p style={{ margin: 0, color: "var(--muted)", fontSize: "0.8rem", lineHeight: 1.55 }}>
-          ⚠️ Google may show a "hasn't verified this app" notice first - that's expected while we're still
+          <AlertIcon />Google may show a "hasn't verified this app" notice first - that's expected while we're still
           going through Google's review, not a sign anything's wrong. Tap <strong style={{ color: "var(--paper)" }}>Advanced</strong>, then{" "}
           <strong style={{ color: "var(--paper)" }}>Go to Kuzana Connect (unsafe)</strong> to continue. We only ever request access to check
           free/busy time and create this one event - never anything else on your account.

@@ -1,3 +1,12 @@
+function BellIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "0.4rem", verticalAlign: "-2px" }}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 const formatElapsed = (since) => {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(since).getTime()) / 1000));
   const days = Math.floor(seconds / 86400);
@@ -51,7 +60,7 @@ export default function WaitingPanel({ partnerName, since, lastReminderSentAt, r
       )}
 
       <button onClick={onRemind} disabled={busy || onCooldown} className="btn-ghost" style={{ padding: "0.5rem 1.1rem", fontSize: "0.85rem", alignSelf: "center" }}>
-        {onCooldown ? `Reminder sent - try again in ${Math.ceil(cooldownRemaining / 60)}m` : "👋 Send a reminder"}
+        {onCooldown ? `Reminder sent - try again in ${Math.ceil(cooldownRemaining / 60)}m` : <><BellIcon />Send a reminder</>}
       </button>
     </div>
   );

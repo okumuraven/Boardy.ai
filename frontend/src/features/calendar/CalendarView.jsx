@@ -5,6 +5,7 @@ import "./Calendar.css";
 import AgendaDay from "./AgendaDay";
 import AddPersonalEventForm from "./AddPersonalEventForm";
 import { dateKeyFromDate } from "./dateKey";
+import { CalendarIcon } from "../shell/icons";
 
 // Turns the raw /api/schedules + /api/personal_events responses into a
 // flat list of dated agenda items - one entry per confirmed call, one
@@ -137,7 +138,7 @@ export default function CalendarView({ profile, onOpenMatch, onOpenBizi }) {
 
         {isEmpty && (
           <div className="calendar-empty-state">
-            <div className="calendar-empty-icon">📅</div>
+            <div className="calendar-empty-icon"><CalendarIcon /></div>
             <p className="calendar-empty-title">Nothing on your agenda yet</p>
             <p className="calendar-empty-sub">
               Once a match unlocks, its intro call scheduling will show up here — or add something of your own above.

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CallHistoryIcon, BiziIcon } from "../shell/icons";
 
 const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 const formatClock = (hhmm, date) => new Date(`${date}T${hhmm}:00`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
@@ -23,7 +24,7 @@ function CallItem({ item, onOpenMatch }) {
         <span className="agenda-item-time">{formatTime(item.time)}</span>
         <div className="agenda-item-body">
           <span className="agenda-item-title">
-            {item.status === "confirmed" ? "📞 " : ""}
+            {item.status === "confirmed" && <span className="agenda-item-icon"><CallHistoryIcon /></span>}
             {item.status === "confirmed" ? `Call with ${name}` : `Proposed · with ${name}`}
           </span>
           {item.status === "slot_proposed" && <span className="agenda-item-sub">Waiting on both sides to pick the same slot</span>}
@@ -71,7 +72,7 @@ function BiziCallItem({ item, onOpenBizi }) {
       <div className="agenda-item-row">
         <span className="agenda-item-time">{formatTime(item.time)}</span>
         <div className="agenda-item-body">
-          <span className="agenda-item-title">🚀 Bizi verification call - {item.company_name}</span>
+          <span className="agenda-item-title"><span className="agenda-item-icon"><BiziIcon /></span>Bizi verification call - {item.company_name}</span>
           <span className="agenda-item-sub">With the Kuzana team</span>
         </div>
         <div className="agenda-item-actions">

@@ -1,5 +1,36 @@
 const MODES = ["call", "video", "chat"];
-const MODE_LABEL = { call: "📞 Call", video: "🎥 Video", chat: "💬 Chat first" };
+const MODE_TEXT = { call: "Call", video: "Video", chat: "Chat first" };
+
+function CallIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: "13px", height: "13px", marginRight: "0.35rem", verticalAlign: "-2px" }}>
+      <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: "13px", height: "13px", marginRight: "0.35rem", verticalAlign: "-2px" }}>
+      <path d="M15 10.5V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-3.5l5 3.5v-11l-5 3.5Z" />
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: "13px", height: "13px", marginRight: "0.35rem", verticalAlign: "-2px" }}>
+      <path d="M4 5h16v11H9l-4 4v-4H4z" />
+    </svg>
+  );
+}
+
+const MODE_ICON = { call: CallIcon, video: VideoIcon, chat: ChatIcon };
+
+function ModeLabel({ mode }) {
+  const Icon = MODE_ICON[mode] || CallIcon;
+  return <><Icon />{MODE_TEXT[mode] || MODE_TEXT.call}</>;
+}
 
 // Private per-user pre-call briefing - never shown to the other side of
 // the match. `myPreference` is editable here (tapping cycles the mode)
@@ -27,10 +58,10 @@ export default function BriefingCard({ briefing, myPreference, otherPreference, 
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.25rem" }}>
         <button onClick={cycleMode} className="btn-ghost" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}>
-          You prefer: {MODE_LABEL[myPreference] || MODE_LABEL.call} - tap to change
+          You prefer: <ModeLabel mode={myPreference} /> - tap to change
         </button>
         <span style={{ fontSize: "0.85rem", color: "var(--muted)" }}>
-          They prefer: {MODE_LABEL[otherPreference] || MODE_LABEL.call}
+          They prefer: <ModeLabel mode={otherPreference} />
         </span>
       </div>
     </div>

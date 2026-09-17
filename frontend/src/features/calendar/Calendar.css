@@ -15,7 +15,7 @@
   text-align: center; padding: 3rem 1.5rem; color: var(--muted);
   background: var(--ink-raised); border: 1px dashed var(--ink-line-strong); border-radius: 8px;
 }
-.calendar-empty-icon { font-size: 1.8rem; margin-bottom: 0.75rem; opacity: 0.7; }
+.calendar-empty-icon { width: 30px; height: 30px; margin: 0 auto 0.75rem; color: var(--muted); opacity: 0.7; }
 .calendar-empty-title { font-family: var(--font-display); font-size: 1.05rem; color: var(--paper); margin: 0 0 0.35rem; }
 .calendar-empty-sub { font-size: 0.85rem; color: var(--muted); max-width: 380px; margin: 0; }
 
@@ -30,11 +30,17 @@
   font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--brass); margin: 0 0 0.6rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--ink-line);
 }
-.agenda-item { background: var(--ink); border: 1px solid var(--ink-line-strong); border-radius: 7px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; }
+/* --ink-raised, not --ink - the page underneath is already --ink, so a
+   same-color card had only its border to separate it from the
+   background, same low-contrast bug fixed on every other card this
+   pass (e.g. .home-stat-tile). */
+.agenda-item { background: var(--ink-raised); border: 1px solid var(--ink-line-strong); border-radius: 7px; padding: 0.85rem 1rem; margin-bottom: 0.6rem; }
 .agenda-item-row { display: flex; align-items: center; gap: 0.9rem; }
 .agenda-item-time { font-family: var(--font-mono); font-size: 0.78rem; color: var(--brass); width: 4.6rem; flex-shrink: 0; }
 .agenda-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
-.agenda-item-title { font-family: var(--font-display); font-size: 1rem; color: var(--paper); }
+.agenda-item-title { font-family: var(--font-display); font-size: 1rem; color: var(--paper); display: flex; align-items: center; }
+.agenda-item-icon { display: inline-flex; margin-right: 0.4rem; color: var(--brass); }
+.agenda-item-icon svg { width: 14px; height: 14px; }
 .agenda-item-sub { font-size: 0.78rem; color: var(--muted); }
 .agenda-item-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 .agenda-item-delete {
