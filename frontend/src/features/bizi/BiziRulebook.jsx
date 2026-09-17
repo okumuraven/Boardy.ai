@@ -6,6 +6,32 @@ const CheckIcon = () => (
   </svg>
 );
 
+// Real SVG, not emoji (matches the anti-emoji-icon convention used across
+// the rest of the app) - these three reuse Home's .home-stat-icon/.home-stat-tile
+// classes, so only .home-stat-tile-brass/-signal exist as named color variants;
+// the third tile's warn tint is applied inline here rather than adding a new
+// class to the shared Home.css just for this one page.
+const CashIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1-3 2.2c0 2.8 6 1.6 6 4.3 0 1.3-1.3 2.3-3 2.3s-3-1-3-2.3" />
+  </svg>
+);
+
+const TrendUpIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 17 9 11 13 15 21 6" />
+    <polyline points="14 6 21 6 21 13" />
+  </svg>
+);
+
+const EquityIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="12" r="6" />
+    <circle cx="15" cy="12" r="6" />
+  </svg>
+);
+
 const CheckList = ({ items }) => (
   <ul className="stage-list" style={{ margin: 0, gap: "0.65rem" }}>
     {items.map((item) => (
@@ -34,19 +60,19 @@ export default function BiziRulebook({ onBack, onApply, canApply }) {
         </h2>
 
         <div className="home-stats-row" style={{ maxWidth: "none", marginBottom: "1.5rem" }}>
-          <div className="home-stat-tile">
-            <div className="home-stat-icon">💰</div>
+          <div className="home-stat-tile home-stat-tile-brass">
+            <div className="home-stat-icon"><CashIcon /></div>
             <div className="num">$40k</div>
             <div className="lbl">Total investment</div>
           </div>
-          <div className="home-stat-tile">
-            <div className="home-stat-icon">📈</div>
+          <div className="home-stat-tile home-stat-tile-signal">
+            <div className="home-stat-icon"><TrendUpIcon /></div>
             <div className="num">6 mo</div>
             <div className="lbl">Goal: 2x your business</div>
           </div>
-          <div className="home-stat-tile">
-            <div className="home-stat-icon">🤝</div>
-            <div className="num">7-33%</div>
+          <div className="home-stat-tile" style={{ borderTop: "2px solid var(--warn)" }}>
+            <div className="home-stat-icon" style={{ background: "var(--warn-wash)", color: "var(--warn)" }}><EquityIcon /></div>
+            <div className="num" style={{ color: "var(--warn)" }}>7-33%</div>
             <div className="lbl">Equity taken, historically</div>
           </div>
         </div>

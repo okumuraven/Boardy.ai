@@ -17,7 +17,10 @@ import { ROLES, roleTitle as roleLabel, isCapitalSideRole, isServiceRole } from 
 const AVATAR_ACCEPT = "image/jpeg,image/png,image/webp";
 
 const CONTACT_MODES = ["call", "video", "chat"];
-const CONTACT_LABEL = { call: "📞 Call", video: "🎥 Video", chat: "💬 Chat" };
+// Plain text, not emoji - a <select><option> can't render an SVG icon,
+// and every other field in this same list (name, phone, role...) is
+// plain text too, so an icon here alone would be inconsistent.
+const CONTACT_LABEL = { call: "Call", video: "Video call", chat: "Chat" };
 const roleTitle = (role) => (role ? roleLabel(role) : "Member");
 
 // The first real place a user can see or change what Kuzana Connect has on file

@@ -18,6 +18,23 @@ import "./Bizi.css";
 const BIZI_QUIZ_URL = "https://kuzana.co/quiz/?source=linkedin&campaign=Quiz";
 const goToQuiz = () => window.open(BIZI_QUIZ_URL, "_blank", "noopener,noreferrer");
 
+// Real SVG, not emoji - matches the anti-emoji-icon convention used
+// across the rest of the app.
+const PartnershipIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="12" r="6" />
+    <circle cx="15" cy="12" r="6" />
+  </svg>
+);
+
+const RocketIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2c3 2 5 6 5 10 0 2-1 4-2 5l-3 3-3-3c-1-1-2-3-2-5 0-4 2-8 5-10Z" />
+    <circle cx="12" cy="10" r="2" />
+    <path d="M8 16l-3 3M16 16l3 3" />
+  </svg>
+);
+
 // Kuzana's real form rejects everyone but the operating founder outright
 // (kuzana_website.md §9) - shown to non-founders as a better-fitting
 // offer, not a dead end (bizi_flow.md §1).
@@ -26,7 +43,7 @@ function ReferAFounder() {
     <div className="panel">
       <p className="panel-label">Know a founder who should apply?</p>
       <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", marginBottom: "1.25rem" }}>
-        <div className="home-stat-icon" style={{ fontSize: "1.6rem", marginBottom: 0 }}>🤝</div>
+        <div className="home-stat-icon" style={{ background: "var(--brass-wash)", color: "var(--brass)", marginBottom: 0 }}><PartnershipIcon /></div>
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 }}>
           Bizi applications are for operating founders only. If you know one who's ready to grow
           with Kuzana, refer them - Kuzana pays up to <strong style={{ color: "var(--paper)" }}>Ksh 50,000</strong> if
@@ -72,7 +89,7 @@ function EntryCard({ onReadRulebook, onApply }) {
     <div className="panel">
       <p className="panel-label">Kuzana Bizi Program</p>
       <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start", marginBottom: "1.5rem" }}>
-        <div className="home-stat-icon" style={{ fontSize: "1.6rem", marginBottom: 0 }}>🚀</div>
+        <div className="home-stat-icon" style={{ background: "var(--signal-wash)", color: "#b8860b", marginBottom: 0 }}><RocketIcon /></div>
         <p style={{ color: "var(--muted)", fontSize: "0.9rem", lineHeight: 1.6, margin: 0 }}>
           A $40,000 investment, months of workshops, a personal Strategy Board, and a Bizi Buddy -
           for founders ready to professionalize and scale.
