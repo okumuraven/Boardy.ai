@@ -1,0 +1,156 @@
+/* Notification Hub (NotificationBell.jsx) - was entirely inline-styled,
+   the one remaining spot in the app without a real stylesheet: plain
+   text rows with no per-type iconography, unlike the identical data
+   already shown with icon chips + colored accents on Home's Recent
+   Activity card (see notificationGlyphs.jsx, now the shared source for
+   both). Brought up to the same visual language here. */
+.notif-bell-wrap { position: relative; }
+
+.notif-bell-btn { position: relative; }
+.notif-bell-btn svg { width: 16px; height: 16px; display: block; }
+
+.notif-bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--warn);
+  color: var(--ink);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.4;
+  padding: 0.05rem 0.35rem;
+}
+
+.panel.notif-dropdown {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 0.75rem);
+  width: 340px;
+  max-height: 440px;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  padding: 1rem;
+  box-shadow: 0 12px 32px -8px rgba(26, 26, 26, 0.35);
+  animation: notif-dropdown-in 0.15s ease;
+}
+
+@keyframes notif-dropdown-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+  flex-shrink: 0;
+}
+.notif-dropdown-header .panel-label { margin: 0; }
+.notif-mark-read-btn { padding: 0.25rem 0.6rem !important; font-size: 0.75rem !important; }
+
+/* A quiet secondary nudge, not a competing CTA - the notification list
+   itself is this panel's actual job, so this stays low-key (ghost
+   border, no fill) rather than the brand-filled treatment reserved for
+   a screen's one primary action elsewhere in the app. */
+.notif-push-cta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--ink-line-strong);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.notif-push-cta:hover:not(:disabled) { border-color: var(--brass-dim); background: var(--ink-line); }
+.notif-push-cta:disabled { cursor: default; opacity: 0.7; }
+
+.notif-push-cta-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--brass-wash);
+  color: var(--brass);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-push-cta-icon svg { width: 13px; height: 13px; }
+
+.notif-push-cta-text { display: flex; flex-direction: column; gap: 0.1rem; font-size: 0.8rem; color: var(--paper); }
+.notif-push-cta-title { font-weight: 600; }
+.notif-push-cta-sub { font-size: 0.72rem; color: var(--muted); }
+
+.notif-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0 -0.5rem;
+  padding: 0 0.5rem;
+}
+
+/* Same icon-chip + colored-left-border language as .home-activity-row -
+   the same underlying notification should read identically wherever a
+   member sees it. Unread keeps the original brass-wash background tint
+   on top of that, so "new" is still legible at a glance without a
+   second competing dot indicator. */
+.notif-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid var(--ink-line);
+  padding: 0.7rem 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+.notif-row:hover { background: var(--ink-line); }
+.notif-row:last-child { border-bottom: none; }
+.notif-row.unread { background: var(--brass-wash); }
+.notif-row.unread:hover { filter: brightness(1.05); }
+
+.notif-row-glyph {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-row-glyph svg { width: 15px; height: 15px; }
+
+.notif-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.notif-row-body { font-size: 0.85rem; color: var(--paper); line-height: 1.4; }
+.notif-row-time { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+.notif-empty svg { width: 28px; height: 28px; color: var(--brass); opacity: 0.5; margin-bottom: 0.75rem; }
+.notif-empty-title { font-family: var(--font-display); font-size: 0.95rem; color: var(--paper); margin: 0 0 0.25rem; }
+.notif-empty-sub { font-size: 0.8rem; color: var(--muted); margin: 0; max-width: 220px; }
+
+@media (max-width: 480px) {
+  .notif-dropdown { width: min(340px, calc(100vw - 2rem)); }
+}

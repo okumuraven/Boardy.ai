@@ -1,23 +1,10 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api";
 import { isCapitalSideRole } from "../../constants/roles";
-import { CalendarIcon, CallHistoryIcon, DirectoryIcon, MatchesIcon } from "../shell/icons";
+import { DirectoryIcon } from "../shell/icons";
+import { TYPE_GLYPH, SparkleIcon } from "../notifications/notificationGlyphs";
 import "./Home.css";
 import Dashboard from "../../components/Dashboard";
-
-// Real SVG, not emoji (renders inconsistently across OS/browsers and
-// reads as unpolished next to the rest of the app's actual icon set -
-// every nav item already uses one). No sparkle glyph exists in
-// features/shell/icons.jsx yet, so a small one is defined here rather
-// than reusing an unrelated shape for "new match".
-function SparkleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
-      <path d="M7 7l2.5 2.5M14.5 14.5L17 17M17 7l-2.5 2.5M9.5 14.5L7 17" />
-    </svg>
-  );
-}
 
 function ClockIcon() {
   return (
@@ -45,17 +32,6 @@ function ChatBubbleIcon() {
     </svg>
   );
 }
-
-// accent is the left-border/section color for this activity type - a
-// colored border alongside colored icon since a bare gray divider line
-// gave every row the same neutral weight regardless of what actually
-// happened.
-const TYPE_GLYPH = {
-  chat_message: { Icon: MatchesIcon, bg: "var(--ink-line)", color: "var(--muted)", accent: "var(--ink-line-strong)" },
-  calendar_reminder: { Icon: CalendarIcon, bg: "var(--warn-wash)", color: "var(--warn)", accent: "var(--warn)" },
-  new_match: { Icon: SparkleIcon, bg: "var(--signal-wash)", color: "var(--signal)", accent: "var(--signal)" },
-  incoming_call: { Icon: CallHistoryIcon, bg: "var(--brass-wash)", color: "var(--brass)", accent: "var(--brass)" },
-};
 
 const timeAgo = (iso) => {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));

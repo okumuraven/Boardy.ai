@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Socket } from "phoenix";
 import { apiFetch, getToken } from "../../lib/api";
 import { enablePushNotifications } from "./pushSetup";
+import { TYPE_GLYPH } from "./notificationGlyphs";
+import "./NotificationBell.css";
 
 // Real SVG, not emoji (🔔 renders inconsistently across OS/browsers and
 // was the last spot in the notification UI still using a glyph instead
@@ -98,87 +100,69 @@ export default function NotificationBell({ profile, onOpen }) {
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <button onClick={() => setOpen((v) => !v)} className="btn-ghost btn-sm" style={{ position: "relative" }}>
-        <span style={{ display: "inline-flex", width: "16px", height: "16px" }}><BellIcon /></span>
-        {unreadCount > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-4px",
-              right: "-4px",
-              background: "var(--warn)",
-              color: "var(--ink)",
-              borderRadius: "999px",
-              fontSize: "0.65rem",
-              padding: "0.05rem 0.35rem",
-              fontWeight: 700,
-              lineHeight: 1.4,
-            }}
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
+    <div className="notif-bell-wrap">
+      <button onClick={() => setOpen((v) => !v)} className="btn-ghost btn-sm notif-bell-btn" aria-label="Notifications">
+        <BellIcon />
+        {unreadCount > 0 && <span className="notif-bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 
       {open && (
-        <div
-          className="panel"
-          style={{ position: "absolute", bottom: 0, left: "calc(100% + 0.75rem)", width: "320px", maxHeight: "400px", overflowY: "auto", zIndex: 30, padding: "0.75rem" }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <p className="panel-label" style={{ margin: 0 }}>Notifications</p>
+        <div className="panel notif-dropdown">
+          <div className="notif-dropdown-header">
+            <p className="panel-label">Notifications</p>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="btn-ghost" style={{ padding: "0.2rem 0.6rem", fontSize: "0.75rem" }}>
+              <button onClick={markAllRead} className="btn-ghost btn-sm notif-mark-read-btn">
                 Mark all read
               </button>
             )}
           </div>
 
           {pushSupported && pushPermission === "default" && pushStatus !== "enabled" && (
-            <button
-              onClick={handleEnablePush}
-              disabled={pushStatus === "enabling"}
-              className="btn-ghost"
-              style={{ width: "100%", padding: "0.5rem", fontSize: "0.8rem", marginBottom: "0.5rem", textAlign: "center" }}
-            >
+            <button onClick={handleEnablePush} disabled={pushStatus === "enabling"} className="notif-push-cta">
+              <span className="notif-push-cta-icon"><BellIcon /></span>
               {pushStatus === "enabling" ? (
-                "Requesting permission..."
+                <span className="notif-push-cta-text">Requesting permission…</span>
               ) : pushStatus === "error" ? (
-                "Couldn't enable - try again?"
+                <span className="notif-push-cta-text">Couldn't enable - try again?</span>
               ) : (
-                <>
-                  <span style={{ display: "inline-flex", width: "13px", height: "13px", verticalAlign: "-2px", marginRight: "0.35rem" }}><BellIcon /></span>
-                  Enable push alerts (works even with this tab closed)
-                </>
+                <span className="notif-push-cta-text">
+                  <span className="notif-push-cta-title">Enable push alerts</span>
+                  <span className="notif-push-cta-sub">Works even with this tab closed</span>
+                </span>
               )}
             </button>
           )}
 
-          {notifications.length === 0 ? (
-            <p style={{ color: "var(--muted)", fontSize: "0.85rem", textAlign: "center", margin: "1rem 0" }}>Nothing yet.</p>
-          ) : (
-            notifications.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => handleClick(n)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "0.6rem 0.5rem",
-                  background: n.is_read ? "transparent" : "var(--brass-wash)",
-                  border: "none",
-                  borderBottom: "1px solid var(--ink-line)",
-                  cursor: "pointer",
-                  color: "var(--paper)",
-                }}
-              >
-                <div style={{ fontSize: "0.85rem" }}>{n.body}</div>
-                <div style={{ fontSize: "0.7rem", color: "var(--muted)", marginTop: "0.2rem" }}>{timeAgo(n.inserted_at)}</div>
-              </button>
-            ))
-          )}
+          <div className="notif-list">
+            {notifications.length === 0 ? (
+              <div className="notif-empty">
+                <BellIcon />
+                <p className="notif-empty-title">Nothing yet</p>
+                <p className="notif-empty-sub">New activity on your intros shows up here.</p>
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const glyph = TYPE_GLYPH[n.type] || TYPE_GLYPH.chat_message;
+                const Icon = glyph.Icon;
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => handleClick(n)}
+                    className={`notif-row ${n.is_read ? "" : "unread"}`}
+                    style={{ borderLeftColor: glyph.accent }}
+                  >
+                    <span className="notif-row-glyph" style={{ background: glyph.bg, color: glyph.color }}>
+                      <Icon />
+                    </span>
+                    <span className="notif-row-text">
+                      <span className="notif-row-body">{n.body}</span>
+                      <span className="notif-row-time">{timeAgo(n.inserted_at)}</span>
+                    </span>
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
