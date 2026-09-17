@@ -235,11 +235,13 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
             data-tour={`nav-${key}`}
             onClick={() => setActiveTab(key)}
           >
-            {key === "profile" ? (
-              <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="tab-btn-avatar" />
-            ) : (
-              <Icon />
-            )}
+            <span className="tab-btn-icon">
+              {key === "profile" ? (
+                <Avatar avatarUrl={profile?.avatar_url} name={profile?.name} className="tab-btn-avatar" />
+              ) : (
+                <Icon />
+              )}
+            </span>
             <span className="lbl">{label}</span>
           </button>
         ))}
@@ -250,7 +252,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
           aria-expanded={moreOpen}
           onClick={() => setMoreOpen((v) => !v)}
         >
-          <MoreIcon />
+          <span className="tab-btn-icon"><MoreIcon /></span>
           <span className="lbl">More</span>
         </button>
       </nav>
@@ -266,7 +268,7 @@ export default function AppShell({ profile, onInterviewComplete, onFindMatch, on
                 data-tour={`nav-${key}`}
                 onClick={() => setActiveTab(key)}
               >
-                <Icon />
+                <span className="mobile-more-row-icon"><Icon /></span>
                 <span>{label}</span>
               </button>
             ))}
