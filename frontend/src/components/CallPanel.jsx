@@ -126,7 +126,16 @@ export default function CallPanel({ channel, profile, partnerName, partnerAvatar
   // the page. This is the actual fix: if a call hasn't reached in_call
   // within CONNECT_TIMEOUT_MS of entering "connecting", fail it with a
   // real, actionable message instead of hanging indefinitely.
-  const CONNECT_TIMEOUT_MS = 20000;
+  //
+  // 20s turned out too tight once TURN was actually working: a live test
+  // showed the *caller* take 14s to react to "call_accepted" at all
+  // (most likely Chrome throttling a backgrounded tab's JS timers/event
+  // handling) before it even fetched credentials and sent an offer - by
+  // then the callee's own 20s clock (started the moment it accepted) had
+  // almost no runway left to receive the offer, answer, and gather ICE
+  // before timing out. 40s gives real-world slack for a slow network, a
+  // backgrounded tab, or a slower TURN allocation on either side.
+  const CONNECT_TIMEOUT_MS = 40000;
   useEffect(() => {
     if (status !== "connecting") return;
     connectTimeoutRef.current = setTimeout(() => {
