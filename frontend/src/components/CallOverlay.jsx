@@ -1,4 +1,5 @@
 import "./CallOverlay.css";
+import Avatar from "./Avatar";
 
 function PhoneIcon() {
   return (
@@ -45,6 +46,25 @@ const formatElapsed = (seconds) => {
   return `${m}:${String(s).padStart(2, "0")}`;
 };
 
+const STATUS_COPY = {
+  calling: "Calling…",
+  incoming: "Incoming call…",
+  connecting: "Connecting…",
+};
+
+// A simple animated waveform standing in for "there's live audio here" -
+// the one visual only a voice call actually has a right to. Bars are
+// pure CSS, staggered so they never move in lockstep.
+function Waveform() {
+  return (
+    <div className="call-waveform" aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+        <span key={i} style={{ animationDelay: `${i * 0.09}s` }} />
+      ))}
+    </div>
+  );
+}
+
 // Pure presentational piece of CallPanel.jsx - split out to stay under
 // the 250-line file cap. No state of its own, just renders whichever
 // call state CallPanel hands it.
@@ -52,6 +72,7 @@ export default function CallOverlay({
   status,
   incomingFrom,
   partnerName,
+  partnerAvatarUrl,
   elapsed,
   muted,
   callError,
@@ -63,65 +84,60 @@ export default function CallOverlay({
   onDismissError,
 }) {
   const displayName = (status === "incoming" ? incomingFrom?.name : partnerName) || "Someone";
-  // Idle-pulse rings only make sense while something is actually in
-  // flight (ringing out, being rung, or negotiating media) - a
-  // connected call or an error state is a resolved moment, not a
-  // "waiting" one.
-  const isPulsing = status === "calling" || status === "incoming" || status === "connecting";
+  // The brand ring keeps turning while something is unresolved (ringing
+  // out, being rung, or negotiating media) and settles once a call
+  // actually connects - a resolved moment doesn't need to keep moving.
+  const isPending = status === "calling" || status === "incoming" || status === "connecting";
 
   return (
     <div className="call-overlay">
+      <div className="call-overlay-glow"></div>
       <div className="call-overlay-card">
-        <div className={`call-overlay-avatar-wrap ${status === "incoming" ? "ringing" : ""}`}>
-          {isPulsing && (
-            <>
-              <div className="call-orb-ring"></div>
-              <div className="call-orb-ring"></div>
-            </>
-          )}
-          <div className="match-avatar call-overlay-avatar">{displayName[0] || "?"}</div>
+        <div className={`call-ring-frame ${isPending ? "spinning" : ""} ${status === "incoming" ? "ringing" : ""}`}>
+          <div className="call-ring-frame-inner">
+            <Avatar avatarUrl={partnerAvatarUrl} name={displayName} className="call-overlay-avatar" />
+          </div>
         </div>
 
-        {status === "calling" && (
-          <>
-            <p className="call-overlay-name">{displayName}</p>
-            <p className="call-overlay-status">Calling…</p>
+        <p className="call-overlay-name">{displayName}</p>
+
+        {status === "in_call" ? (
+          <div className="call-overlay-live-row">
+            <Waveform />
+            <span className="call-overlay-timer">{formatElapsed(elapsed)}</span>
+          </div>
+        ) : status === "error" ? (
+          <p className="call-overlay-error">{callError}</p>
+        ) : (
+          <span className="call-overlay-status-pill">{STATUS_COPY[status]}</span>
+        )}
+
+        <div className="call-overlay-actions">
+          {status === "calling" && (
             <button onClick={onCancel} className="call-overlay-btn call-overlay-btn-end" aria-label="Cancel call">
               <PhoneOffIcon />
             </button>
-          </>
-        )}
+          )}
 
-        {status === "incoming" && (
-          <>
-            <p className="call-overlay-name">{displayName}</p>
-            <p className="call-overlay-status">Incoming call…</p>
-            <div className="call-overlay-actions">
+          {status === "incoming" && (
+            <>
               <button onClick={onDecline} className="call-overlay-btn call-overlay-btn-end" aria-label="Decline call">
                 <PhoneOffIcon />
               </button>
               <button onClick={onAccept} className="call-overlay-btn call-overlay-btn-accept" aria-label="Accept call">
                 <PhoneIcon />
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {status === "connecting" && (
-          <>
-            <p className="call-overlay-name">{displayName}</p>
-            <p className="call-overlay-status">Connecting…</p>
+          {status === "connecting" && (
             <button onClick={onEnd} className="call-overlay-btn call-overlay-btn-end" aria-label="Cancel">
               <PhoneOffIcon />
             </button>
-          </>
-        )}
+          )}
 
-        {status === "in_call" && (
-          <>
-            <p className="call-overlay-name">{displayName}</p>
-            <p className="call-overlay-status call-overlay-timer">{formatElapsed(elapsed)}</p>
-            <div className="call-overlay-actions">
+          {status === "in_call" && (
+            <>
               <button
                 onClick={onToggleMute}
                 className={`call-overlay-btn call-overlay-btn-secondary ${muted ? "active" : ""}`}
@@ -132,17 +148,13 @@ export default function CallOverlay({
               <button onClick={onEnd} className="call-overlay-btn call-overlay-btn-end" aria-label="End call">
                 <PhoneOffIcon />
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {status === "error" && (
-          <>
-            <p className="call-overlay-name">{displayName}</p>
-            <p className="call-overlay-error">{callError}</p>
+          {status === "error" && (
             <button onClick={onDismissError} className="btn-ghost call-overlay-close">Close</button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

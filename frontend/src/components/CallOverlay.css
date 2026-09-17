@@ -1,60 +1,109 @@
-/* In-App Calling overlay (Phase 1) - covers the chat panel regardless of
-   where CallPanel sits in the DOM. Redesigned from a flat page of
-   floating text (bare avatar, monospace status line, plain text
-   buttons) into a real "phone call" moment - a glowing avatar, icon
-   buttons in the app's own action colors, and a friendlier voice. */
+/* In-App Calling overlay (Phase 1) - redesigned around the brand's own
+   three-arc mark (the same brass/warn/signal ring used on the landing
+   page and marketing materials) instead of a generic pulsing circle -
+   a "story ring" around the caller's photo, a soft ambient color glow
+   filling what used to be a flat empty screen, and a live waveform
+   standing in for the one thing only a voice call actually has: sound. */
 .call-overlay {
   position: absolute; inset: 0; z-index: 20;
   background: var(--ink); display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
-.call-overlay-card { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; text-align: center; }
 
-.call-overlay-avatar-wrap {
-  position: relative;
-  width: 128px; height: 128px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 1.25rem;
+.call-overlay-glow {
+  position: absolute;
+  top: 42%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 130vw); height: min(560px, 130vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--brass-wash) 0%, var(--signal-wash) 45%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
 }
-.call-overlay-avatar {
-  width: 96px; height: 96px; font-size: 2.1rem;
+
+.call-overlay-card {
   position: relative; z-index: 1;
-  box-shadow: 0 8px 28px var(--brass-dim);
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
 }
 
-/* Same ambient-pulse convention as the voice-interview mic orb
-   (VoiceInterview.css's .mic-orb-idle-ring) - reused here rather than
-   inventing a second "waiting" animation language. */
-.call-orb-ring {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 1.5px solid var(--brass-dim);
-  opacity: 0; pointer-events: none;
-  animation: call-orb-pulse 2.4s ease-in-out infinite;
+/* The brand ring - same conic-gradient device as the app's own mark,
+   worn as a "story ring" around the caller's photo. Keeps turning while
+   the call is unresolved (ringing out, being rung, or negotiating
+   media) and comes to rest the moment it actually connects. */
+.call-ring-frame {
+  width: 172px; height: 172px;
+  border-radius: 50%;
+  padding: 5px;
+  background: conic-gradient(from 0deg, var(--brass), var(--warn), var(--signal), var(--brass));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 12px 32px -8px var(--brass-dim);
 }
-.call-orb-ring:nth-child(2) { animation-delay: 0.9s; }
-@keyframes call-orb-pulse {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  100% { transform: scale(1.45); opacity: 0; }
+.call-ring-frame.spinning { animation: call-ring-spin 3.2s linear infinite; }
+.call-ring-frame.ringing { animation: call-ring-spin 1.5s linear infinite, call-ring-glow-pulse 1.5s ease-in-out infinite; }
+@keyframes call-ring-spin { to { transform: rotate(360deg); } }
+@keyframes call-ring-glow-pulse {
+  0%, 100% { box-shadow: 0 12px 32px -8px var(--signal-wash); }
+  50% { box-shadow: 0 12px 42px 6px var(--signal-wash); }
 }
-/* Incoming calls get the urgent/inviting color (signal gold) instead of
-   brass, so a ringing call visually reads differently from an outgoing
-   or connecting one at a glance. */
-.call-overlay-avatar-wrap.ringing .call-orb-ring { border-color: var(--signal); animation-duration: 1.3s; }
 
-.call-overlay-name { font-family: var(--font-display); font-weight: 500; font-size: 1.4rem; color: var(--paper); margin: 0; }
-.call-overlay-status { font-family: var(--font-body); font-size: 0.95rem; color: var(--muted); margin: 0 0 1.75rem; }
+.call-ring-frame-inner {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  background: var(--ink);
+  padding: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.call-overlay-avatar {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--brass-wash); color: var(--brass);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 600; font-size: 3rem;
+}
+.call-overlay-avatar .avatar-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+.call-overlay-name { font-family: var(--font-display); font-weight: 600; font-size: 1.65rem; color: var(--paper); margin: 1.5rem 0 0; }
+
+.call-overlay-status-pill {
+  display: inline-flex; align-items: center;
+  font-size: 0.88rem; font-weight: 500;
+  color: var(--brass); background: var(--brass-wash);
+  padding: 0.4rem 1.1rem; border-radius: 999px;
+  margin: 0.85rem 0 2.25rem;
+}
+
+.call-overlay-live-row { display: flex; align-items: center; gap: 0.85rem; margin: 0.85rem 0 2.25rem; }
 .call-overlay-timer { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--brass); font-size: 1rem; }
-.call-overlay-error { color: var(--warn); font-size: 0.88rem; margin: 0 0 1.25rem; max-width: 320px; text-align: center; line-height: 1.5; }
 
-.call-overlay-actions { display: flex; align-items: center; gap: 1.5rem; }
+/* The one visual only a voice call has a right to - a live waveform,
+   not just a static status word, standing in for actual sound. */
+.call-waveform { display: flex; align-items: center; gap: 3px; height: 20px; }
+.call-waveform span {
+  display: block; width: 3px; border-radius: 2px;
+  background: var(--brass);
+  height: 6px;
+  animation: call-wave 0.9s ease-in-out infinite;
+}
+@keyframes call-wave {
+  0%, 100% { height: 5px; }
+  50% { height: 20px; }
+}
+
+.call-overlay-error { color: var(--warn); font-size: 0.9rem; margin: 1.25rem 0 2rem; max-width: 300px; line-height: 1.5; }
+
+.call-overlay-actions { display: flex; align-items: center; gap: 1.75rem; }
 
 .call-overlay-btn {
-  width: 56px; height: 56px; border-radius: 50%;
+  width: 58px; height: 58px; border-radius: 50%;
   border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform 0.15s ease, filter 0.15s ease;
 }
-.call-overlay-btn svg { width: 22px; height: 22px; }
-.call-overlay-btn:hover { transform: scale(1.05); }
+.call-overlay-btn svg { width: 23px; height: 23px; }
+.call-overlay-btn:hover { transform: scale(1.06); }
 .call-overlay-btn:active { transform: scale(0.96); }
 
 .call-overlay-btn-end { background: var(--warn); color: var(--ink); }
@@ -73,11 +122,12 @@
 .call-overlay-close { margin-top: 0.25rem; }
 
 @media (max-width: 480px) {
-  .call-overlay-avatar-wrap { width: 108px; height: 108px; }
-  .call-overlay-avatar { width: 80px; height: 80px; font-size: 1.8rem; }
-  .call-overlay-btn { width: 50px; height: 50px; }
+  .call-ring-frame { width: 148px; height: 148px; }
+  .call-overlay-avatar { font-size: 2.5rem; }
+  .call-overlay-btn { width: 52px; height: 52px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .call-orb-ring { animation: none; opacity: 0; }
+  .call-ring-frame.spinning, .call-ring-frame.ringing { animation: none; }
+  .call-waveform span { animation: none; height: 12px; }
 }

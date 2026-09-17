@@ -522,7 +522,7 @@ export default function ChatRoomView({ roomId, matchId, pairingKind, profile, pa
           </div>
           {matchId && (
             <div className="chat-header-actions">
-              <CallPanel channel={channelForCall} profile={profile} partnerName={partnerName} />
+              <CallPanel channel={channelForCall} profile={profile} partnerName={partnerName} partnerAvatarUrl={partnerAvatarUrl} />
               <button
                 onClick={() => setPanelView((v) => (v === "profile" ? null : "profile"))}
                 className={`chat-action-btn ${panelView === "profile" ? "btn-primary" : "btn-ghost"}`}

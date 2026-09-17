@@ -12,7 +12,7 @@ import { CallHistoryIcon } from "../features/shell/icons";
 // peer connection the moment it clicks Accept so it's ready the instant
 // the offer arrives. Renders as a small button in the chat header when
 // idle, and a full overlay for every other state.
-export default function CallPanel({ channel, profile, partnerName }) {
+export default function CallPanel({ channel, profile, partnerName, partnerAvatarUrl }) {
   const [status, setStatus] = useState("idle"); // idle | calling | incoming | connecting | in_call | error
   const [incomingFrom, setIncomingFrom] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -210,6 +210,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
           status={status}
           incomingFrom={incomingFrom}
           partnerName={partnerName}
+          partnerAvatarUrl={partnerAvatarUrl}
           elapsed={elapsed}
           muted={muted}
           callError={callError}
