@@ -1,15 +1,83 @@
 /* In-App Calling overlay (Phase 1) - covers the chat panel regardless of
-   where CallPanel sits in the DOM. */
+   where CallPanel sits in the DOM. Redesigned from a flat page of
+   floating text (bare avatar, monospace status line, plain text
+   buttons) into a real "phone call" moment - a glowing avatar, icon
+   buttons in the app's own action colors, and a friendlier voice. */
 .call-overlay {
   position: absolute; inset: 0; z-index: 20;
   background: var(--ink); display: flex; align-items: center; justify-content: center;
 }
 .call-overlay-card { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; text-align: center; }
-.call-overlay-avatar {
-  width: 72px; height: 72px; font-size: 1.6rem; margin-bottom: 0.75rem;
+
+.call-overlay-avatar-wrap {
+  position: relative;
+  width: 128px; height: 128px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 1.25rem;
 }
-.call-overlay-name { font-family: var(--font-display); font-size: 1.3rem; color: var(--paper); margin: 0; }
-.call-overlay-status { font-family: var(--font-mono); color: var(--muted); margin: 0 0 0.75rem; }
-.call-overlay-end { border-color: var(--warn-dim); color: var(--warn); }
-.call-overlay-muted { border-color: var(--brass-dim); color: var(--brass); }
-.call-overlay-error { color: var(--warn); font-size: 0.82rem; margin-top: 0.75rem; max-width: 320px; text-align: center; }
+.call-overlay-avatar {
+  width: 96px; height: 96px; font-size: 2.1rem;
+  position: relative; z-index: 1;
+  box-shadow: 0 8px 28px var(--brass-dim);
+}
+
+/* Same ambient-pulse convention as the voice-interview mic orb
+   (VoiceInterview.css's .mic-orb-idle-ring) - reused here rather than
+   inventing a second "waiting" animation language. */
+.call-orb-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 1.5px solid var(--brass-dim);
+  opacity: 0; pointer-events: none;
+  animation: call-orb-pulse 2.4s ease-in-out infinite;
+}
+.call-orb-ring:nth-child(2) { animation-delay: 0.9s; }
+@keyframes call-orb-pulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+/* Incoming calls get the urgent/inviting color (signal gold) instead of
+   brass, so a ringing call visually reads differently from an outgoing
+   or connecting one at a glance. */
+.call-overlay-avatar-wrap.ringing .call-orb-ring { border-color: var(--signal); animation-duration: 1.3s; }
+
+.call-overlay-name { font-family: var(--font-display); font-weight: 500; font-size: 1.4rem; color: var(--paper); margin: 0; }
+.call-overlay-status { font-family: var(--font-body); font-size: 0.95rem; color: var(--muted); margin: 0 0 1.75rem; }
+.call-overlay-timer { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--brass); font-size: 1rem; }
+.call-overlay-error { color: var(--warn); font-size: 0.88rem; margin: 0 0 1.25rem; max-width: 320px; text-align: center; line-height: 1.5; }
+
+.call-overlay-actions { display: flex; align-items: center; gap: 1.5rem; }
+
+.call-overlay-btn {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.call-overlay-btn svg { width: 22px; height: 22px; }
+.call-overlay-btn:hover { transform: scale(1.05); }
+.call-overlay-btn:active { transform: scale(0.96); }
+
+.call-overlay-btn-end { background: var(--warn); color: var(--ink); }
+.call-overlay-btn-end:hover { filter: brightness(1.08); }
+
+.call-overlay-btn-accept { background: var(--signal); color: var(--paper); }
+.call-overlay-btn-accept:hover { filter: brightness(1.08); }
+
+.call-overlay-btn-secondary {
+  background: var(--ink-raised); color: var(--paper);
+  border: 1px solid var(--ink-line-strong);
+}
+.call-overlay-btn-secondary:hover { background: var(--ink-line); }
+.call-overlay-btn-secondary.active { background: var(--warn-wash); color: var(--warn); border-color: var(--warn-dim); }
+
+.call-overlay-close { margin-top: 0.25rem; }
+
+@media (max-width: 480px) {
+  .call-overlay-avatar-wrap { width: 108px; height: 108px; }
+  .call-overlay-avatar { width: 80px; height: 80px; font-size: 1.8rem; }
+  .call-overlay-btn { width: 50px; height: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-orb-ring { animation: none; opacity: 0; }
+}

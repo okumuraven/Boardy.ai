@@ -21,7 +21,16 @@ defmodule Vokazi.Calling.TurnCredentials do
   def generate(_user_id) do
     %{
       ice_servers: [
-        %{urls: "stun:stun.relay.metered.ca:80"},
+        # Google's public STUN - direct-connection discovery only (no
+        # relay, no credentials needed), but it's a large, extremely
+        # reliable operator. Kept alongside Metered's STUN/TURN rather
+        # than replacing them: this widens the pool of candidates a call
+        # can try, which matters most on the exact networks (mobile
+        # carrier NAT) where a call is most likely to need a working
+        # relay and least likely to tolerate a single provider having a
+        # bad day.
+        %{urls: "stun:stun.l.google.com:19302"},
+        %{urls: "stun:relay.metered.ca:80"},
         %{urls: "turn:relay.metered.ca:80", username: @username, credential: @credential},
         %{urls: "turn:relay.metered.ca:443", username: @username, credential: @credential},
         %{urls: "turn:relay.metered.ca:443?transport=tcp", username: @username, credential: @credential}

@@ -29,6 +29,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
   const localStreamRef = useRef(null);
   const pendingCandidatesRef = useRef([]);
   const remoteAudioRef = useRef(null);
+  const connectTimeoutRef = useRef(null);
 
   const cleanupCall = () => {
     peerConnectionRef.current?.close();
@@ -39,6 +40,7 @@ export default function CallPanel({ channel, profile, partnerName }) {
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
     isCallerRef.current = false;
     callIdRef.current = null;
+    clearTimeout(connectTimeoutRef.current);
     setMuted(false);
     setCallError("");
   };
@@ -114,6 +116,23 @@ export default function CallPanel({ channel, profile, partnerName }) {
       if (startedAt) setElapsed(Math.floor(Date.now() / 1000) - startedAt);
     }, 1000);
     return () => clearInterval(interval);
+  }, [status]);
+
+  // Backstop for the real bug reported live: a stuck TURN relay (or any
+  // other silent connectivity failure) can leave a browser's ICE state
+  // parked on "checking" forever instead of ever reaching "failed" -
+  // oniceconnectionstatechange in webrtc.js then never fires, and
+  // "Connecting audio..." just sits there with no way out but reloading
+  // the page. This is the actual fix: if a call hasn't reached in_call
+  // within CONNECT_TIMEOUT_MS of entering "connecting", fail it with a
+  // real, actionable message instead of hanging indefinitely.
+  const CONNECT_TIMEOUT_MS = 20000;
+  useEffect(() => {
+    if (status !== "connecting") return;
+    connectTimeoutRef.current = setTimeout(() => {
+      failCall("Couldn't connect the call - check your connection and try again.");
+    }, CONNECT_TIMEOUT_MS);
+    return () => clearTimeout(connectTimeoutRef.current);
   }, [status]);
 
   // Audibly distinct tones for "I'm calling out" vs. "someone's calling
